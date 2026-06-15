@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitall - Rejestracja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        qv: {
+                            bg: 'var(--qv-bg)',
+                            surface: 'var(--qv-surface)',
+                            border: 'var(--qv-border)',
+                            text: 'var(--qv-text)',
+                            muted: 'var(--qv-muted)',
+                            accent: 'var(--qv-accent)'
+                        }
+                    },
+                    boxShadow: {
+                        'qv-lg': '0 10px 25px -5px rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --qv-bg: #f8fafc;
+            --qv-surface: #ffffff;
+            --qv-border: #e2e8f0;
+            --qv-text: #0f172a;
+            --qv-muted: #64748b;
+            --qv-accent: #7c3aed;
+        }
+        .dark {
+            --qv-bg: #0b1120;
+            --qv-surface: #1e293b;
+            --qv-border: #334155;
+            --qv-text: #f8fafc;
+            --qv-muted: #94a3b8;
+            --qv-accent: #8b5cf6;
+        }
+        body {
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .transition-colors-all {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 400ms;
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+    </script>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex flex-col justify-center items-center relative overflow-hidden">
+
+    <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-qv-accent/10 dark:bg-qv-accent/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-[100px] opacity-70 animate-pulse transition-colors-all"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-300/10 dark:bg-blue-600/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-[100px] opacity-70 transition-colors-all"></div>
+
+    <div class="absolute top-6 right-6 z-50">
+        <button onclick="toggleTheme()" class="p-3 bg-qv-surface border border-qv-border rounded-full hover:scale-110 shadow-sm transition-all" title="Przełącz motyw">
+            <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        </button>
+    </div>
+
+    <div class="w-full max-w-md bg-qv-surface/90 backdrop-blur-xl border border-qv-border rounded-2xl shadow-qv-lg p-10 relative z-10 transition-colors-all transform hover:scale-[1.01] duration-300">
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-qv-accent to-blue-400 p-0.5 mx-auto mb-5 shadow-sm">
+                <div class="w-full h-full bg-qv-surface rounded-2xl flex items-center justify-center transition-colors-all">
+                    <img src="/images/logo.png" alt="Logo" class="w-7 h-7 object-contain">
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-qv-text tracking-tight transition-colors-all">Rejestracja</h2>
+            <p class="text-sm text-qv-muted mt-2 transition-colors-all">Załóż nowe konto inwestycyjne.</p>
+        </div>
+
+        <div th:if="${error}" class="mb-5 p-4 bg-red-50 dark:bg-red-900 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-300 text-sm font-medium rounded-lg transition-colors-all text-center">
+            <span th:text="${error}">Wystąpił błąd podczas rejestracji.</span>
+        </div>
+
+        <form th:action="@{/register}" th:object="${registerForm}" method="POST" class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold text-qv-text mb-1.5 transition-colors-all">Identyfikator (Username)</label>
+                <input th:field="*{username}" type="text" required
+                       class="w-full bg-qv-bg border border-qv-border rounded-lg px-4 py-3 text-qv-text focus:bg-qv-surface focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all shadow-sm"
+                       placeholder="np. john_doe" />
+                <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="text-xs text-red-500 mt-1"></p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-qv-text mb-1.5 transition-colors-all">Adres E-mail</label>
+                <input th:field="*{email}" type="email" required
+                       class="w-full bg-qv-bg border border-qv-border rounded-lg px-4 py-3 text-qv-text focus:bg-qv-surface focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all shadow-sm"
+                       placeholder="john@example.com" />
+                <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-xs text-red-500 mt-1"></p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-qv-text mb-1.5 transition-colors-all">Zabezpieczenie konta (Hasło)</label>
+                <input th:field="*{password}" type="password" required
+                       class="w-full bg-qv-bg border border-qv-border rounded-lg px-4 py-3 text-qv-text focus:bg-qv-surface focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all shadow-sm"
+                       placeholder="Minimum 6 znaków" />
+                <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-xs text-red-500 mt-1"></p>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-qv-accent to-blue-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 mt-6 border border-white/10">
+                Utwórz profil
+            </button>
+        </form>
+
+        <div class="mt-8 text-center text-sm font-medium text-qv-muted transition-colors-all">
+            Masz już konto? <a href="/login" class="text-qv-accent hover:underline">Zaloguj się</a>
+        </div>
+    </div>
+
+</body>
+</html>

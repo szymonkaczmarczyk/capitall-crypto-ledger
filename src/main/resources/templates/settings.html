@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitall - Ustawienia użytkownika</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        qv: {
+                            bg: 'var(--qv-bg)',
+                            surface: 'var(--qv-surface)',
+                            border: 'var(--qv-border)',
+                            text: 'var(--qv-text)',
+                            muted: 'var(--qv-muted)',
+                            accent: 'var(--qv-accent)'
+                        }
+                    },
+                    boxShadow: { 'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1)', 'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --qv-bg: #f8fafc;
+            --qv-surface: #ffffff;
+            --qv-border: #e2e8f0;
+            --qv-text: #0f172a;
+            --qv-muted: #64748b;
+            --qv-accent: #7c3aed;
+        }
+        .dark {
+            --qv-bg: #0b1120;
+            --qv-surface: #1e293b;
+            --qv-border: #334155;
+            --qv-text: #f8fafc;
+            --qv-muted: #94a3b8;
+            --qv-accent: #8b5cf6;
+        }
+        body {
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .transition-colors-all {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 400ms;
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+    </script>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside class="w-64 bg-qv-surface border-r border-qv-border flex flex-col hidden md:flex transition-colors-all">
+        <div class="h-16 flex items-center px-6 border-b border-qv-border">
+            <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
+            <span class="font-bold text-lg text-qv-text transition-colors-all">Capitall</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-1">
+            <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
+                Dashboard
+            </a>
+            <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                Alokacje
+            </a>
+            <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" /></svg>
+                Aktywa
+            </a>
+            <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                Narzędzia
+            </a>
+            <a href="/settings" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                Ustawienia
+            </a>
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin" class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                Administracja
+            </a>
+        </nav>
+        <div class="p-4 border-t border-qv-border">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Wyloguj się
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <h2 class="text-lg font-bold text-qv-text transition-colors-all">Ustawienia użytkownika</h2>
+            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Przełącz motyw">
+                <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            </button>
+        </header>
+
+        <div class="p-6 lg:p-8 space-y-8 max-w-3xl w-full mx-auto">
+
+            <div th:if="${error}" class="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 text-xs font-semibold rounded-md">
+                <span th:text="${error}">Błąd zmiany ustawień.</span>
+            </div>
+            <div th:if="${success}" class="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 text-green-700 dark:text-green-400 text-xs font-semibold rounded-md">
+                <span th:text="${success}">Operacja powiodła się.</span>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl p-6 lg:p-8 shadow-qv transition-colors-all">
+                <h3 class="text-md font-bold text-qv-text mb-2 transition-colors-all">Zmiana hasła dostępowego</h3>
+                <p class="text-xs text-qv-muted mb-6 transition-colors-all">Wymagaj przynajmniej 6 znaków.</p>
+
+                <form th:action="@{/settings/password}" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Stare hasło</label>
+                        <input name="oldPassword" type="password" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Nowe hasło</label>
+                        <input name="newPassword" id="newPassword" type="password" required oninput="checkStrength()" class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+
+                        <div class="mt-2 flex items-center space-x-1.5">
+                            <div class="h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700 transition-all" id="strengthBar1"></div>
+                            <div class="h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700 transition-all" id="strengthBar2"></div>
+                            <div class="h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700 transition-all" id="strengthBar3"></div>
+                        </div>
+                        <span class="text-[10px] text-qv-muted mt-1 block" id="strengthText">Brak hasła</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Powtórz Nowe hasło</label>
+                        <input name="confirmPassword" type="password" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button type="submit" class="px-5 py-2.5 bg-qv-accent text-white text-sm font-semibold rounded-md shadow hover:opacity-90 transition-opacity">
+                            Aktualizuj hasło
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl p-6 lg:p-8 shadow-qv transition-colors-all space-y-6">
+                <div>
+                    <h3 class="text-md font-bold text-qv-text transition-colors-all">Ustawienia alertów i powiadomień</h3>
+                    <p class="text-xs text-qv-muted transition-colors-all">Zarządzaj powiadomieniami push oraz wiadomościami e-mail.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between py-2 border-b border-qv-border">
+                        <div>
+                            <span class="text-sm font-semibold text-qv-text block">Alert przy spadku kapitału o 5%</span>
+                            <span class="text-xs text-qv-muted">Wyślij natychmiastowy alert e-mail w przypadku nagłego załamania rynku.</span>
+                        </div>
+                        <input type="checkbox" checked class="w-4 h-4 rounded text-qv-accent border-qv-border focus:ring-qv-accent cursor-pointer" />
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 border-b border-qv-border">
+                        <div>
+                            <span class="text-sm font-semibold text-qv-text block">Raport tygodniowy (Weekly Newsletter)</span>
+                            <span class="text-xs text-qv-muted">Zbiorcze zestawienie wszystkich alokacji i wygenerowanego zysku PnL.</span>
+                        </div>
+                        <input type="checkbox" checked class="w-4 h-4 rounded text-qv-accent border-qv-border focus:ring-qv-accent cursor-pointer" />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function checkStrength() {
+            const pwd = document.getElementById('newPassword').value;
+            const b1 = document.getElementById('strengthBar1');
+            const b2 = document.getElementById('strengthBar2');
+            const b3 = document.getElementById('strengthBar3');
+            const txt = document.getElementById('strengthText');
+
+            b1.className = 'h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700';
+            b2.className = 'h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700';
+            b3.className = 'h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700';
+
+            if(!pwd) {
+                txt.innerText = 'Brak hasła';
+                return;
+            }
+
+            if(pwd.length < 6) {
+                txt.innerText = 'Za krótkie (min. 6 znaków)';
+                b1.classList.add('!bg-red-500');
+                return;
+            }
+
+            let score = 1;
+            if(/[A-Z]/.test(pwd)) score++;
+            if(/[0-9]/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score++;
+
+            if(score === 1) {
+                txt.innerText = 'Słabe';
+                b1.className = 'h-1 w-1/3 rounded bg-red-500';
+            } else if(score === 2) {
+                txt.innerText = 'Średnie';
+                b1.className = 'h-1 w-1/3 rounded bg-yellow-500';
+                b2.className = 'h-1 w-1/3 rounded bg-yellow-500';
+            } else if(score === 3) {
+                txt.innerText = 'Silne';
+                b1.className = 'h-1 w-1/3 rounded bg-green-500';
+                b2.className = 'h-1 w-1/3 rounded bg-green-500';
+                b3.className = 'h-1 w-1/3 rounded bg-green-500';
+            }
+        }
+    </script>
+
+</body>
+</html>

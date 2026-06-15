@@ -1,0 +1,12 @@
+package com.capitall.service;
+
+import com.capitall.dto.DashboardStatsResponse;
+import com.capitall.dto.PnLPoint;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface AnalyticsService {
+    DashboardStatsResponse getDashboardStats();
+    List<PnLPoint> simulatePnL(UUID userId, int days);
+}
