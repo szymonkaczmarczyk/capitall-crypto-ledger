@@ -30,26 +30,47 @@ public class ViewController {
     private final UserService userService;
     private final AllocationService allocationService;
     private final com.capitall.repository.UserRepository userRepository;
+    private final com.capitall.repository.AllocationRepository allocationRepository;
+    private final com.capitall.repository.WalletRepository walletRepository;
+    private final com.capitall.repository.HoldingRepository holdingRepository;
+    private final com.capitall.repository.TradeRepository tradeRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final com.capitall.service.AuditLogService auditLogService;
     private final com.capitall.config.MaintenanceModeState maintenanceModeState;
+    private final com.capitall.service.WalletService walletService;
+    private final com.capitall.service.EquitySnapshotter equitySnapshotter;
+    private final com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository;
 
     public ViewController(ExchangeAccountService exchangeAccountService,
                           AnalyticsService analyticsService,
                           UserService userService,
                           AllocationService allocationService,
                           com.capitall.repository.UserRepository userRepository,
+                          com.capitall.repository.AllocationRepository allocationRepository,
+                          com.capitall.repository.WalletRepository walletRepository,
+                          com.capitall.repository.HoldingRepository holdingRepository,
+                          com.capitall.repository.TradeRepository tradeRepository,
                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
                           com.capitall.service.AuditLogService auditLogService,
-                          com.capitall.config.MaintenanceModeState maintenanceModeState) {
+                          com.capitall.config.MaintenanceModeState maintenanceModeState,
+                          com.capitall.service.WalletService walletService,
+                          com.capitall.service.EquitySnapshotter equitySnapshotter,
+                          com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository) {
         this.exchangeAccountService = exchangeAccountService;
         this.analyticsService = analyticsService;
         this.userService = userService;
         this.allocationService = allocationService;
         this.userRepository = userRepository;
+        this.allocationRepository = allocationRepository;
+        this.walletRepository = walletRepository;
+        this.holdingRepository = holdingRepository;
+        this.tradeRepository = tradeRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.maintenanceModeState = maintenanceModeState;
+        this.walletService = walletService;
+        this.equitySnapshotter = equitySnapshotter;
+        this.equitySnapshotRepository = equitySnapshotRepository;
     }
 
     @GetMapping("/")
@@ -103,6 +124,22 @@ public class ViewController {
         model.addAttribute("pnlPoints", pnlPoints);
         model.addAttribute("traderName", traderName);
         return "dashboard";
+    }
+
+    @GetMapping("/dashboard/equity-series")
+    @ResponseBody
+    public java.util.List<java.util.Map<String, Object>> equitySeries(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        java.time.LocalDateTime from = java.time.LocalDateTime.now().minusDays(30);
+        java.util.List<com.capitall.model.EquitySnapshot> series =
+                equitySnapshotRepository.findByUserIdAndCapturedAtGreaterThanEqualOrderByCapturedAtAsc(user.getId(), from);
+        return series.stream().map(s -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("t", s.getCapturedAt().toString());
+            m.put("equity", s.getEquityUsd().toPlainString());
+            m.put("cash", s.getCashUsd().toPlainString());
+            m.put("crypto", s.getCryptoUsd().toPlainString());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     @GetMapping("/assets")
@@ -295,6 +332,126 @@ public class ViewController {
         return "tools";
     }
 
+    @GetMapping("/market")
+    public String showMarket(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
+        java.util.List<com.capitall.model.Holding> holdings = walletService.getHoldings(user.getId());
+        model.addAttribute("availableBalance", wallet.getUsdBalance());
+        model.addAttribute("holdings", holdings);
+        model.addAttribute("recentLogs", auditLogService.getLogsForUser(user.getId()).stream()
+                .filter(l -> l.getAction() != null && (l.getAction().startsWith("ORDER:") || l.getAction().startsWith("SELL:")))
+                .limit(12)
+                .collect(java.util.stream.Collectors.toList()));
+        return "market";
+    }
+
+    @GetMapping("/market/portfolio")
+    @ResponseBody
+    public java.util.Map<String, Object> portfolioData(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
+        java.util.List<java.util.Map<String, Object>> holdings = walletService.getHoldings(user.getId()).stream()
+                .map(h -> {
+                    java.util.Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("symbol", h.getSymbol());
+                    m.put("amount", h.getAmount().stripTrailingZeros().toPlainString());
+                    m.put("avgCost", h.getAvgCost().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+                    return m;
+                }).collect(java.util.stream.Collectors.toList());
+        return java.util.Map.of(
+                "balance", wallet.getUsdBalance().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                "holdings", holdings
+        );
+    }
+
+    @GetMapping("/market/trades")
+    @ResponseBody
+    public java.util.List<java.util.Map<String, Object>> recentTrades(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        return walletService.getRecentTrades(user.getId(), 25).stream().map(t -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", t.getId().toString());
+            m.put("symbol", t.getSymbol());
+            m.put("side", t.getSide().name());
+            m.put("coinAmount", t.getCoinAmount().stripTrailingZeros().toPlainString());
+            m.put("price", t.getPrice().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+            m.put("fee", t.getFee().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+            m.put("gross", t.getGross().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+            m.put("realizedPnl", t.getRealizedPnl().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+            m.put("createdAt", t.getCreatedAt().toString());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+
+    @PostMapping("/market/buy")
+    @ResponseBody
+    public java.util.Map<String, Object> buyAsset(
+            @RequestParam String symbol,
+            @RequestParam java.math.BigDecimal price,
+            @RequestParam java.math.BigDecimal usdAmount,
+            @RequestParam(required = false, defaultValue = "MARKET") String orderType,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        try {
+            com.capitall.service.WalletService.TradeResult r = walletService.buy(user.getId(), symbol, price, usdAmount);
+            String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            String action = String.format("ORDER: %s %s · %s %s @ $%s · fee $%s · id=%s",
+                    orderType, symbol,
+                    r.coinAmount().stripTrailingZeros().toPlainString(), symbol,
+                    price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    r.fee().toPlainString(), orderId);
+            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            return java.util.Map.of(
+                    "status", "FILLED",
+                    "orderId", orderId,
+                    "symbol", symbol,
+                    "coinAmount", r.coinAmount().stripTrailingZeros().toPlainString(),
+                    "price", price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "fee", r.fee().toPlainString(),
+                    "total", usdAmount.add(r.fee()).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "balance", r.cash().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "holding", r.totalAmountAfter().stripTrailingZeros().toPlainString(),
+                    "message", "Zlecenie wykonane pomyślnie."
+            );
+        } catch (RuntimeException e) {
+            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
+        }
+    }
+
+    @PostMapping("/market/sell")
+    @ResponseBody
+    public java.util.Map<String, Object> sellAsset(
+            @RequestParam String symbol,
+            @RequestParam java.math.BigDecimal price,
+            @RequestParam java.math.BigDecimal coinAmount,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        try {
+            com.capitall.service.WalletService.TradeResult r = walletService.sell(user.getId(), symbol, price, coinAmount);
+            String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            java.math.BigDecimal gross = coinAmount.multiply(price).setScale(2, java.math.RoundingMode.HALF_UP);
+            String action = String.format("SELL: MARKET %s · %s %s @ $%s · net $%s · fee $%s · id=%s",
+                    symbol,
+                    coinAmount.stripTrailingZeros().toPlainString(), symbol,
+                    price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    gross.subtract(r.fee()).toPlainString(),
+                    r.fee().toPlainString(), orderId);
+            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            return java.util.Map.of(
+                    "status", "FILLED",
+                    "orderId", orderId,
+                    "symbol", symbol,
+                    "coinAmount", coinAmount.stripTrailingZeros().toPlainString(),
+                    "price", price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "fee", r.fee().toPlainString(),
+                    "net", gross.subtract(r.fee()).toPlainString(),
+                    "balance", r.cash().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "holding", r.totalAmountAfter().stripTrailingZeros().toPlainString(),
+                    "message", "Sprzedaż zrealizowana."
+            );
+        } catch (RuntimeException e) {
+            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
+        }
+    }
+
     @PostMapping("/tools/test-api")
     @ResponseBody
     public java.util.Map<String, String> testApiKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
@@ -377,6 +534,31 @@ public class ViewController {
         userRepository.save(user);
         String action = user.isEnabled() ? "Aktywowano" : "Zablokowano";
         auditLogService.log(admin.getId(), admin.getUsername(), action + " konto użytkownika " + user.getUsername(), "127.0.0.1");
+        return "redirect:/admin";
+    }
+
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/user/{id}/delete")
+    @org.springframework.transaction.annotation.Transactional
+    public String deleteUser(@PathVariable UUID id,
+                             @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (id.equals(admin.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Nie możesz usunąć własnego konta.");
+            return "redirect:/admin";
+        }
+        com.capitall.model.User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            redirectAttributes.addFlashAttribute("error", "Użytkownik nie istnieje.");
+            return "redirect:/admin";
+        }
+        String username = target.getUsername();
+        allocationRepository.deleteAll(allocationRepository.findByUserId(id));
+        holdingRepository.deleteAll(holdingRepository.findByUserId(id));
+        walletRepository.findByUserId(id).ifPresent(walletRepository::delete);
+        userRepository.delete(target);
+        auditLogService.log(admin.getId(), admin.getUsername(), "Usunięto konto użytkownika " + username, "127.0.0.1");
+        redirectAttributes.addFlashAttribute("success", "Usunięto konto " + username + ".");
         return "redirect:/admin";
     }
 

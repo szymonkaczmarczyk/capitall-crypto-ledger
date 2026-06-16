@@ -29,12 +29,12 @@
     </script>
     <style>
         :root {
-            --qv-bg: #f8fafc;
+            --qv-bg: #e7ecf3;
             --qv-surface: #ffffff;
-            --qv-border: #e2e8f0;
-            --qv-text: #0f172a;
-            --qv-muted: #64748b;
-            --qv-accent: #7c3aed;
+            --qv-border: #94a3b8;
+            --qv-text: #0a0f1e;
+            --qv-muted: #334155;
+            --qv-accent: #5b21b6;
         }
         .dark {
             --qv-bg: #0b1120;
@@ -52,7 +52,18 @@
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 400ms;
         }
+        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(1.4);} }
+        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+        @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+        .shimmer { background: linear-gradient(90deg, rgba(139,92,246,0.0) 0%, rgba(139,92,246,0.15) 50%, rgba(139,92,246,0) 100%); background-size: 200% 100%; animation: shimmer 2.5s infinite; }
+        .metric-value { font-variant-numeric: tabular-nums; transition: color 0.3s ease; }
+        .metric-card { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(0,0,0,0.25); }
+        .ring-progress { transform: rotate(-90deg); }
+        .ring-progress circle { transition: stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1); }
+        .row-hover:hover { background: rgba(139,92,246,0.04); }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -76,6 +87,10 @@
             <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
                 <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
                 Dashboard
+            </a>
+            <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
             </a>
             <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
                 <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -117,7 +132,7 @@
             </button>
         </header>
 
-        <div class="p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto">
+        <div class="p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
 
             <div th:if="${success}" class="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 text-green-700 dark:text-green-400 text-xs font-semibold rounded-md">
                 <span th:text="${success}">Operacja powiodła się.</span>
@@ -126,51 +141,157 @@
                 <span th:text="${error}">Błąd operacji.</span>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv space-y-4">
-                    <h3 class="text-sm font-bold text-qv-text">Konsola Bazy Danych</h3>
-                    <div class="space-y-2 text-xs text-qv-muted">
-                        <div class="flex justify-between"><span>Rozmiar bazy:</span><span class="font-bold text-qv-text" th:text="${dbSize}">2.8 MB</span></div>
-                        <div class="flex justify-between"><span>Liczba kont giełdowych:</span><span class="font-bold text-qv-text" th:text="${assetsCount}">3</span></div>
-                        <div class="flex justify-between"><span>Zarejestrowanych użytkowników:</span><span class="font-bold text-qv-text" th:text="${activeUsersCount}">2</span></div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="metric-card bg-qv-surface border border-qv-border rounded-xl p-4 shadow-qv">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <span class="text-[11px] font-semibold text-qv-muted uppercase tracking-wide">Użytkownicy</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                     </div>
+                    <div class="metric-value text-2xl font-bold text-qv-text" th:text="${activeUsersCount}">0</div>
+                    <p class="text-[11px] text-qv-muted mt-0.5">Zarejestrowanych w systemie</p>
+                </div>
+                <div class="metric-card bg-qv-surface border border-qv-border rounded-xl p-4 shadow-qv">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l5 5L20 7"/></svg>
+                            </div>
+                            <span class="text-[11px] font-semibold text-qv-muted uppercase tracking-wide">Konta giełdowe</span>
+                        </div>
+                    </div>
+                    <div class="metric-value text-2xl font-bold text-qv-text" th:text="${assetsCount}">0</div>
+                    <p class="text-[11px] text-qv-muted mt-0.5">Połączeń z exchange'ami</p>
+                </div>
+                <div class="metric-card bg-qv-surface border border-qv-border rounded-xl p-4 shadow-qv">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7M4 7l8 5 8-5M4 7h16"/></svg>
+                            </div>
+                            <span class="text-[11px] font-semibold text-qv-muted uppercase tracking-wide">Rozmiar bazy</span>
+                        </div>
+                    </div>
+                    <div class="metric-value text-2xl font-bold text-qv-text" th:text="${dbSize}">—</div>
+                    <p class="text-[11px] text-qv-muted mt-0.5">PostgreSQL · primary</p>
+                </div>
+                <div class="metric-card bg-qv-surface border border-qv-border rounded-xl p-4 shadow-qv">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                            <span class="text-[11px] font-semibold text-qv-muted uppercase tracking-wide">Latency p95</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <div class="metric-value text-2xl font-bold text-qv-text" id="latencyValue">— ms</div>
+                    <p class="text-[11px] text-qv-muted mt-0.5">API gateway</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv lg:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-qv-text flex items-center gap-2">Throughput systemu
+                                <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            </h3>
+                            <p class="text-[11px] text-qv-muted">Req/s · WebSocket · DB queries (60 s)</p>
+                        </div>
+                    </div>
+                    <div class="h-56"><canvas id="throughputChart"></canvas></div>
                 </div>
 
-                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv space-y-3 flex flex-col justify-between">
-                    <h3 class="text-sm font-bold text-qv-text">Narzędzia Systemowe</h3>
-                    <div class="grid grid-cols-2 gap-3">
+                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv">
+                    <h3 class="text-sm font-bold text-qv-text mb-4">Zdrowie systemu</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">CPU</span><span class="text-qv-text" id="cpuVal">— %</span></div>
+                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="cpuBar" class="h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">RAM</span><span class="text-qv-text" id="ramVal">— %</span></div>
+                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="ramBar" class="h-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 transition-all duration-700" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">Network I/O</span><span class="text-qv-text" id="netVal">— MB/s</span></div>
+                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="netBar" class="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">Disk usage</span><span class="text-qv-text" id="diskVal">— %</span></div>
+                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="diskBar" class="h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-700" style="width:0%"></div></div>
+                        </div>
+                    </div>
+                    <div class="border-t border-qv-border mt-5 pt-4 flex items-center justify-between text-[11px]">
+                        <span class="text-qv-muted">Uptime</span>
+                        <span class="font-bold text-qv-text" id="uptime">99.98 %</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-qv-text">Narzędzia systemowe</h3>
+                        <span class="text-[10px] font-semibold text-qv-muted">ADMIN ONLY</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <form th:action="@{/admin/clear-cache}" method="POST">
-                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:bg-slate-50 transition-colors">
+                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
                                 Wyczyść Cache
                             </button>
                         </form>
                         <form th:action="@{/admin/rotate-keys}" method="POST">
-                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:bg-slate-50 transition-colors">
+                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
                                 Rotuj Klucze
                             </button>
                         </form>
+                    </div>
+                    <div class="border-t border-qv-border pt-3 text-[11px] text-qv-muted">
+                        <div class="flex justify-between"><span>Wersja API</span><span class="font-semibold text-qv-text">v2.7.1</span></div>
+                        <div class="flex justify-between mt-1"><span>Region</span><span class="font-semibold text-qv-text">eu-central-1</span></div>
+                        <div class="flex justify-between mt-1"><span>Build</span><span class="font-semibold text-qv-text" id="buildHash">—</span></div>
                     </div>
                 </div>
 
                 <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv flex flex-col justify-between">
                     <div>
-                        <h3 class="text-sm font-bold text-qv-text">Tryb Przerwy Technicznej</h3>
+                        <h3 class="text-sm font-bold text-qv-text">Tryb przerwy technicznej</h3>
                         <p class="text-[11px] text-qv-muted mt-1">Gdy włączony, zwykli użytkownicy widzą komunikat serwisowy.</p>
                     </div>
-                    <form th:action="@{/admin/maintenance}" method="POST" class="flex items-center justify-between">
+                    <form th:action="@{/admin/maintenance}" method="POST" class="flex items-center justify-between mt-4">
                         <input type="hidden" name="active" th:value="${!maintenanceActive}" />
-                        <span class="text-xs font-semibold" th:text="${maintenanceActive ? 'Aktywny' : 'Nieaktywny'}" th:classappend="${maintenanceActive ? 'text-red-500' : 'text-green-500'}">Nieaktywny</span>
-                        <button type="submit" class="px-4 py-1.5 text-xs font-semibold rounded text-white" th:classappend="${maintenanceActive ? 'bg-green-600' : 'bg-red-600'}">
-                            <span th:text="${maintenanceActive ? 'Wyłącz Przerwę' : 'Włącz Przerwę'}">Włącz</span>
+                        <span class="text-xs font-semibold flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full" th:classappend="${maintenanceActive ? 'bg-red-500 live-dot' : 'bg-green-500 live-dot'}"></span>
+                            <span th:text="${maintenanceActive ? 'Aktywny' : 'Nieaktywny'}" th:classappend="${maintenanceActive ? 'text-red-500' : 'text-green-500'}">Nieaktywny</span>
+                        </span>
+                        <button type="submit" class="px-4 py-1.5 text-xs font-semibold rounded text-white shadow hover:opacity-90 transition-opacity" th:classappend="${maintenanceActive ? 'bg-green-600' : 'bg-red-600'}">
+                            <span th:text="${maintenanceActive ? 'Wyłącz' : 'Włącz'}">Włącz</span>
                         </button>
                     </form>
+                </div>
+
+                <div class="bg-qv-surface border border-qv-border rounded-xl p-5 shadow-qv">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-qv-text">Strumień aktywności</h3>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <ul id="activityFeed" class="space-y-2.5 text-[11px] max-h-44 overflow-hidden"></ul>
                 </div>
             </div>
 
             <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv overflow-hidden">
-                <div class="px-6 py-4 border-b border-qv-border">
-                    <h3 class="text-md font-bold text-qv-text">Zarządzanie użytkownikami</h3>
+                <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-md font-bold text-qv-text">Zarządzanie użytkownikami</h3>
+                        <p class="text-[11px] text-qv-muted mt-0.5">Role, status i reset haseł</p>
+                    </div>
+                    <span class="text-[10px] font-semibold text-qv-muted bg-qv-bg border border-qv-border rounded-full px-3 py-1" th:text="${activeUsersCount + ' rekordów'}">0 rekordów</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -184,8 +305,13 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-qv-border text-xs text-qv-text">
-                            <tr th:each="user : ${users}">
-                                <td class="py-4 px-6 font-semibold" th:text="${user.username}">user</td>
+                            <tr th:each="user : ${users}" class="row-hover transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-qv-bg border border-qv-border flex items-center justify-center font-bold text-qv-accent text-xs" th:text="${#strings.toUpperCase(#strings.substring(user.username,0,1))}">U</div>
+                                        <span class="font-semibold" th:text="${user.username}">user</span>
+                                    </div>
+                                </td>
                                 <td class="py-4 px-6 text-qv-muted" th:text="${user.email}">user@capitall.com</td>
                                 <td class="py-4 px-6">
                                     <form th:action="@{/admin/user/{id}/role(id=${user.id})}" method="POST" class="flex items-center space-x-2">
@@ -200,13 +326,20 @@
                                 </td>
                                 <td class="py-4 px-6 text-right space-x-2">
 
-                                    <button th:onclick="'openResetModal(\'' + ${user.id} + '\', \'' + ${user.username} + '\')'" class="px-3 py-1 bg-qv-bg border border-qv-border text-qv-text font-semibold rounded hover:bg-slate-50 text-[10px]">
+                                    <button type="button" data-reset-user th:attr="data-user-id=${user.id},data-username=${user.username}"
+                                            class="px-3 py-1 bg-qv-bg border border-qv-border text-qv-text font-semibold rounded hover:bg-slate-50 text-[10px]">
                                         Resetuj Hasło
                                     </button>
 
                                     <form th:action="@{/admin/user/{id}/toggle-status(id=${user.id})}" method="POST" class="inline">
                                         <button type="submit" class="px-3 py-1 text-[10px] font-semibold rounded text-white" th:classappend="${user.enabled ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}">
                                             <span th:text="${user.enabled ? 'Zablokuj' : 'Odblokuj'}">Zablokuj</span>
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{/admin/user/{id}/delete(id=${user.id})}" method="POST" class="inline" data-delete-user th:attr="data-username=${user.username}">
+                                        <button type="submit" class="px-3 py-1 text-[10px] font-semibold rounded bg-slate-700 hover:bg-slate-800 text-white">
+                                            Usuń
                                         </button>
                                     </form>
                                 </td>
@@ -246,10 +379,138 @@
             document.getElementById('resetForm').action = '/admin/user/' + userId + '/reset-password';
             document.getElementById('resetModal').classList.remove('hidden');
         }
-
         function closeResetModal() {
             document.getElementById('resetModal').classList.add('hidden');
         }
+        document.querySelectorAll('[data-reset-user]').forEach(btn => {
+            btn.addEventListener('click', () => openResetModal(btn.dataset.userId, btn.dataset.username));
+        });
+        document.querySelectorAll('form[data-delete-user]').forEach(f => {
+            f.addEventListener('submit', e => {
+                if (!confirm('Na pewno usunąć konto ' + f.dataset.username + '? Tej operacji nie da się cofnąć.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        (function () {
+            const buildHash = Math.random().toString(16).slice(2, 9);
+            const buildEl = document.getElementById('buildHash');
+            if (buildEl) buildEl.textContent = buildHash;
+
+            function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+            function randWalk(prev, step, min, max) { return clamp(prev + (Math.random() - 0.5) * step, min, max); }
+
+            const state = { cpu: 23, ram: 41, net: 12, disk: 47, latency: 38 };
+
+            function tween(el, from, to, fmt, dur = 700) {
+                const start = performance.now();
+                function step(t) {
+                    const k = Math.min(1, (t - start) / dur);
+                    const eased = 1 - Math.pow(1 - k, 3);
+                    el.textContent = fmt(from + (to - from) * eased);
+                    if (k < 1) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+            }
+
+            function tickHealth() {
+                const prev = { ...state };
+                state.cpu = randWalk(state.cpu, 6, 8, 78);
+                state.ram = randWalk(state.ram, 3, 30, 82);
+                state.net = randWalk(state.net, 4, 2, 45);
+                state.disk = randWalk(state.disk, 0.4, 40, 60);
+                state.latency = randWalk(state.latency, 6, 18, 95);
+                document.getElementById('cpuBar').style.width = state.cpu.toFixed(1) + '%';
+                document.getElementById('ramBar').style.width = state.ram.toFixed(1) + '%';
+                document.getElementById('netBar').style.width = (state.net / 45 * 100).toFixed(1) + '%';
+                document.getElementById('diskBar').style.width = state.disk.toFixed(1) + '%';
+                tween(document.getElementById('cpuVal'), prev.cpu, state.cpu, v => v.toFixed(1) + ' %');
+                tween(document.getElementById('ramVal'), prev.ram, state.ram, v => v.toFixed(1) + ' %');
+                tween(document.getElementById('netVal'), prev.net, state.net, v => v.toFixed(1) + ' MB/s');
+                tween(document.getElementById('diskVal'), prev.disk, state.disk, v => v.toFixed(1) + ' %');
+                tween(document.getElementById('latencyValue'), prev.latency, state.latency, v => v.toFixed(0) + ' ms');
+            }
+            tickHealth();
+            setInterval(tickHealth, 2200);
+
+            const ctx = document.getElementById('throughputChart').getContext('2d');
+            const labels = Array.from({ length: 30 }, (_, i) => (i - 29) + 's');
+            const reqs = Array.from({ length: 30 }, () => 80 + Math.random() * 80);
+            const ws = Array.from({ length: 30 }, () => 30 + Math.random() * 40);
+            const dbq = Array.from({ length: 30 }, () => 60 + Math.random() * 50);
+
+            const gradReq = ctx.createLinearGradient(0, 0, 0, 220);
+            gradReq.addColorStop(0, 'rgba(139,92,246,0.35)'); gradReq.addColorStop(1, 'rgba(139,92,246,0)');
+            const gradWs = ctx.createLinearGradient(0, 0, 0, 220);
+            gradWs.addColorStop(0, 'rgba(14,165,233,0.3)'); gradWs.addColorStop(1, 'rgba(14,165,233,0)');
+            const gradDb = ctx.createLinearGradient(0, 0, 0, 220);
+            gradDb.addColorStop(0, 'rgba(16,185,129,0.3)'); gradDb.addColorStop(1, 'rgba(16,185,129,0)');
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'API req/s', data: reqs, borderColor: '#8b5cf6', backgroundColor: gradReq, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
+                        { label: 'WebSocket msg/s', data: ws, borderColor: '#0ea5e9', backgroundColor: gradWs, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
+                        { label: 'DB queries/s', data: dbq, borderColor: '#10b981', backgroundColor: gradDb, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 600, easing: 'easeOutCubic' },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter', size: 10 }, boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+                        tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#fff', bodyColor: '#e2e8f0', padding: 10, cornerRadius: 6 }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 }, maxTicksLimit: 6 } },
+                        y: { grid: { color: 'rgba(148,163,184,0.15)' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 } }, beginAtZero: true }
+                    }
+                }
+            });
+
+            setInterval(() => {
+                const ds = chart.data.datasets;
+                ds[0].data.shift(); ds[0].data.push(clamp((ds[0].data[ds[0].data.length - 1] || 100) + (Math.random() - 0.5) * 30, 30, 220));
+                ds[1].data.shift(); ds[1].data.push(clamp((ds[1].data[ds[1].data.length - 1] || 40) + (Math.random() - 0.5) * 18, 10, 90));
+                ds[2].data.shift(); ds[2].data.push(clamp((ds[2].data[ds[2].data.length - 1] || 80) + (Math.random() - 0.5) * 25, 30, 150));
+                chart.update('none');
+            }, 1500);
+
+            const FEED_EVENTS = [
+                { c: 'violet', t: 'Auth', m: 'Pomyślne logowanie · admin@capitall.com' },
+                { c: 'emerald', t: 'Order', m: 'Wykonano transakcję BTC/USDT na Binance' },
+                { c: 'sky', t: 'WS', m: 'Połączono klienta WebSocket (region eu-central-1)' },
+                { c: 'amber', t: 'API', m: 'Reset limitu zapytań dla klucza ak_••e2c1' },
+                { c: 'fuchsia', t: 'Alloc', m: 'Nowa alokacja dla użytkownika jankowalski' },
+                { c: 'rose', t: 'Audit', m: 'Sprawdzono integralność audit log (OK)' },
+                { c: 'teal', t: 'Sync', m: 'Synchronizacja sald z Kraken (4 konta)' },
+                { c: 'indigo', t: 'KMS', m: 'Rotacja klucza szyfrującego (AES-GCM-256)' }
+            ];
+            const feed = document.getElementById('activityFeed');
+            function pushEvent() {
+                const ev = FEED_EVENTS[Math.floor(Math.random() * FEED_EVENTS.length)];
+                const now = new Date().toLocaleTimeString('pl-PL');
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-2 opacity-0 transition-opacity duration-500';
+                li.innerHTML = `<span class="mt-1 w-1.5 h-1.5 rounded-full bg-${ev.c}-500 live-dot flex-shrink-0"></span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between gap-2">
+                            <span class="font-semibold text-${ev.c}-500">${ev.t}</span>
+                            <span class="text-qv-muted text-[10px]">${now}</span>
+                        </div>
+                        <div class="text-qv-text truncate">${ev.m}</div>
+                    </div>`;
+                feed.prepend(li);
+                requestAnimationFrame(() => li.classList.add('opacity-100'));
+                while (feed.children.length > 5) feed.removeChild(feed.lastChild);
+            }
+            for (let i = 0; i < 4; i++) pushEvent();
+            setInterval(pushEvent, 3500);
+        })();
     </script>
 
 </body>

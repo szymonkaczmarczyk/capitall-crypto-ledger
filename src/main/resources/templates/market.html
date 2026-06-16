@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitall - Rynek</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        qv: {
+                            bg: 'var(--qv-bg)',
+                            surface: 'var(--qv-surface)',
+                            border: 'var(--qv-border)',
+                            text: 'var(--qv-text)',
+                            muted: 'var(--qv-muted)',
+                            accent: 'var(--qv-accent)'
+                        }
+                    },
+                    boxShadow: { 'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1)', 'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --qv-bg: #e7ecf3; --qv-surface: #ffffff; --qv-border: #94a3b8;
+            --qv-text: #0a0f1e; --qv-muted: #334155; --qv-accent: #5b21b6;
+        }
+        .dark {
+            --qv-bg: #0b1120; --qv-surface: #1e293b; --qv-border: #334155;
+            --qv-text: #f8fafc; --qv-muted: #94a3b8; --qv-accent: #8b5cf6;
+        }
+        body { transition: background-color 0.4s cubic-bezier(0.4,0,0.2,1), color 0.4s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(1.4);} }
+        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+        @keyframes flashGreen { 0%{color:#10b981;transform:translateY(-2px);} 100%{color:inherit;transform:translateY(0);} }
+        @keyframes flashRed { 0%{color:#ef4444;transform:translateY(2px);} 100%{color:inherit;transform:translateY(0);} }
+        .flash-up { animation: flashGreen 0.8s ease-out; }
+        .flash-down { animation: flashRed 0.8s ease-out; }
+        .market-row { transition: background-color 0.2s, transform 0.2s; }
+        .market-row:hover { background: rgba(139,92,246,0.05); }
+        .price-value { font-variant-numeric: tabular-nums; transition: color 0.4s ease; }
+        .modal-backdrop { backdrop-filter: blur(4px); }
+        .modal-card { transform: scale(0.96); opacity: 0; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s; }
+        .modal-open .modal-card { transform: scale(1); opacity: 1; }
+        @keyframes successPop { 0%{transform:scale(0.5);opacity:0;} 60%{transform:scale(1.08);opacity:1;} 100%{transform:scale(1);opacity:1;} }
+        .success-pop { animation: successPop 0.6s cubic-bezier(0.4,0,0.2,1); }
+        .qv-slider { -webkit-appearance: none; appearance: none; height: 4px; background: linear-gradient(to right, var(--qv-accent) 0%, var(--qv-accent) var(--p,0%), var(--qv-border) var(--p,0%), var(--qv-border) 100%); border-radius: 999px; outline: none; }
+        .qv-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--qv-accent); cursor: pointer; box-shadow: 0 0 0 4px rgba(139,92,246,0.2); }
+        .qv-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--qv-accent); border: none; cursor: pointer; }
+        .spark { width:100%; height:32px; }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+    </script>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-qv-surface border-r border-qv-border flex-col hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-qv-border">
+            <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
+            <span class="font-bold text-lg text-qv-text">Capitall</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-1">
+            <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
+                Dashboard
+            </a>
+            <a href="/market" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md">
+                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
+            </a>
+            <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                Alokacje
+            </a>
+            <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" /></svg>
+                Aktywa
+            </a>
+            <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                Narzędzia
+            </a>
+            <a href="/settings" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                Ustawienia
+            </a>
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin" class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                Administracja
+            </a>
+        </nav>
+        <div class="p-4 border-t border-qv-border">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Wyloguj się
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8">
+            <div>
+                <h2 class="text-lg font-bold text-qv-text flex items-center gap-2">Rynek krypto
+                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                </h2>
+                <p class="text-[11px] text-qv-muted">Ceny przez Binance · odświeżanie co 6 s</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="hidden sm:block text-right">
+                    <p class="text-[11px] text-qv-muted">Dostępne środki</p>
+                    <p class="text-sm font-bold text-qv-text price-value" id="balanceLabel"
+                       th:attr="data-base=${availableBalance}">$0.00</p>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv p-5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-qv-muted">Saldo (USD)</p>
+                    <p class="text-2xl font-bold text-qv-text price-value mt-1" id="cashBalance">$0.00</p>
+                    <p class="text-[11px] text-qv-muted mt-1">Wolne środki na konto</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv p-5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-qv-muted">Wartość krypto</p>
+                    <p class="text-2xl font-bold text-qv-text price-value mt-1" id="cryptoValue">$0.00</p>
+                    <p class="text-[11px] text-qv-muted mt-1">Wycena pozycji po cenie rynkowej</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv p-5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-qv-muted">Łączna wartość</p>
+                    <p class="text-2xl font-bold text-qv-text price-value mt-1" id="totalEquity">$0.00</p>
+                    <p class="text-[11px] text-qv-muted mt-1">Saldo + wycena pozycji</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv p-5">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-qv-muted">Niezrealizowany P&amp;L</p>
+                    <p class="text-2xl font-bold price-value mt-1" id="unrealizedPnl">$0.00</p>
+                    <p class="text-[11px] text-qv-muted mt-1" id="unrealizedPnlPct">—</p>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv overflow-hidden">
+                <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Twoje pozycje</h3>
+                        <p class="text-[11px] text-qv-muted">Krypto w portfelu · ceny i P&amp;L na żywo</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-qv-bg border-b border-qv-border text-[10px] font-bold uppercase tracking-wider text-qv-muted">
+                                <th class="py-3 px-4">Aktywo</th>
+                                <th class="py-3 px-4 text-right">Ilość</th>
+                                <th class="py-3 px-4 text-right hidden md:table-cell">Średni koszt</th>
+                                <th class="py-3 px-4 text-right">Cena teraz</th>
+                                <th class="py-3 px-4 text-right">Wartość</th>
+                                <th class="py-3 px-4 text-right">P&amp;L</th>
+                                <th class="py-3 px-4 text-right">Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioBody" class="divide-y divide-qv-border text-xs">
+                            <tr><td colspan="7" class="py-8 text-center text-qv-muted">Nie posiadasz jeszcze żadnych aktyw. Kup coś poniżej, aby rozpocząć.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <input id="searchInput" placeholder="Szukaj waluty..." class="flex-1 min-w-[200px] h-10 bg-qv-surface border border-qv-border rounded-md px-3 text-sm text-qv-text focus:ring-1 focus:ring-qv-accent focus:outline-none" />
+                <div class="flex gap-1" id="sortBtns">
+                    <button data-sort="cap" class="px-3 py-2 text-[11px] font-semibold rounded-md border border-qv-border bg-qv-accent text-white">Kapitalizacja</button>
+                    <button data-sort="gain" class="px-3 py-2 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">Top wzrosty</button>
+                    <button data-sort="loss" class="px-3 py-2 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">Top spadki</button>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-qv-bg border-b border-qv-border text-[10px] font-bold uppercase tracking-wider text-qv-muted">
+                                <th class="py-3 px-4">#</th>
+                                <th class="py-3 px-4">Aktywo</th>
+                                <th class="py-3 px-4 text-right">Cena</th>
+                                <th class="py-3 px-4 text-right">24h</th>
+                                <th class="py-3 px-4 text-right hidden md:table-cell">Kapitalizacja</th>
+                                <th class="py-3 px-4 hidden lg:table-cell">7d</th>
+                                <th class="py-3 px-4 text-right">Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marketBody" class="divide-y divide-qv-border text-xs">
+                            <tr><td colspan="7" class="py-12 text-center text-qv-muted">Ładowanie żywych danych rynkowych…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv overflow-hidden">
+                <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Twoje transakcje (PnL zrealizowany)</h3>
+                        <p class="text-[11px] text-qv-muted">Zakupy i sprzedaże z faktyczną realizacją zysku/straty</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-qv-bg border-b border-qv-border text-[10px] font-bold uppercase tracking-wider text-qv-muted">
+                                <th class="py-3 px-4">Czas</th>
+                                <th class="py-3 px-4">Strona</th>
+                                <th class="py-3 px-4">Symbol</th>
+                                <th class="py-3 px-4 text-right">Ilość</th>
+                                <th class="py-3 px-4 text-right">Cena</th>
+                                <th class="py-3 px-4 text-right">Wartość</th>
+                                <th class="py-3 px-4 text-right">Prowizja</th>
+                                <th class="py-3 px-4 text-right">PnL zreal.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesBody" class="divide-y divide-qv-border text-xs">
+                            <tr><td colspan="8" class="py-6 text-center text-qv-muted">Ładowanie historii…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv overflow-hidden">
+                <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Historia twoich zleceń</h3>
+                        <p class="text-[11px] text-qv-muted">Ostatnie transakcje powiązane z twoim kontem</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-qv-bg border-b border-qv-border text-[10px] font-bold uppercase tracking-wider text-qv-muted">
+                                <th class="py-3 px-4">Czas</th>
+                                <th class="py-3 px-4">Szczegóły</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody" class="divide-y divide-qv-border text-xs">
+                            <tr th:each="log : ${recentLogs}">
+                                <td class="py-3 px-4 text-qv-muted whitespace-nowrap" th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">2026-06-15</td>
+                                <td class="py-3 px-4 text-qv-text font-medium" th:text="${log.action}">ORDER: ...</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentLogs)}">
+                                <td colspan="2" class="py-6 text-center text-qv-muted">Brak transakcji. Wykonaj swój pierwszy zakup powyżej.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="buyModal" class="fixed inset-0 z-50 hidden modal-backdrop bg-slate-900/50 items-center justify-center p-4">
+        <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-md w-full">
+            <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="bmIcon" class="w-10 h-10 rounded-full bg-qv-bg flex items-center justify-center font-bold text-lg">₿</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Kup <span id="bmSymbol">BTC</span></h3>
+                        <p class="text-[11px] text-qv-muted" id="bmName">Bitcoin</p>
+                    </div>
+                </div>
+                <button onclick="closeBuy()" class="text-qv-muted hover:text-qv-text text-2xl leading-none">&times;</button>
+            </div>
+            <div class="px-6 py-5 space-y-4" id="bmForm">
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                        <p class="text-qv-muted text-[10px] font-semibold uppercase">Cena rynkowa</p>
+                        <p class="font-bold text-qv-text price-value" id="bmPrice">$0.00</p>
+                    </div>
+                    <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                        <p class="text-qv-muted text-[10px] font-semibold uppercase">Zmiana 24h</p>
+                        <p class="font-bold" id="bmChange">—</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-1.5" id="presetBtns">
+                    <button type="button" data-pct="25" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">25%</button>
+                    <button type="button" data-pct="50" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">50%</button>
+                    <button type="button" data-pct="75" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">75%</button>
+                    <button type="button" data-pct="100" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">MAX</button>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-qv-muted mb-1">Kwota (USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-sm font-medium text-qv-muted">$</span>
+                        <input id="bmAmount" type="number" min="0" step="1" value="100" class="w-full h-10 bg-qv-bg border border-qv-border rounded-md pl-7 pr-3 text-sm font-semibold text-qv-text focus:ring-1 focus:ring-qv-accent focus:outline-none" />
+                    </div>
+                </div>
+
+                <input id="bmSlider" type="range" min="0" max="100" value="10" class="qv-slider w-full" />
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-qv-muted mb-1">Typ zlecenia</label>
+                    <div class="grid grid-cols-3 gap-1.5" id="orderTypeBtns">
+                        <button type="button" data-type="MARKET" class="py-2 text-[11px] font-semibold border border-qv-border rounded-md bg-qv-accent text-white">Market</button>
+                        <button type="button" data-type="LIMIT" class="py-2 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text">Limit</button>
+                        <button type="button" data-type="DCA" class="py-2 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text">DCA</button>
+                    </div>
+                </div>
+
+                <div class="bg-qv-bg border border-qv-border rounded-lg p-3 text-xs space-y-1">
+                    <div class="flex justify-between"><span class="text-qv-muted">Ilość</span><span class="font-bold text-qv-text price-value" id="bmCoinAmount">0.00000000</span></div>
+                    <div class="flex justify-between"><span class="text-qv-muted">Prowizja (0.10%)</span><span class="font-semibold text-qv-text price-value" id="bmFee">$0.00</span></div>
+                    <div class="flex justify-between border-t border-qv-border pt-1.5 mt-1"><span class="text-qv-muted">Łącznie do zapłaty</span><span class="font-bold text-qv-accent price-value" id="bmTotal">$0.00</span></div>
+                </div>
+
+                <button id="bmSubmit" onclick="submitBuy()" class="w-full py-2.5 bg-qv-accent text-white text-sm font-bold rounded-md hover:opacity-90 shadow-qv">
+                    Potwierdź zakup
+                </button>
+                <p id="bmError" class="text-xs font-semibold text-red-500 text-center hidden"></p>
+            </div>
+
+            <div id="bmSuccess" class="px-6 py-8 hidden text-center space-y-3">
+                <div class="success-pop w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="font-bold text-qv-text">Zlecenie zrealizowane</h3>
+                <p class="text-xs text-qv-muted" id="bmSuccessMsg">Order ID: —</p>
+                <button onclick="closeBuy()" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-xs font-semibold rounded-md hover:bg-slate-50">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sellModal" class="fixed inset-0 z-50 hidden modal-backdrop bg-slate-900/50 items-center justify-center p-4">
+        <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-md w-full">
+            <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="smIcon" class="w-10 h-10 rounded-full bg-qv-bg flex items-center justify-center font-bold text-lg">₿</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Sprzedaj <span id="smSymbol">BTC</span></h3>
+                        <p class="text-[11px] text-qv-muted" id="smName">Bitcoin</p>
+                    </div>
+                </div>
+                <button onclick="closeSell()" class="text-qv-muted hover:text-qv-text text-2xl leading-none">&times;</button>
+            </div>
+            <div class="px-6 py-5 space-y-4" id="smForm">
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                        <p class="text-qv-muted text-[10px] font-semibold uppercase">Cena rynkowa</p>
+                        <p class="font-bold text-qv-text price-value" id="smPrice">$0.00</p>
+                    </div>
+                    <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                        <p class="text-qv-muted text-[10px] font-semibold uppercase">Posiadasz</p>
+                        <p class="font-bold text-qv-text" id="smOwned">0.00000000</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-1.5" id="smPresetBtns">
+                    <button type="button" data-pct="25" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">25%</button>
+                    <button type="button" data-pct="50" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">50%</button>
+                    <button type="button" data-pct="75" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">75%</button>
+                    <button type="button" data-pct="100" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">MAX</button>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-qv-muted mb-1">Ilość do sprzedaży</label>
+                    <input id="smCoinInput" type="number" min="0" step="0.00000001" value="0" class="w-full h-10 bg-qv-bg border border-qv-border rounded-md px-3 text-sm font-semibold text-qv-text focus:ring-1 focus:ring-qv-accent focus:outline-none" />
+                </div>
+
+                <input id="smSlider" type="range" min="0" max="100" value="0" class="qv-slider w-full" />
+
+                <div class="bg-qv-bg border border-qv-border rounded-lg p-3 text-xs space-y-1">
+                    <div class="flex justify-between"><span class="text-qv-muted">Wartość brutto</span><span class="font-bold text-qv-text price-value" id="smGross">$0.00</span></div>
+                    <div class="flex justify-between"><span class="text-qv-muted">Prowizja (0.10%)</span><span class="font-semibold text-qv-text price-value" id="smFee">$0.00</span></div>
+                    <div class="flex justify-between border-t border-qv-border pt-1.5 mt-1"><span class="text-qv-muted">Otrzymasz netto</span><span class="font-bold text-green-500 price-value" id="smNet">$0.00</span></div>
+                    <div class="flex justify-between"><span class="text-qv-muted">P&amp;L tej sprzedaży</span><span class="font-semibold price-value" id="smPnl">—</span></div>
+                </div>
+
+                <button id="smSubmit" onclick="submitSell()" class="w-full py-2.5 bg-red-500 text-white text-sm font-bold rounded-md hover:opacity-90 shadow-qv">
+                    Potwierdź sprzedaż
+                </button>
+                <p id="smError" class="text-xs font-semibold text-red-500 text-center hidden"></p>
+            </div>
+
+            <div id="smSuccess" class="px-6 py-8 hidden text-center space-y-3">
+                <div class="success-pop w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="font-bold text-qv-text">Sprzedaż zrealizowana</h3>
+                <p class="text-xs text-qv-muted" id="smSuccessMsg">Order ID: —</p>
+                <button onclick="closeSell()" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-xs font-semibold rounded-md hover:bg-slate-50">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const baseBalance = parseFloat(/*[[${availableBalance}]]*/ 0) || 1000;
+
+        const ASSETS = [
+            { sym: 'BTC', pair: 'BTCUSDT', name: 'Bitcoin', icon: '₿', color: 'amber' },
+            { sym: 'ETH', pair: 'ETHUSDT', name: 'Ethereum', icon: 'Ξ', color: 'indigo' },
+            { sym: 'SOL', pair: 'SOLUSDT', name: 'Solana', icon: '◎', color: 'fuchsia' },
+            { sym: 'BNB', pair: 'BNBUSDT', name: 'BNB', icon: 'B', color: 'yellow' },
+            { sym: 'XRP', pair: 'XRPUSDT', name: 'XRP', icon: 'X', color: 'sky' },
+            { sym: 'ADA', pair: 'ADAUSDT', name: 'Cardano', icon: '₳', color: 'blue' },
+            { sym: 'DOGE', pair: 'DOGEUSDT', name: 'Dogecoin', icon: 'Ð', color: 'orange' },
+            { sym: 'DOT', pair: 'DOTUSDT', name: 'Polkadot', icon: '●', color: 'pink' },
+            { sym: 'AVAX', pair: 'AVAXUSDT', name: 'Avalanche', icon: 'A', color: 'red' },
+            { sym: 'TRX', pair: 'TRXUSDT', name: 'TRON', icon: 'T', color: 'rose' },
+            { sym: 'LINK', pair: 'LINKUSDT', name: 'Chainlink', icon: 'L', color: 'cyan' },
+            { sym: 'LTC', pair: 'LTCUSDT', name: 'Litecoin', icon: 'Ł', color: 'slate' }
+        ];
+        const PAIR_MAP = Object.fromEntries(ASSETS.map(a => [a.pair, a]));
+
+        const BINANCE_HOSTS = ['https://api.binance.com', 'https://api1.binance.com', 'https://data-api.binance.vision'];
+        async function binanceFetch(path) {
+            let lastErr;
+            for (const host of BINANCE_HOSTS) {
+                try {
+                    const res = await fetch(host + path, { mode: 'cors' });
+                    if (res.ok) return await res.json();
+                    lastErr = new Error('HTTP ' + res.status);
+                } catch (e) { lastErr = e; }
+            }
+            throw lastErr || new Error('All Binance hosts failed');
+        }
+
+        let marketState = {};
+        let sparkCache = {};
+        let currentSort = 'cap';
+        const searchInput = document.getElementById('searchInput');
+
+        const fmtUsd = v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtCompact = v => { const n = Number(v); if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T'; if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M'; if (n >= 1e3) return '$' + (n/1e3).toFixed(2) + 'K'; return fmtUsd(n); };
+
+        function tween(el, from, to, fmt, dur = 600) {
+            const start = performance.now();
+            function step(t) {
+                const k = Math.min(1, (t - start) / dur);
+                const eased = 1 - Math.pow(1 - k, 3);
+                el.textContent = fmt(from + (to - from) * eased);
+                if (k < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        async function loadMarket() {
+            try {
+                const symbols = JSON.stringify(ASSETS.map(a => a.pair));
+                const data = await binanceFetch('/api/v3/ticker/24hr?symbols=' + encodeURIComponent(symbols));
+                data.forEach(t => {
+                    const meta = PAIR_MAP[t.symbol];
+                    if (!meta) return;
+                    const prev = marketState[t.symbol]?.price ?? parseFloat(t.lastPrice);
+                    marketState[t.symbol] = {
+                        ...meta,
+                        price: parseFloat(t.lastPrice),
+                        change24h: parseFloat(t.priceChangePercent),
+                        volume: parseFloat(t.quoteVolume),
+                        high24h: parseFloat(t.highPrice),
+                        low24h: parseFloat(t.lowPrice),
+                        prev
+                    };
+                });
+                renderMarket();
+                document.querySelectorAll('canvas[data-pair]').forEach(canvas => loadSpark(canvas.dataset.pair, canvas));
+            } catch (e) {
+                console.warn('Binance load failed', e);
+                document.getElementById('marketBody').innerHTML = '<tr><td colspan="7" class="py-8 text-center text-red-500">Nie udało się pobrać danych rynkowych. Sprawdź połączenie sieciowe.</td></tr>';
+            }
+        }
+
+        async function loadSpark(pair, canvas) {
+            if (sparkCache[pair]) { drawSpark(canvas, sparkCache[pair].pts, sparkCache[pair].color); return; }
+            try {
+                const klines = await binanceFetch(`/api/v3/klines?symbol=${pair}&interval=4h&limit=42`);
+                const pts = klines.map(k => parseFloat(k[4]));
+                const up7 = pts[pts.length - 1] >= pts[0];
+                const color = up7 ? '#10b981' : '#ef4444';
+                sparkCache[pair] = { pts, color };
+                drawSpark(canvas, pts, color);
+            } catch (e) { /* skip */ }
+        }
+
+        function renderMarket() {
+            const body = document.getElementById('marketBody');
+            const q = searchInput.value.trim().toLowerCase();
+            let list = Object.values(marketState);
+            if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.sym.toLowerCase().includes(q));
+            if (currentSort === 'gain') list.sort((a, b) => (b.change24h || 0) - (a.change24h || 0));
+            else if (currentSort === 'loss') list.sort((a, b) => (a.change24h || 0) - (b.change24h || 0));
+            else list.sort((a, b) => (b.volume || 0) - (a.volume || 0));
+
+            body.innerHTML = list.map((c, i) => {
+                const up = (c.change24h || 0) >= 0;
+                const flash = c.price > (c.prev || 0) + 1e-8 ? 'flash-up' : (c.price < (c.prev || 0) - 1e-8 ? 'flash-down' : '');
+                return `<tr class="market-row" data-pair="${c.pair}">
+                    <td class="py-3 px-4 text-qv-muted font-semibold">${i+1}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-${c.color}-500/20 text-${c.color}-500 flex items-center justify-center font-bold">${c.icon}</div>
+                            <div>
+                                <div class="font-semibold text-qv-text">${c.name}</div>
+                                <div class="text-[10px] text-qv-muted uppercase">${c.sym}/USDT</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold text-qv-text price-value ${flash}">${fmtUsd(c.price)}</td>
+                    <td class="py-3 px-4 text-right font-semibold ${up ? 'text-green-500' : 'text-red-500'}">${up ? '▲ +' : '▼ '}${(c.change24h || 0).toFixed(2)}%</td>
+                    <td class="py-3 px-4 text-right text-qv-muted hidden md:table-cell">${fmtCompact(c.volume)}</td>
+                    <td class="py-3 px-4 hidden lg:table-cell"><canvas class="spark" data-pair="${c.pair}"></canvas></td>
+                    <td class="py-3 px-4 text-right">
+                        <button data-buy="${c.pair}" class="px-3 py-1.5 bg-qv-accent text-white text-[11px] font-bold rounded-md hover:opacity-90 shadow">Kup</button>
+                    </td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="7" class="py-8 text-center text-qv-muted">Brak wyników.</td></tr>';
+
+            body.querySelectorAll('button[data-buy]').forEach(btn => {
+                btn.addEventListener('click', () => openBuy(marketState[btn.dataset.buy]));
+            });
+            body.querySelectorAll('canvas[data-pair]').forEach(canvas => loadSpark(canvas.dataset.pair, canvas));
+        }
+
+        function drawSpark(canvas, data, color) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+            if (!w || !h || !data || data.length < 2) return;
+            canvas.width = w * dpr; canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+            const min = Math.min(...data), max = Math.max(...data), range = (max - min) || 1;
+            ctx.beginPath();
+            data.forEach((v, i) => { const x = (i/(data.length-1))*w, y = h - ((v-min)/range)*(h-4) - 2; if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+            ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.stroke();
+        }
+
+        let activeCoin = null;
+        let orderType = 'MARKET';
+        let currentBalance = baseBalance;
+        let portfolioHoldings = [];
+
+        const SYM_TO_PAIR = Object.fromEntries(ASSETS.map(a => [a.sym, a.pair]));
+
+        function priceForSym(sym) {
+            const pair = SYM_TO_PAIR[sym];
+            return pair && marketState[pair] ? marketState[pair].price : null;
+        }
+
+        async function loadPortfolio() {
+            try {
+                const res = await fetch('/market/portfolio', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const data = await res.json();
+                currentBalance = parseFloat(data.balance) || 0;
+                portfolioHoldings = data.holdings || [];
+                renderPortfolio();
+            } catch (e) { /* ignore */ }
+        }
+
+        async function loadTrades() {
+            const body = document.getElementById('tradesBody');
+            if (!body) return;
+            try {
+                const res = await fetch('/market/trades', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const trades = await res.json();
+                if (!trades.length) {
+                    body.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-qv-muted">Brak transakcji. Wykonaj swój pierwszy zakup powyżej.</td></tr>';
+                    return;
+                }
+                body.innerHTML = trades.map(t => {
+                    const isBuy = t.side === 'BUY';
+                    const sideCls = isBuy ? 'text-blue-500' : 'text-amber-500';
+                    const pnl = parseFloat(t.realizedPnl) || 0;
+                    let pnlCell = '<span class="text-qv-muted">—</span>';
+                    if (!isBuy) {
+                        const cls = pnl >= 0 ? 'text-green-500' : 'text-red-500';
+                        const sign = pnl >= 0 ? '+' : '';
+                        pnlCell = `<span class="${cls} font-bold">${sign}${fmtUsd(pnl)}</span>`;
+                    }
+                    const dt = new Date(t.createdAt);
+                    const ts = isNaN(dt) ? t.createdAt : dt.toLocaleString('pl-PL', { hour12: false });
+                    return `<tr>
+                        <td class="py-3 px-4 text-qv-muted whitespace-nowrap">${ts}</td>
+                        <td class="py-3 px-4 font-bold ${sideCls}">${t.side}</td>
+                        <td class="py-3 px-4 font-mono font-bold text-qv-text">${t.symbol}</td>
+                        <td class="py-3 px-4 text-right font-mono text-qv-text">${parseFloat(t.coinAmount).toFixed(8).replace(/0+$/,'').replace(/\.$/,'')}</td>
+                        <td class="py-3 px-4 text-right text-qv-text">${fmtUsd(parseFloat(t.price))}</td>
+                        <td class="py-3 px-4 text-right text-qv-text">${fmtUsd(parseFloat(t.gross))}</td>
+                        <td class="py-3 px-4 text-right text-qv-muted">${fmtUsd(parseFloat(t.fee))}</td>
+                        <td class="py-3 px-4 text-right">${pnlCell}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { /* ignore */ }
+        }
+
+        function renderPortfolio() {
+            const body = document.getElementById('portfolioBody');
+            const balanceLabel = document.getElementById('balanceLabel');
+            if (balanceLabel) balanceLabel.textContent = fmtUsd(currentBalance);
+            document.getElementById('cashBalance').textContent = fmtUsd(currentBalance);
+
+            if (!portfolioHoldings || portfolioHoldings.length === 0) {
+                body.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-qv-muted">Nie posiadasz jeszcze żadnych aktyw. Kup coś poniżej, aby rozpocząć.</td></tr>';
+                document.getElementById('cryptoValue').textContent = fmtUsd(0);
+                document.getElementById('totalEquity').textContent = fmtUsd(currentBalance);
+                document.getElementById('unrealizedPnl').textContent = fmtUsd(0);
+                document.getElementById('unrealizedPnl').className = 'text-2xl font-bold price-value mt-1 text-qv-text';
+                document.getElementById('unrealizedPnlPct').textContent = '—';
+                return;
+            }
+
+            let cryptoValue = 0;
+            let cost = 0;
+            body.innerHTML = portfolioHoldings.map(h => {
+                const sym = h.symbol;
+                const amount = parseFloat(h.amount);
+                const avg = parseFloat(h.avgCost);
+                const pair = SYM_TO_PAIR[sym];
+                const meta = pair ? PAIR_MAP[pair] : null;
+                const price = priceForSym(sym);
+                const value = price != null ? amount * price : 0;
+                const basis = amount * avg;
+                cryptoValue += value;
+                cost += basis;
+                const pnl = price != null ? value - basis : 0;
+                const pnlPct = basis > 0 ? (pnl / basis) * 100 : 0;
+                const up = pnl >= 0;
+                const icon = meta ? meta.icon : sym[0];
+                const color = meta ? meta.color : 'violet';
+                const name = meta ? meta.name : sym;
+                return `<tr class="market-row">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-${color}-500/20 text-${color}-500 flex items-center justify-center font-bold">${icon}</div>
+                            <div>
+                                <div class="font-semibold text-qv-text">${name}</div>
+                                <div class="text-[10px] text-qv-muted uppercase">${sym}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold text-qv-text">${amount.toFixed(8).replace(/\.?0+$/, '')}</td>
+                    <td class="py-3 px-4 text-right text-qv-muted hidden md:table-cell">${fmtUsd(avg)}</td>
+                    <td class="py-3 px-4 text-right font-bold text-qv-text price-value">${price != null ? fmtUsd(price) : '—'}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-qv-text price-value">${fmtUsd(value)}</td>
+                    <td class="py-3 px-4 text-right font-bold ${up ? 'text-green-500' : 'text-red-500'}">
+                        ${up ? '+' : ''}${fmtUsd(pnl)}<br>
+                        <span class="text-[10px] font-semibold">${up ? '+' : ''}${pnlPct.toFixed(2)}%</span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button data-sell="${sym}" data-amt="${amount}" class="px-3 py-1.5 bg-red-500 text-white text-[11px] font-bold rounded-md hover:opacity-90 shadow">Sprzedaj</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('cryptoValue').textContent = fmtUsd(cryptoValue);
+            document.getElementById('totalEquity').textContent = fmtUsd(currentBalance + cryptoValue);
+            const totalPnl = cryptoValue - cost;
+            const pnlEl = document.getElementById('unrealizedPnl');
+            pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtUsd(totalPnl);
+            pnlEl.className = 'text-2xl font-bold price-value mt-1 ' + (totalPnl >= 0 ? 'text-green-500' : 'text-red-500');
+            document.getElementById('unrealizedPnlPct').textContent = cost > 0 ? ((totalPnl >= 0 ? '+' : '') + (totalPnl / cost * 100).toFixed(2) + '% vs średni koszt') : '—';
+
+            body.querySelectorAll('button[data-sell]').forEach(btn => {
+                btn.addEventListener('click', () => openSell(btn.dataset.sell, parseFloat(btn.dataset.amt)));
+            });
+        }
+
+        function openBuy(coin) {
+            if (!coin) return;
+            activeCoin = coin;
+            document.getElementById('bmSymbol').textContent = coin.sym;
+            document.getElementById('bmName').textContent = coin.name;
+            document.getElementById('bmIcon').textContent = coin.icon;
+            document.getElementById('bmIcon').className = `w-10 h-10 rounded-full bg-${coin.color}-500/20 text-${coin.color}-500 flex items-center justify-center font-bold text-lg`;
+            document.getElementById('bmPrice').textContent = fmtUsd(coin.price);
+            const ch = coin.change24h || 0;
+            const chEl = document.getElementById('bmChange');
+            chEl.textContent = (ch >= 0 ? '▲ +' : '▼ ') + ch.toFixed(2) + '%';
+            chEl.className = 'font-bold ' + (ch >= 0 ? 'text-green-500' : 'text-red-500');
+            document.getElementById('bmForm').classList.remove('hidden');
+            document.getElementById('bmSuccess').classList.add('hidden');
+            document.getElementById('bmError').classList.add('hidden');
+            const suggested = Math.min(currentBalance, Math.max(10, Math.floor(currentBalance * 0.1)));
+            document.getElementById('bmAmount').value = suggested.toFixed(0);
+            updateSummary();
+            const modal = document.getElementById('buyModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => modal.classList.add('modal-open'));
+        }
+
+        function closeBuy() {
+            const modal = document.getElementById('buyModal');
+            modal.classList.remove('modal-open');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 250);
+        }
+
+        function updateSummary() {
+            const amt = parseFloat(document.getElementById('bmAmount').value) || 0;
+            if (!activeCoin) return;
+            const coins = activeCoin.price > 0 ? amt / activeCoin.price : 0;
+            const fee = amt * 0.001;
+            document.getElementById('bmCoinAmount').textContent = coins.toFixed(8) + ' ' + activeCoin.sym;
+            document.getElementById('bmFee').textContent = fmtUsd(fee);
+            document.getElementById('bmTotal').textContent = fmtUsd(amt + fee);
+            const slider = document.getElementById('bmSlider');
+            const pct = currentBalance > 0 ? Math.min(100, (amt / currentBalance) * 100) : 0;
+            slider.value = pct;
+            slider.style.setProperty('--p', pct + '%');
+        }
+
+        document.getElementById('bmAmount').addEventListener('input', updateSummary);
+        document.getElementById('bmSlider').addEventListener('input', e => {
+            const pct = parseFloat(e.target.value);
+            document.getElementById('bmAmount').value = Math.floor(currentBalance * pct / 100);
+            updateSummary();
+        });
+        document.querySelectorAll('#presetBtns button').forEach(btn => btn.onclick = () => {
+            const pct = parseInt(btn.dataset.pct, 10);
+            document.getElementById('bmAmount').value = Math.floor(currentBalance * pct / 100);
+            updateSummary();
+        });
+        document.querySelectorAll('#orderTypeBtns button').forEach(btn => btn.onclick = () => {
+            document.querySelectorAll('#orderTypeBtns button').forEach(b => { b.classList.remove('bg-qv-accent', 'text-white'); b.classList.add('text-qv-muted'); });
+            btn.classList.add('bg-qv-accent', 'text-white'); btn.classList.remove('text-qv-muted');
+            orderType = btn.dataset.type;
+        });
+        document.querySelectorAll('#sortBtns button').forEach(btn => btn.onclick = () => {
+            document.querySelectorAll('#sortBtns button').forEach(b => { b.classList.remove('bg-qv-accent', 'text-white'); b.classList.add('text-qv-muted'); });
+            btn.classList.add('bg-qv-accent', 'text-white'); btn.classList.remove('text-qv-muted');
+            currentSort = btn.dataset.sort;
+            renderMarket();
+        });
+        searchInput.addEventListener('input', renderMarket);
+
+        async function submitBuy() {
+            if (!activeCoin) return;
+            const amt = parseFloat(document.getElementById('bmAmount').value) || 0;
+            const errorEl = document.getElementById('bmError');
+            errorEl.classList.add('hidden');
+            if (amt < 1) { errorEl.textContent = 'Minimalna kwota to $1.'; errorEl.classList.remove('hidden'); return; }
+            const totalNeed = amt * 1.001;
+            if (totalNeed > currentBalance + 0.005) { errorEl.textContent = 'Niewystarczające środki. Dostępne: ' + fmtUsd(currentBalance); errorEl.classList.remove('hidden'); return; }
+            const btn = document.getElementById('bmSubmit');
+            btn.disabled = true; btn.textContent = 'Wykonywanie zlecenia…';
+            try {
+                const params = new URLSearchParams({ symbol: activeCoin.sym, price: activeCoin.price, usdAmount: amt, orderType });
+                const res = await fetch('/market/buy', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+                const data = await res.json();
+                if (data.status === 'FILLED') {
+                    document.getElementById('bmForm').classList.add('hidden');
+                    document.getElementById('bmSuccess').classList.remove('hidden');
+                    document.getElementById('bmSuccessMsg').textContent = `${data.coinAmount} ${data.symbol} @ $${data.price} · ID ${data.orderId}`;
+                    if (data.balance != null) { currentBalance = parseFloat(data.balance); }
+                    loadPortfolio();
+                    loadTrades();
+                } else {
+                    errorEl.textContent = data.message || 'Błąd zlecenia.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Błąd komunikacji z serwerem.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Potwierdź zakup';
+            }
+        }
+
+        let activeSell = null;
+
+        function openSell(sym, owned) {
+            const pair = SYM_TO_PAIR[sym];
+            const meta = pair ? PAIR_MAP[pair] : null;
+            const price = priceForSym(sym);
+            if (!meta || price == null) return;
+            const holding = portfolioHoldings.find(h => h.symbol === sym);
+            const avg = holding ? parseFloat(holding.avgCost) : 0;
+            activeSell = { sym, name: meta.name, icon: meta.icon, color: meta.color, price, owned, avg };
+            document.getElementById('smSymbol').textContent = sym;
+            document.getElementById('smName').textContent = meta.name;
+            document.getElementById('smIcon').textContent = meta.icon;
+            document.getElementById('smIcon').className = `w-10 h-10 rounded-full bg-${meta.color}-500/20 text-${meta.color}-500 flex items-center justify-center font-bold text-lg`;
+            document.getElementById('smPrice').textContent = fmtUsd(price);
+            document.getElementById('smOwned').textContent = owned.toFixed(8).replace(/\.?0+$/, '') + ' ' + sym;
+            document.getElementById('smCoinInput').value = owned.toFixed(8);
+            document.getElementById('smSlider').value = 100;
+            document.getElementById('smSlider').style.setProperty('--p', '100%');
+            document.getElementById('smForm').classList.remove('hidden');
+            document.getElementById('smSuccess').classList.add('hidden');
+            document.getElementById('smError').classList.add('hidden');
+            updateSellSummary();
+            const modal = document.getElementById('sellModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => modal.classList.add('modal-open'));
+        }
+
+        function closeSell() {
+            const modal = document.getElementById('sellModal');
+            modal.classList.remove('modal-open');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 250);
+            loadPortfolio();
+        }
+
+        function updateSellSummary() {
+            if (!activeSell) return;
+            const coins = Math.min(activeSell.owned, Math.max(0, parseFloat(document.getElementById('smCoinInput').value) || 0));
+            const gross = coins * activeSell.price;
+            const fee = gross * 0.001;
+            const net = gross - fee;
+            const pnl = (activeSell.price - activeSell.avg) * coins;
+            document.getElementById('smGross').textContent = fmtUsd(gross);
+            document.getElementById('smFee').textContent = fmtUsd(fee);
+            document.getElementById('smNet').textContent = fmtUsd(net);
+            const pnlEl = document.getElementById('smPnl');
+            pnlEl.textContent = (pnl >= 0 ? '+' : '') + fmtUsd(pnl);
+            pnlEl.className = 'font-semibold price-value ' + (pnl >= 0 ? 'text-green-500' : 'text-red-500');
+            const slider = document.getElementById('smSlider');
+            const pct = activeSell.owned > 0 ? Math.min(100, (coins / activeSell.owned) * 100) : 0;
+            slider.value = pct;
+            slider.style.setProperty('--p', pct + '%');
+        }
+
+        document.getElementById('smCoinInput').addEventListener('input', updateSellSummary);
+        document.getElementById('smSlider').addEventListener('input', e => {
+            if (!activeSell) return;
+            const pct = parseFloat(e.target.value);
+            document.getElementById('smCoinInput').value = (activeSell.owned * pct / 100).toFixed(8);
+            updateSellSummary();
+        });
+        document.querySelectorAll('#smPresetBtns button').forEach(btn => btn.onclick = () => {
+            if (!activeSell) return;
+            const pct = parseInt(btn.dataset.pct, 10);
+            document.getElementById('smCoinInput').value = (activeSell.owned * pct / 100).toFixed(8);
+            updateSellSummary();
+        });
+
+        async function submitSell() {
+            if (!activeSell) return;
+            const coins = parseFloat(document.getElementById('smCoinInput').value) || 0;
+            const errorEl = document.getElementById('smError');
+            errorEl.classList.add('hidden');
+            if (coins <= 0) { errorEl.textContent = 'Wybierz ilość większą od zera.'; errorEl.classList.remove('hidden'); return; }
+            if (coins > activeSell.owned + 1e-8) { errorEl.textContent = 'Nie posiadasz tyle.'; errorEl.classList.remove('hidden'); return; }
+            const btn = document.getElementById('smSubmit');
+            btn.disabled = true; btn.textContent = 'Sprzedaję…';
+            try {
+                const params = new URLSearchParams({ symbol: activeSell.sym, price: activeSell.price, coinAmount: coins });
+                const res = await fetch('/market/sell', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+                const data = await res.json();
+                if (data.status === 'FILLED') {
+                    document.getElementById('smForm').classList.add('hidden');
+                    document.getElementById('smSuccess').classList.remove('hidden');
+                    document.getElementById('smSuccessMsg').textContent = `${data.coinAmount} ${data.symbol} → ${fmtUsd(parseFloat(data.net))} · ID ${data.orderId}`;
+                    if (data.balance != null) { currentBalance = parseFloat(data.balance); }
+                    loadPortfolio();
+                    loadTrades();
+                } else {
+                    errorEl.textContent = data.message || 'Błąd zlecenia.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Błąd komunikacji z serwerem.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Potwierdź sprzedaż';
+            }
+        }
+
+        renderPortfolio();
+        loadMarket().then(() => renderPortfolio());
+        loadPortfolio();
+        loadTrades();
+        setInterval(loadMarket, 6000);
+        setInterval(() => { renderPortfolio(); }, 6000);
+        setInterval(loadTrades, 15000);
+    </script>
+</body>
+</html>

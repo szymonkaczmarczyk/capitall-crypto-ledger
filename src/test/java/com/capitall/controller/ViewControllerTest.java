@@ -1,6 +1,5 @@
 package com.capitall.controller;
 
-import com.capitall.dto.CreateExchangeAccountRequest;
 import com.capitall.dto.DashboardStatsResponse;
 import com.capitall.dto.ExchangeAccountResponse;
 import com.capitall.dto.PnLPoint;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -65,6 +63,27 @@ class ViewControllerTest {
 
         @MockBean
         private com.capitall.config.MaintenanceModeState maintenanceModeState;
+
+        @MockBean
+        private com.capitall.repository.AllocationRepository allocationRepository;
+
+        @MockBean
+        private com.capitall.repository.WalletRepository walletRepository;
+
+        @MockBean
+        private com.capitall.repository.HoldingRepository holdingRepository;
+
+        @MockBean
+        private com.capitall.repository.TradeRepository tradeRepository;
+
+        @MockBean
+        private com.capitall.service.WalletService walletService;
+
+        @MockBean
+        private com.capitall.service.EquitySnapshotter equitySnapshotter;
+
+        @MockBean
+        private com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository;
 
         @Test
         void dashboard_ShouldPopulateStatsAndRenderView() throws Exception {
@@ -134,9 +153,6 @@ class ViewControllerTest {
 
         @Test
         void submitCreateForm_ShouldRedirect_WhenValidationPasses() throws Exception {
-                CreateExchangeAccountRequest validForm = new CreateExchangeAccountRequest(
-                                "BINANCE", "My Bot", "api-key-test", "api-secret-test", BigDecimal.valueOf(2000));
-
                 mockMvc.perform(post("/assets/new")
                                 .with(csrf())
                                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)

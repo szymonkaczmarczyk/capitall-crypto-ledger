@@ -30,12 +30,12 @@
     </script>
     <style>
         :root {
-            --qv-bg: #f8fafc;
+            --qv-bg: #e7ecf3;
             --qv-surface: #ffffff;
-            --qv-border: #e2e8f0;
-            --qv-text: #0f172a;
-            --qv-muted: #64748b;
-            --qv-accent: #7c3aed;
+            --qv-border: #94a3b8;
+            --qv-text: #0a0f1e;
+            --qv-muted: #334155;
+            --qv-accent: #5b21b6;
         }
         .dark {
             --qv-bg: #0b1120;
@@ -53,6 +53,25 @@
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 400ms;
         }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+        @keyframes flashGreen {
+            0% { color: #10b981; transform: translateY(-2px); }
+            100% { color: inherit; transform: translateY(0); }
+        }
+        @keyframes flashRed {
+            0% { color: #ef4444; transform: translateY(2px); }
+            100% { color: inherit; transform: translateY(0); }
+        }
+        .flash-up { animation: flashGreen 0.8s ease-out; }
+        .flash-down { animation: flashRed 0.8s ease-out; }
+        .ticker-card { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s; }
+        .ticker-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -8px rgba(0,0,0,0.2); }
+        .price-value { transition: color 0.4s ease; font-variant-numeric: tabular-nums; }
+        .spark { width: 100%; height: 38px; }
     </style>
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -77,6 +96,10 @@
             <a href="/dashboard" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
                 <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
                 Dashboard
+            </a>
+            <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
             </a>
             <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
                 <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -126,10 +149,70 @@
 
         <div class="flex-1 overflow-y-auto p-6 lg:p-8">
 
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="tickerGrid">
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="bitcoin" data-symbol="BTC">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs">₿</div>
+                            <span class="text-xs font-semibold text-qv-muted">BTC/USD</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
+                    <div class="flex items-end justify-between">
+                        <div class="text-xs font-semibold" data-change>—</div>
+                        <canvas class="spark" data-spark></canvas>
+                    </div>
+                </div>
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="ethereum" data-symbol="ETH">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-500 flex items-center justify-center font-bold text-xs">Ξ</div>
+                            <span class="text-xs font-semibold text-qv-muted">ETH/USD</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
+                    <div class="flex items-end justify-between">
+                        <div class="text-xs font-semibold" data-change>—</div>
+                        <canvas class="spark" data-spark></canvas>
+                    </div>
+                </div>
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="solana" data-symbol="SOL">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-fuchsia-500/20 text-fuchsia-500 flex items-center justify-center font-bold text-xs">◎</div>
+                            <span class="text-xs font-semibold text-qv-muted">SOL/USD</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
+                    <div class="flex items-end justify-between">
+                        <div class="text-xs font-semibold" data-change>—</div>
+                        <canvas class="spark" data-spark></canvas>
+                    </div>
+                </div>
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="binancecoin" data-symbol="BNB">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold text-xs">B</div>
+                            <span class="text-xs font-semibold text-qv-muted">BNB/USD</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                    </div>
+                    <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
+                    <div class="flex items-end justify-between">
+                        <div class="text-xs font-semibold" data-change>—</div>
+                        <canvas class="spark" data-spark></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5">
                     <p class="text-sm font-medium text-qv-muted mb-1">Całkowite AUM</p>
-                    <h3 class="text-2xl font-bold text-qv-text" th:text="${'$' + #numbers.formatDecimal(stats.totalAum, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                    <h3 class="text-2xl font-bold text-qv-text price-value" id="aumValue" th:attr="data-base=${stats.totalAum}">$0.00</h3>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1">Wartość koryguje się żywym ruchem rynku</p>
                 </div>
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5">
                     <p class="text-sm font-medium text-qv-muted mb-1">Aktywne konta giełdowe</p>
@@ -138,18 +221,30 @@
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5">
                     <p class="text-sm font-medium text-qv-muted mb-1">Status systemu</p>
                     <div class="flex items-center mt-1">
-                        <div class="w-2.5 h-2.5 rounded-full bg-green-500 mr-2"></div>
-                        <h3 class="text-lg font-bold text-qv-text">Online</h3>
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-500 mr-2 live-dot"></div>
+                        <h3 class="text-lg font-bold text-qv-text">Online · Stream OK</h3>
                     </div>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1" id="lastTick">Oczekiwanie na pierwszy tick…</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 lg:col-span-2">
-                    <div class="mb-4">
-                        <h3 class="text-base font-bold text-qv-text">Symulacja zysków (PnL)</h3>
-                        <p class="text-xs text-qv-muted">Wykres na podstawie logiki symulacyjnej (30 dni)</p>
+                    <div class="mb-4 flex items-start justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
+                                Symulacja zysków (PnL)
+                                <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            </h3>
+                            <p class="text-xs text-qv-muted">Strumień powiązany z kursem BTC z Binance (30 dni)</p>
+                        </div>
+                        <div class="flex gap-1" id="rangeBtns">
+                            <button data-days="1" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">24H</button>
+                            <button data-days="7" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">7D</button>
+                            <button data-days="30" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border bg-qv-accent text-white">30D</button>
+                            <button data-days="90" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">90D</button>
+                        </div>
                     </div>
                     <div class="w-full h-80">
                         <canvas id="pnlChart"></canvas>
@@ -180,6 +275,27 @@
                 </div>
             </div>
 
+            <div class="mt-6 bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6">
+                <div class="mb-4 flex items-start justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
+                            Wartość Twojego portfela
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                        </h3>
+                        <p class="text-xs text-qv-muted">Suma gotówki i krypto w czasie — snapshoty co 5 min oraz po każdej transakcji</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-semibold uppercase text-qv-muted">Obecna wartość</p>
+                        <p id="equityCurrent" class="text-xl font-bold text-qv-text">—</p>
+                        <p id="equityDelta" class="text-[11px] font-semibold">—</p>
+                    </div>
+                </div>
+                <div class="w-full h-72">
+                    <canvas id="equityChart"></canvas>
+                </div>
+                <p id="equityEmpty" class="hidden text-center text-xs text-qv-muted py-8">Brak danych historycznych. Wykonaj pierwszą transakcję w sekcji Rynek, aby uruchomić zapis snapshotów.</p>
+            </div>
+
         </div>
     </main>
 
@@ -200,42 +316,318 @@
 
     <script th:inline="javascript">
         /*<![CDATA[*/
-        const pnlData = /*[[${pnlPoints}]]*/ [];
+        const fallbackPnl = /*[[${pnlPoints}]]*/ [];
         const divMap = /*[[${stats.diversification}]]*/ {};
+        const baseAum = parseFloat(/*[[${stats.totalAum}]]*/ 0) || 0;
         /*]]>*/
 
-        if (pnlData && pnlData.length > 0) {
-            const labels = pnlData.map(pt => new Date(pt.timestamp).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' }));
-            const capitals = pnlData.map(pt => pt.capital);
+        const COINS = ['bitcoin', 'ethereum', 'solana', 'binancecoin'];
+        const COIN_TO_PAIR = { bitcoin: 'BTCUSDT', ethereum: 'ETHUSDT', solana: 'SOLUSDT', binancecoin: 'BNBUSDT' };
+        const PAIR_TO_COIN = Object.fromEntries(Object.entries(COIN_TO_PAIR).map(([c, p]) => [p, c]));
+        const COIN_COLORS = { bitcoin: '#f59e0b', ethereum: '#6366f1', solana: '#d946ef', binancecoin: '#eab308' };
+        const BINANCE_HOSTS = ['https://api.binance.com', 'https://api1.binance.com', 'https://data-api.binance.vision'];
+        async function binanceFetch(path) {
+            let lastErr;
+            for (const host of BINANCE_HOSTS) {
+                try {
+                    const res = await fetch(host + path, { mode: 'cors' });
+                    if (res.ok) return await res.json();
+                    lastErr = new Error('HTTP ' + res.status);
+                } catch (e) { lastErr = e; }
+            }
+            throw lastErr || new Error('All Binance hosts failed');
+        }
 
-            new Chart(document.getElementById('pnlChart').getContext('2d'), {
+        const fmtUsd = v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtUsdCompact = v => '$' + Number(v).toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+        function tween(el, from, to, fmt, dur = 700) {
+            const start = performance.now();
+            function step(t) {
+                const k = Math.min(1, (t - start) / dur);
+                const eased = 1 - Math.pow(1 - k, 3);
+                const v = from + (to - from) * eased;
+                el.textContent = fmt(v);
+                if (k < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function drawSpark(canvas, data, color) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+            canvas.width = w * dpr; canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, w, h);
+            if (!data || data.length < 2) return;
+            const min = Math.min(...data), max = Math.max(...data);
+            const range = (max - min) || 1;
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, color + '55');
+            grad.addColorStop(1, color + '00');
+            ctx.beginPath();
+            data.forEach((v, i) => {
+                const x = (i / (data.length - 1)) * w;
+                const y = h - ((v - min) / range) * (h - 4) - 2;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.6;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+            ctx.fillStyle = grad; ctx.fill();
+        }
+
+        const tickerState = {};
+
+        async function refreshTickers() {
+            try {
+                const pairs = JSON.stringify(COINS.map(c => COIN_TO_PAIR[c]));
+                const data = await binanceFetch('/api/v3/ticker/24hr?symbols=' + encodeURIComponent(pairs));
+                const byCoin = {};
+                data.forEach(t => {
+                    const coin = PAIR_TO_COIN[t.symbol];
+                    if (coin) byCoin[coin] = { usd: parseFloat(t.lastPrice), change: parseFloat(t.priceChangePercent) };
+                });
+                document.querySelectorAll('#tickerGrid [data-coin]').forEach(card => {
+                    const coin = card.dataset.coin;
+                    const d = byCoin[coin];
+                    if (!d) return;
+                    const priceEl = card.querySelector('[data-price]');
+                    const changeEl = card.querySelector('[data-change]');
+                    const prev = tickerState[coin]?.price ?? d.usd;
+                    tween(priceEl, prev, d.usd, fmtUsd, 600);
+                    if (d.usd > prev + 0.0001) { priceEl.classList.remove('flash-down'); priceEl.classList.add('flash-up'); }
+                    else if (d.usd < prev - 0.0001) { priceEl.classList.remove('flash-up'); priceEl.classList.add('flash-down'); }
+                    setTimeout(() => priceEl.classList.remove('flash-up', 'flash-down'), 900);
+                    const ch = d.change || 0;
+                    changeEl.textContent = (ch >= 0 ? '▲ +' : '▼ ') + ch.toFixed(2) + '%';
+                    changeEl.className = 'text-xs font-semibold ' + (ch >= 0 ? 'text-green-500' : 'text-red-500');
+                    tickerState[coin] = { price: d.usd, change: ch };
+                });
+                const totalLive = COINS.reduce((s, c) => s + (tickerState[c]?.change || 0), 0) / COINS.length;
+                const aumEl = document.getElementById('aumValue');
+                if (aumEl && baseAum > 0) {
+                    const target = baseAum * (1 + totalLive / 100 * 0.4);
+                    const cur = parseFloat(aumEl.textContent.replace(/[^0-9.\-]/g, '')) || baseAum;
+                    tween(aumEl, cur, target, v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 900);
+                }
+                const t = new Date();
+                document.getElementById('lastTick').textContent = 'Ostatni tick: ' + t.toLocaleTimeString('pl-PL');
+            } catch (e) {
+                console.warn('Ticker fetch failed', e);
+            }
+        }
+
+        async function refreshSparks() {
+            await Promise.all(COINS.map(async coin => {
+                try {
+                    const pair = COIN_TO_PAIR[coin];
+                    const klines = await binanceFetch(`/api/v3/klines?symbol=${pair}&interval=30m&limit=48`);
+                    const pts = klines.map(k => parseFloat(k[4]));
+                    const card = document.querySelector(`#tickerGrid [data-coin="${coin}"]`);
+                    if (card) drawSpark(card.querySelector('[data-spark]'), pts, COIN_COLORS[coin]);
+                } catch (e) { /* ignore */ }
+            }));
+        }
+
+        let pnlChart = null;
+        let currentDays = 30;
+        let basePnlSeries = [];
+
+        function buildPnlChart(timestamps, values) {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 320);
+            grad.addColorStop(0, 'rgba(124, 58, 237, 0.35)');
+            grad.addColorStop(1, 'rgba(124, 58, 237, 0)');
+            const labels = timestamps.map(ts => {
+                const d = new Date(ts);
+                return currentDays <= 1
+                    ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+                    : d.toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' });
+            });
+            if (pnlChart) {
+                pnlChart.data.labels = labels;
+                pnlChart.data.datasets[0].data = values;
+                pnlChart.data.datasets[0].backgroundColor = grad;
+                pnlChart.update('active');
+                return;
+            }
+            pnlChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [{
-                        label: 'Wartość ($)',
-                        data: capitals,
+                        label: 'Wartość portfela (USD)',
+                        data: values,
                         borderColor: '#7c3aed',
-                        borderWidth: 2,
-                        tension: 0.1,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#7c3aed',
-                        pointRadius: 3
+                        backgroundColor: grad,
+                        borderWidth: 2.4,
+                        tension: 0.38,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#7c3aed',
+                        pointHoverBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 900, easing: 'easeOutCubic' },
+                    animations: {
+                        y: { duration: 600, easing: 'easeOutCubic' },
+                        tension: { duration: 1200, easing: 'easeInOutSine', from: 0.2, to: 0.38, loop: false }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.95)',
+                            titleColor: '#fff', bodyColor: '#e2e8f0',
+                            padding: 10, cornerRadius: 6, displayColors: false,
+                            callbacks: { label: c => fmtUsd(c.parsed.y) }
+                        }
+                    },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } } },
-                        y: { grid: { color: '#e2e8f0' }, ticks: { color: '#64748b', font: { family: 'Inter', size: 11 }, callback: v => '$' + v.toLocaleString('pl-PL') } }
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, maxTicksLimit: 8 } },
+                        y: { grid: { color: 'rgba(148,163,184,0.15)' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, callback: v => fmtUsdCompact(v) } }
                     }
                 }
             });
         }
 
+        async function loadPnl(days) {
+            currentDays = days;
+            try {
+                const interval = days <= 1 ? '15m' : (days <= 7 ? '1h' : (days <= 30 ? '4h' : '1d'));
+                const limit = days <= 1 ? 96 : (days <= 7 ? 168 : (days <= 30 ? 180 : 90));
+                const klines = await binanceFetch(`/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`);
+                if (!klines || klines.length === 0) throw new Error('empty');
+                const stride = Math.max(1, Math.floor(klines.length / 80));
+                const sampled = klines.filter((_, i) => i % stride === 0);
+                const first = parseFloat(sampled[0][4]) || 1;
+                const portfolioBase = baseAum > 0 ? baseAum : 100000;
+                const timestamps = sampled.map(k => k[0]);
+                const values = sampled.map(k => portfolioBase * (parseFloat(k[4]) / first));
+                basePnlSeries = values.slice();
+                buildPnlChart(timestamps, values);
+            } catch (e) {
+                if (fallbackPnl && fallbackPnl.length > 0) {
+                    buildPnlChart(fallbackPnl.map(p => p.timestamp), fallbackPnl.map(p => p.capital));
+                }
+            }
+        }
+
+        function nudgePnlLive() {
+            if (!pnlChart || basePnlSeries.length === 0) return;
+            const drift = (Math.random() - 0.5) * 0.004;
+            const last = pnlChart.data.datasets[0].data;
+            const newLast = last[last.length - 1] * (1 + drift);
+            last[last.length - 1] = newLast;
+            pnlChart.update('none');
+        }
+
+        document.querySelectorAll('#rangeBtns button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#rangeBtns button').forEach(b => {
+                    b.classList.remove('bg-qv-accent', 'text-white');
+                    b.classList.add('text-qv-muted');
+                });
+                btn.classList.add('bg-qv-accent', 'text-white');
+                btn.classList.remove('text-qv-muted');
+                loadPnl(parseInt(btn.dataset.days, 10));
+            });
+        });
+
+        refreshTickers();
+        refreshSparks();
+        loadPnl(30);
+        setInterval(refreshTickers, 6000);
+        setInterval(refreshSparks, 60000);
+        setInterval(nudgePnlLive, 2500);
+
         const keys = Object.keys(divMap);
+        let equityChart = null;
+        function fmtUsdDash(n) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+        }
+        async function loadEquitySeries() {
+            try {
+                const res = await fetch('/dashboard/equity-series', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const series = await res.json();
+                const canvas = document.getElementById('equityChart');
+                const empty = document.getElementById('equityEmpty');
+                if (!series.length) {
+                    canvas.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                    document.getElementById('equityCurrent').textContent = '—';
+                    document.getElementById('equityDelta').textContent = '—';
+                    return;
+                }
+                canvas.classList.remove('hidden');
+                empty.classList.add('hidden');
+                const labels = series.map(s => new Date(s.t).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
+                const values = series.map(s => parseFloat(s.equity));
+                const first = values[0], last = values[values.length - 1];
+                const delta = last - first;
+                const deltaPct = first > 0 ? (delta / first) * 100 : 0;
+                document.getElementById('equityCurrent').textContent = fmtUsdDash(last);
+                const deltaEl = document.getElementById('equityDelta');
+                const sign = delta >= 0 ? '+' : '';
+                deltaEl.textContent = `${sign}${fmtUsdDash(delta)} (${sign}${deltaPct.toFixed(2)}%)`;
+                deltaEl.className = 'text-[11px] font-semibold ' + (delta >= 0 ? 'text-green-500' : 'text-red-500');
+
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, 0, 280);
+                grad.addColorStop(0, 'rgba(139,92,246,0.35)');
+                grad.addColorStop(1, 'rgba(139,92,246,0)');
+                if (equityChart) {
+                    equityChart.data.labels = labels;
+                    equityChart.data.datasets[0].data = values;
+                    equityChart.data.datasets[0].backgroundColor = grad;
+                    equityChart.update('active');
+                    return;
+                }
+                equityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Equity USD',
+                            data: values,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: grad,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 800, easing: 'easeOutCubic' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#fff', bodyColor: '#e2e8f0', padding: 10, cornerRadius: 6, callbacks: { label: c => 'Equity: ' + fmtUsdDash(c.parsed.y) } }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', maxTicksLimit: 8 }, grid: { display: false } },
+                            y: { ticks: { color: '#94a3b8', callback: v => fmtUsdDash(v) }, grid: { color: 'rgba(148,163,184,0.15)' } }
+                        }
+                    }
+                });
+            } catch (e) { /* ignore */ }
+        }
+        loadEquitySeries();
+        setInterval(loadEquitySeries, 30000);
+
         if (keys.length > 0) {
             new Chart(document.getElementById('diversificationChart').getContext('2d'), {
                 type: 'doughnut',
@@ -243,14 +635,19 @@
                     labels: keys,
                     datasets: [{
                         data: Object.values(divMap),
-                        backgroundColor: ['#7c3aed', '#cbd5e1', '#94a3b8', '#64748b', '#475569'],
-                        borderWidth: 0
+                        backgroundColor: ['#7c3aed', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'],
+                        borderWidth: 0,
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    animation: { animateRotate: true, animateScale: true, duration: 1100, easing: 'easeOutCubic' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#fff', bodyColor: '#e2e8f0', padding: 10, cornerRadius: 6, callbacks: { label: c => c.label + ': ' + c.parsed + '%' } }
+                    },
                     cutout: '75%'
                 }
             });

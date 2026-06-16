@@ -33,7 +33,8 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        User admin = createUserIfNotExists("admin", "admin@capitall.com", "admin1", UserRole.ADMIN);
+        User admin = createUserIfNotExists("admin", "admin@capitall.com", "admin", UserRole.ADMIN);
+        ensureAdminCredentials(admin, "admin");
         User jankowalski = createUserIfNotExists("jankowalski", "jan.kowalski@example.pl", "test123", UserRole.USER);
         User pnowak = createUserIfNotExists("pnowak", "piotr.nowak@example.pl", "test123", UserRole.USER);
         User mwisniewska = createUserIfNotExists("mwisniewska", "magda.wisniewska@example.pl", "test123", UserRole.USER);
@@ -54,7 +55,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private User createUserIfNotExists(String username, String email, String password, UserRole role) {
-        return userRepository.findByUsername(username).orElseGet(() -> 
+        return userRepository.findByUsername(username).orElseGet(() ->
             userRepository.save(User.builder()
                 .id(UUID.randomUUID())
                 .username(username)
@@ -63,6 +64,17 @@ public class DataInitializer implements CommandLineRunner {
                 .role(role)
                 .build())
         );
+    }
+
+    private void ensureAdminCredentials(User admin, String desiredPassword) {
+        boolean dirty = false;
+        if (admin.getRole() != UserRole.ADMIN) { admin.setRole(UserRole.ADMIN); dirty = true; }
+        if (!admin.isEnabled()) { admin.setEnabled(true); dirty = true; }
+        if (!passwordEncoder.matches(desiredPassword, admin.getPassword())) {
+            admin.setPassword(passwordEncoder.encode(desiredPassword));
+            dirty = true;
+        }
+        if (dirty) userRepository.save(admin);
     }
 
     private com.capitall.model.ExchangeAccount createExchangeAccount(String exchangeName, String accountName, String capital) {
