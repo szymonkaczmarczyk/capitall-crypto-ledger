@@ -51,6 +51,12 @@
         body {
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .text-qv-bg {
+            color: #ffffff !important;
+        }
+        .dark .text-qv-bg {
+            color: rgb(15 23 42 / var(--tw-bg-opacity, 1)) !important;
+        }
         .transition-colors-all {
             transition-property: background-color, border-color, color, fill, stroke, box-shadow;
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -422,7 +428,7 @@
             </svg>
         </div>
 
-        <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center text-sm text-violet-300">
+        <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center text-sm text-violet-300 pt-4">
             &copy; 2026 Capitall. Wszelkie prawa zastrzeżone.
         </div>
     </footer>
