@@ -140,4 +140,14 @@ public class WalletService {
 
         return new TradeResult(coinAmount, fee, wallet.getUsdBalance(), remaining);
     }
+
+    @Transactional
+    public Wallet deposit(UUID userId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Kwota doładowania musi być większa od zera.");
+        }
+        Wallet wallet = getOrCreate(userId);
+        wallet.setUsdBalance(wallet.getUsdBalance().add(amount).setScale(2, RoundingMode.HALF_UP));
+        return walletRepository.save(wallet);
+    }
 }

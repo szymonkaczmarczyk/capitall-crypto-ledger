@@ -452,6 +452,28 @@ public class ViewController {
         }
     }
 
+    @PostMapping("/market/deposit")
+    @ResponseBody
+    public java.util.Map<String, Object> depositFunds(
+            @RequestParam java.math.BigDecimal amount,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        try {
+            com.capitall.model.Wallet wallet = walletService.deposit(user.getId(), amount);
+            String action = String.format("DEPOSIT: Doładowano konto kwotą $%s",
+                    amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
+            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            return java.util.Map.of(
+                    "status", "SUCCESS",
+                    "amount", amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "balance", wallet.getUsdBalance().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                    "message", "Konto zostało pomyślnie zasilone."
+            );
+        } catch (RuntimeException e) {
+            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zasilenia konta." : e.getMessage());
+        }
+    }
+
     @PostMapping("/tools/test-api")
     @ResponseBody
     public java.util.Map<String, String> testApiKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {

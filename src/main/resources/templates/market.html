@@ -125,6 +125,9 @@
                 <p class="text-[11px] text-qv-muted">Ceny przez Binance · odświeżanie co 6 s</p>
             </div>
             <div class="flex items-center gap-6">
+                <button onclick="openDeposit()" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-md shadow-sm transition-colors">
+                    Zasil portfel
+                </button>
                 <div class="hidden sm:block text-right">
                     <p class="text-[11px] text-qv-muted">Dostępne środki</p>
                     <p class="text-sm font-bold text-qv-text price-value" id="balanceLabel"
@@ -411,6 +414,52 @@
                 <h3 class="font-bold text-qv-text">Sprzedaż zrealizowana</h3>
                 <p class="text-xs text-qv-muted" id="smSuccessMsg">Order ID: —</p>
                 <button onclick="closeSell()" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-xs font-semibold rounded-md hover:bg-slate-50">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="depositModal" class="fixed inset-0 z-50 hidden modal-backdrop bg-slate-900/50 items-center justify-center p-4">
+        <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-md w-full">
+            <div class="px-6 py-4 border-b border-qv-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center font-bold text-lg">$</div>
+                    <div>
+                        <h3 class="text-sm font-bold text-qv-text">Zasil portfel</h3>
+                        <p class="text-[11px] text-qv-muted">Wirtualne doładowanie konta USD</p>
+                    </div>
+                </div>
+                <button onclick="closeDeposit()" class="text-qv-muted hover:text-qv-text text-2xl leading-none">&times;</button>
+            </div>
+            <div class="px-6 py-5 space-y-4" id="dmForm">
+                <div>
+                    <label class="block text-[11px] font-semibold text-qv-muted mb-1">Kwota doładowania (USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-sm font-medium text-qv-muted">$</span>
+                        <input id="dmAmount" type="number" min="1" step="1" value="1000" class="w-full h-10 bg-qv-bg border border-qv-border rounded-md pl-7 pr-3 text-sm font-semibold text-qv-text focus:ring-1 focus:ring-qv-accent focus:outline-none" />
+                    </div>
+                </div>
+
+                <div class="flex gap-1.5" id="dmPresetBtns">
+                    <button type="button" onclick="setDepositAmount(100)" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">$100</button>
+                    <button type="button" onclick="setDepositAmount(1000)" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">$1,000</button>
+                    <button type="button" onclick="setDepositAmount(5000)" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">$5,000</button>
+                    <button type="button" onclick="setDepositAmount(10000)" class="flex-1 py-1.5 text-[11px] font-semibold border border-qv-border rounded-md text-qv-muted hover:text-qv-text hover:border-qv-accent transition-colors">$10,000</button>
+                </div>
+
+                <button id="dmSubmit" onclick="submitDeposit()" class="w-full py-2.5 bg-green-500 text-white text-sm font-bold rounded-md hover:opacity-90 shadow-qv transition-opacity">
+                    Zasil konto
+                </button>
+                <p id="dmError" class="text-xs font-semibold text-red-500 text-center hidden"></p>
+            </div>
+
+            <div id="dmSuccess" class="px-6 py-8 hidden text-center space-y-3">
+                <div class="success-pop w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="font-bold text-qv-text">Konto zostało zasilone</h3>
+                <p class="text-xs text-qv-muted" id="dmSuccessMsg">Zasilono kwotą: —</p>
+                <button onclick="closeDeposit()" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-xs font-semibold rounded-md hover:bg-slate-50 transition-colors">Zamknij</button>
             </div>
         </div>
     </div>
@@ -887,6 +936,70 @@
                 errorEl.classList.remove('hidden');
             } finally {
                 btn.disabled = false; btn.textContent = 'Potwierdź sprzedaż';
+            }
+        }
+
+        function openDeposit() {
+            document.getElementById('dmForm').classList.remove('hidden');
+            document.getElementById('dmSuccess').classList.add('hidden');
+            document.getElementById('dmError').classList.add('hidden');
+            document.getElementById('dmAmount').value = '1000';
+            const modal = document.getElementById('depositModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => modal.classList.add('modal-open'));
+        }
+
+        function closeDeposit() {
+            const modal = document.getElementById('depositModal');
+            modal.classList.remove('modal-open');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 250);
+            loadPortfolio();
+        }
+
+        function setDepositAmount(amt) {
+            document.getElementById('dmAmount').value = amt;
+        }
+
+        async function submitDeposit() {
+            const amt = parseFloat(document.getElementById('dmAmount').value) || 0;
+            const errorEl = document.getElementById('dmError');
+            errorEl.classList.add('hidden');
+            if (amt <= 0) {
+                errorEl.textContent = 'Kwota doładowania musi być większa od zera.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            const btn = document.getElementById('dmSubmit');
+            btn.disabled = true;
+            btn.textContent = 'Trwa zasilanie…';
+            try {
+                const params = new URLSearchParams({ amount: amt });
+                const res = await fetch('/market/deposit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+                const data = await res.json();
+                if (data.status === 'SUCCESS') {
+                    document.getElementById('dmForm').classList.add('hidden');
+                    document.getElementById('dmSuccess').classList.remove('hidden');
+                    document.getElementById('dmSuccessMsg').textContent = `Zasilono kwotą: ${fmtUsd(amt)}`;
+                    if (data.balance != null) {
+                        currentBalance = parseFloat(data.balance);
+                    }
+                    loadPortfolio();
+                    loadTrades();
+                } else {
+                    errorEl.textContent = data.message || 'Błąd zasilenia portfela.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Błąd komunikacji z serwerem.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Zasil konto';
             }
         }
 

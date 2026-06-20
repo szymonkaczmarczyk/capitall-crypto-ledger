@@ -180,4 +180,30 @@ class ViewControllerTest {
                                 .andExpect(model().attributeHasFieldErrors("exchangeAccountForm", "exchangeName",
                                                 "accountName", "allocatedCapital"));
         }
+
+        @Test
+        void depositFunds_ShouldReturnSuccess_WhenSuccessful() throws Exception {
+                UUID userId = UUID.randomUUID();
+                com.capitall.model.User mockUser = com.capitall.model.User.builder()
+                                .id(userId)
+                                .username("bob")
+                                .email("bob@example.com")
+                                .role(com.capitall.model.UserRole.USER)
+                                .build();
+                
+                com.capitall.model.Wallet mockWallet = new com.capitall.model.Wallet(userId, BigDecimal.valueOf(2500));
+                
+                when(walletService.deposit(eq(userId), eq(BigDecimal.valueOf(1000))))
+                                .thenReturn(mockWallet);
+
+                mockMvc.perform(post("/market/deposit")
+                                .with(csrf())
+                                .with(user(mockUser))
+                                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                                .param("amount", "1000"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                                .andExpect(jsonPath("$.amount").value("1000.00"))
+                                .andExpect(jsonPath("$.balance").value("2500.00"));
+        }
 }
