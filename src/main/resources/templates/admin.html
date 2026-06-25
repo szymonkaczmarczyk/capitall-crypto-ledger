@@ -299,6 +299,7 @@
                             <tr class="bg-qv-bg text-qv-muted text-[10px] font-bold uppercase tracking-wider">
                                 <th class="py-3 px-6">Nazwa Użytkownika</th>
                                 <th class="py-3 px-6">E-mail</th>
+                                <th class="py-3 px-6">Telefon</th>
                                 <th class="py-3 px-6">Rola</th>
                                 <th class="py-3 px-6">Status konta</th>
                                 <th class="py-3 px-6 text-right">Akcje</th>
@@ -313,6 +314,7 @@
                                     </div>
                                 </td>
                                 <td class="py-4 px-6 text-qv-muted" th:text="${user.email}">user@capitall.com</td>
+                                <td class="py-4 px-6 text-qv-muted" th:text="${user.phoneNumber != null ? user.phoneNumber : '—'}">—</td>
                                 <td class="py-4 px-6">
                                     <form th:action="@{/admin/user/{id}/role(id=${user.id})}" method="POST" class="flex items-center space-x-2">
                                         <select name="role" onchange="this.form.submit()" class="bg-qv-bg border border-qv-border rounded px-2 py-1 text-xs text-qv-text focus:outline-none">
@@ -326,10 +328,22 @@
                                 </td>
                                 <td class="py-4 px-6 text-right space-x-2">
 
+                                    <button type="button" data-credit-user th:attr="data-user-id=${user.id},data-username=${user.username}"
+                                            class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded text-[10px]">
+                                        Doładuj saldo
+                                    </button>
+
                                     <button type="button" data-reset-user th:attr="data-user-id=${user.id},data-username=${user.username}"
                                             class="px-3 py-1 bg-qv-bg border border-qv-border text-qv-text font-semibold rounded hover:bg-slate-50 text-[10px]">
                                         Resetuj Hasło
                                     </button>
+
+                                    <form th:action="@{/admin/user/{id}/reset-2fa(id=${user.id})}" method="POST" class="inline"
+                                          data-reset-2fa th:attr="data-username=${user.username}">
+                                        <button type="submit" class="px-3 py-1 text-[10px] font-semibold rounded bg-amber-500 hover:bg-amber-600 text-white">
+                                            Reset 2FA
+                                        </button>
+                                    </form>
 
                                     <form th:action="@{/admin/user/{id}/toggle-status(id=${user.id})}" method="POST" class="inline">
                                         <button type="submit" class="px-3 py-1 text-[10px] font-semibold rounded text-white" th:classappend="${user.enabled ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}">
@@ -362,12 +376,34 @@
             <form id="resetForm" method="POST" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-qv-text mb-1">Nowe hasło</label>
-                    <input name="newPassword" type="password" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="Minimum 6 znaków" />
+                    <input name="newPassword" type="password" required minlength="12" class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="Min. 12 znaków, A-Z, a-z, 0-9, znak specjalny" />
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
                     <button type="button" onclick="closeResetModal()" class="px-4 py-1.5 text-xs font-semibold text-qv-muted hover:text-qv-text">Anuluj</button>
                     <button type="submit" class="px-4 py-1.5 text-xs font-semibold bg-qv-accent text-white rounded shadow hover:opacity-90">Potwierdź</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="creditModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv-lg max-w-sm w-full p-6 space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-qv-border">
+                <h3 class="text-sm font-bold text-qv-text">Doładuj saldo: <span id="creditUsername" class="text-qv-accent"></span></h3>
+                <button onclick="closeCreditModal()" class="text-qv-muted hover:text-qv-text">&times;</button>
+            </div>
+
+            <form id="creditForm" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-qv-text mb-1">Kwota (USDT)</label>
+                    <input name="amount" type="number" step="0.01" min="0.01" max="1000000" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="np. 1000.00" />
+                    <p class="text-[10px] text-qv-muted mt-1">Doładowanie zostanie zapisane w portfelu użytkownika i wpisane do audit logu.</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeCreditModal()" class="px-4 py-1.5 text-xs font-semibold text-qv-muted hover:text-qv-text">Anuluj</button>
+                    <button type="submit" class="px-4 py-1.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white rounded shadow">Doładuj</button>
                 </div>
             </form>
         </div>
@@ -385,9 +421,28 @@
         document.querySelectorAll('[data-reset-user]').forEach(btn => {
             btn.addEventListener('click', () => openResetModal(btn.dataset.userId, btn.dataset.username));
         });
+
+        function openCreditModal(userId, username) {
+            document.getElementById('creditUsername').innerText = username;
+            document.getElementById('creditForm').action = '/admin/user/' + userId + '/credit-funds';
+            document.getElementById('creditModal').classList.remove('hidden');
+        }
+        function closeCreditModal() {
+            document.getElementById('creditModal').classList.add('hidden');
+        }
+        document.querySelectorAll('[data-credit-user]').forEach(btn => {
+            btn.addEventListener('click', () => openCreditModal(btn.dataset.userId, btn.dataset.username));
+        });
         document.querySelectorAll('form[data-delete-user]').forEach(f => {
             f.addEventListener('submit', e => {
                 if (!confirm('Na pewno usunąć konto ' + f.dataset.username + '? Tej operacji nie da się cofnąć.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        document.querySelectorAll('form[data-reset-2fa]').forEach(f => {
+            f.addEventListener('submit', e => {
+                if (!confirm('Zresetować 2FA użytkownika ' + f.dataset.username + '? Wyślemy mu nowy link aktywacyjny.')) {
                     e.preventDefault();
                 }
             });

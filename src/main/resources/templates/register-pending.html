@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Capitall - Sprawdź skrzynkę</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background:#0b1120; color:#f8fafc; font-family:'Inter',sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center">
+        <div class="w-14 h-14 rounded-full bg-violet-500/20 border border-violet-500/30 mx-auto mb-5 flex items-center justify-center">
+            <svg class="w-7 h-7 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold mb-3">Sprawdź swoją skrzynkę</h1>
+        <p class="text-sm text-slate-400 mb-2">Wysłaliśmy link aktywacyjny na adres:</p>
+        <p class="text-sm font-semibold text-violet-400 mb-6" th:text="${email}">user@example.com</p>
+        <p class="text-xs text-slate-500 mb-6">Link jest ważny 24 godziny. Po kliknięciu skonfigurujesz Microsoft Authenticator (weryfikacja dwuetapowa).</p>
+        <a href="/login" class="block w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-lg">Powrót do logowania</a>
+    </div>
+</body>
+</html>

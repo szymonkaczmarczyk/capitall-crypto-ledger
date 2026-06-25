@@ -113,10 +113,18 @@
             </div>
 
             <div>
+                <label class="block text-sm font-semibold text-qv-text mb-1.5 transition-colors-all">Numer telefonu</label>
+                <input th:field="*{phoneNumber}" type="tel" required
+                       class="w-full bg-qv-bg border border-qv-border rounded-lg px-4 py-3 text-qv-text focus:bg-qv-surface focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all shadow-sm"
+                       placeholder="+48 600 000 000" />
+                <p th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="text-xs text-red-500 mt-1"></p>
+            </div>
+
+            <div>
                 <label class="block text-sm font-semibold text-qv-text mb-1.5 transition-colors-all">Zabezpieczenie konta (Hasło)</label>
                 <input th:field="*{password}" type="password" required
                        class="w-full bg-qv-bg border border-qv-border rounded-lg px-4 py-3 text-qv-text focus:bg-qv-surface focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all shadow-sm"
-                       placeholder="Minimum 6 znaków" />
+                       placeholder="Min. 12 znaków, A-Z, a-z, 0-9, znak specjalny" />
                 <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-xs text-red-500 mt-1"></p>
             </div>
 

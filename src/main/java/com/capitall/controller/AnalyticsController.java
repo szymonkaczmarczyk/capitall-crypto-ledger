@@ -4,6 +4,7 @@ import com.capitall.dto.DashboardStatsResponse;
 import com.capitall.dto.PnLPoint;
 import com.capitall.service.AnalyticsService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/analytics")
+@PreAuthorize("isAuthenticated()")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;

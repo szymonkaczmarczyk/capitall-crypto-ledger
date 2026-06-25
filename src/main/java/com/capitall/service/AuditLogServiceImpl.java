@@ -25,7 +25,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 .userId(userId)
                 .username(username)
                 .action(action)
-                .ipAddress(ipAddress != null ? ipAddress : "127.0.0.1")
+                .ipAddress(ipAddress != null && !ipAddress.isBlank() ? ipAddress : "unknown")
                 .timestamp(LocalDateTime.now())
                 .build();
         auditLogRepository.save(log);

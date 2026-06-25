@@ -101,6 +101,10 @@ public class CapitalPoolServiceImpl implements CapitalPoolService {
         BigDecimal currentBalance = pool.getBalance();
         BigDecimal amount = request.amount();
 
+        if (amount == null || amount.signum() <= 0) {
+            throw new BusinessRuleException("Amount must be a positive value");
+        }
+
         switch (request.operation()) {
             case DEPOSIT -> pool.setBalance(currentBalance.add(amount));
             case WITHDRAW -> {

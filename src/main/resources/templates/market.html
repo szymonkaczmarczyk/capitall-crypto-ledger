@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
     <title>Capitall - Rynek</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -483,6 +485,14 @@
         ];
         const PAIR_MAP = Object.fromEntries(ASSETS.map(a => [a.pair, a]));
 
+        const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+        const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+        function csrfHeaders(extra) {
+            const h = Object.assign({}, extra || {});
+            if (CSRF_TOKEN) h[CSRF_HEADER] = CSRF_TOKEN;
+            return h;
+        }
+
         const BINANCE_HOSTS = ['https://api.binance.com', 'https://api1.binance.com', 'https://data-api.binance.vision'];
         async function binanceFetch(path) {
             let lastErr;
@@ -817,7 +827,7 @@
             btn.disabled = true; btn.textContent = 'Wykonywanie zlecenia…';
             try {
                 const params = new URLSearchParams({ symbol: activeCoin.sym, price: activeCoin.price, usdAmount: amt, orderType });
-                const res = await fetch('/market/buy', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+                const res = await fetch('/market/buy', { method: 'POST', credentials: 'same-origin', headers: csrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }), body: params });
                 const data = await res.json();
                 if (data.status === 'FILLED') {
                     document.getElementById('bmForm').classList.add('hidden');
@@ -918,7 +928,7 @@
             btn.disabled = true; btn.textContent = 'Sprzedaję…';
             try {
                 const params = new URLSearchParams({ symbol: activeSell.sym, price: activeSell.price, coinAmount: coins });
-                const res = await fetch('/market/sell', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+                const res = await fetch('/market/sell', { method: 'POST', credentials: 'same-origin', headers: csrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }), body: params });
                 const data = await res.json();
                 if (data.status === 'FILLED') {
                     document.getElementById('smForm').classList.add('hidden');
@@ -977,7 +987,8 @@
                 const params = new URLSearchParams({ amount: amt });
                 const res = await fetch('/market/deposit', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    credentials: 'same-origin',
+                    headers: csrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
                     body: params
                 });
                 const data = await res.json();

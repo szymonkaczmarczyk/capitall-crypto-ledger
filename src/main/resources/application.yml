@@ -4,12 +4,14 @@ spring:
   datasource:
     url: jdbc:h2:file:./data/capitalldb;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
   h2:
     console:
-      enabled: true
+      enabled: ${H2_CONSOLE_ENABLED:false}
       path: /h2-console
+      settings:
+        web-allow-others: false
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -18,11 +20,24 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   error:
-    include-message: always
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
 
 logging:
   level:
@@ -33,4 +48,12 @@ logging:
 
 capitall:
   encryption:
-    secret-key: "qV_sUpEr_sEcReT_kEy_fOr_aEs_256!" # 32 bytes key for AES-256
+    # NEVER commit a real key. Override with env var CAPITALL_ENCRYPTION_KEY in production.
+    secret-key: ${CAPITALL_ENCRYPTION_KEY:qV_sUpEr_sEcReT_kEy_fOr_aEs_256!}
+  security:
+    # Default admin auto-provisioned only when no users exist; password MUST be overridden via env in production.
+    default-admin-password: ${CAPITALL_DEFAULT_ADMIN_PASSWORD:}
+  mail:
+    from: ${MAIL_FROM:noreply@capitall.example}
+  app:
+    base-url: ${APP_BASE_URL:http://localhost:8080}

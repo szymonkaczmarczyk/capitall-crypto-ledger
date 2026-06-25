@@ -43,6 +43,12 @@ public class WalletService {
         );
     }
 
+    private Wallet lockWallet(UUID userId) {
+        return walletRepository.findByUserIdForUpdate(userId).orElseGet(() ->
+                walletRepository.save(new Wallet(userId, DEFAULT_BALANCE))
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<Holding> getHoldings(UUID userId) {
         return holdingRepository.findByUserId(userId);
@@ -57,7 +63,7 @@ public class WalletService {
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Nieprawidłowa cena rynkowa.");
 
-        Wallet wallet = getOrCreate(userId);
+        Wallet wallet = lockWallet(userId);
         BigDecimal fee = usdAmount.multiply(FEE_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = usdAmount.add(fee);
         if (wallet.getUsdBalance().compareTo(total) < 0) {
@@ -114,7 +120,7 @@ public class WalletService {
         BigDecimal avgCost = holding.getAvgCost();
         BigDecimal realizedPnl = price.subtract(avgCost).multiply(coinAmount).setScale(8, RoundingMode.HALF_UP);
 
-        Wallet wallet = getOrCreate(userId);
+        Wallet wallet = lockWallet(userId);
         wallet.setUsdBalance(wallet.getUsdBalance().add(net).setScale(2, RoundingMode.HALF_UP));
         walletRepository.save(wallet);
 
@@ -146,7 +152,7 @@ public class WalletService {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Kwota doładowania musi być większa od zera.");
         }
-        Wallet wallet = getOrCreate(userId);
+        Wallet wallet = lockWallet(userId);
         wallet.setUsdBalance(wallet.getUsdBalance().add(amount).setScale(2, RoundingMode.HALF_UP));
         return walletRepository.save(wallet);
     }

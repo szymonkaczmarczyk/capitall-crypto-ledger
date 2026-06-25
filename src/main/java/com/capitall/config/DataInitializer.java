@@ -3,14 +3,21 @@ package com.capitall.config;
 import com.capitall.model.User;
 import com.capitall.model.UserRole;
 import com.capitall.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.UUID;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -18,7 +25,10 @@ public class DataInitializer implements CommandLineRunner {
     private final com.capitall.repository.AllocationRepository allocationRepository;
     private final com.capitall.service.ApiSecretsEncryptor apiSecretsEncryptor;
 
-    public DataInitializer(UserRepository userRepository, 
+    @Value("${capitall.security.default-admin-password:}")
+    private String configuredAdminPassword;
+
+    public DataInitializer(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            com.capitall.repository.ExchangeAccountRepository exchangeAccountRepository,
                            com.capitall.repository.AllocationRepository allocationRepository,
@@ -33,8 +43,12 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        User admin = createUserIfNotExists("admin", "admin@capitall.com", "admin", UserRole.ADMIN);
-        ensureAdminCredentials(admin, "admin");
+        boolean adminExists = userRepository.findByUsername("admin").isPresent();
+        String adminPassword = adminExists ? null : resolveAdminPassword();
+        User admin = adminExists
+                ? userRepository.findByUsername("admin").orElseThrow()
+                : createUserIfNotExists("admin", "admin@capitall.com", adminPassword, UserRole.ADMIN);
+        ensureAdminEnabled(admin);
         User jankowalski = createUserIfNotExists("jankowalski", "jan.kowalski@example.pl", "test123", UserRole.USER);
         User pnowak = createUserIfNotExists("pnowak", "piotr.nowak@example.pl", "test123", UserRole.USER);
         User mwisniewska = createUserIfNotExists("mwisniewska", "magda.wisniewska@example.pl", "test123", UserRole.USER);
@@ -66,14 +80,28 @@ public class DataInitializer implements CommandLineRunner {
         );
     }
 
-    private void ensureAdminCredentials(User admin, String desiredPassword) {
+    private String resolveAdminPassword() {
+        if (configuredAdminPassword != null && !configuredAdminPassword.isBlank()) {
+            return configuredAdminPassword;
+        }
+        // No env-provided password: generate a one-time random one printed to logs.
+        // The previous default ("admin") was a hardcoded backdoor and is removed.
+        byte[] buf = new byte[18];
+        new SecureRandom().nextBytes(buf);
+        String generated = Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
+        log.warn("==========================================================================");
+        log.warn("CAPITALL_DEFAULT_ADMIN_PASSWORD not set. Generated one-time admin password:");
+        log.warn("  username: admin");
+        log.warn("  password: {}", generated);
+        log.warn("Save it now and rotate after first login.");
+        log.warn("==========================================================================");
+        return generated;
+    }
+
+    private void ensureAdminEnabled(User admin) {
         boolean dirty = false;
         if (admin.getRole() != UserRole.ADMIN) { admin.setRole(UserRole.ADMIN); dirty = true; }
         if (!admin.isEnabled()) { admin.setEnabled(true); dirty = true; }
-        if (!passwordEncoder.matches(desiredPassword, admin.getPassword())) {
-            admin.setPassword(passwordEncoder.encode(desiredPassword));
-            dirty = true;
-        }
         if (dirty) userRepository.save(admin);
     }
 

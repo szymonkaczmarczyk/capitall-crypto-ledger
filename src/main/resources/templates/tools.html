@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
     <title>Capitall - Narzędzia inwestorskie</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -195,11 +197,15 @@
     </main>
 
     <script>
+        const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+        const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+        const csrfInit = (extra) => ({ method: 'POST', credentials: 'same-origin', headers: Object.assign({ [CSRF_HEADER]: CSRF_TOKEN }, extra || {}) });
+
         function calculateRebalance() {
             const amount = document.getElementById('rebalanceInput').value;
             if(!amount || amount <= 0) return;
 
-            fetch('/tools/rebalance?amount=' + amount, { method: 'POST' })
+            fetch('/tools/rebalance?amount=' + amount, csrfInit())
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('resBinance').innerText = '$' + parseFloat(data.binance).toLocaleString(undefined, {minimumFractionDigits: 2});
@@ -215,7 +221,7 @@
             btn.disabled = true;
             btn.innerText = 'Testowanie...';
 
-            fetch('/tools/test-api', { method: 'POST' })
+            fetch('/tools/test-api', csrfInit())
                 .then(res => res.json())
                 .then(data => {
                     resBox.innerText = data.message;

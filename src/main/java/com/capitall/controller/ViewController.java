@@ -11,6 +11,7 @@ import com.capitall.service.UserService;
 import com.capitall.service.AllocationService;
 import com.capitall.dto.AllocationDto;
 import com.capitall.dto.CreateAllocationRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -40,6 +41,9 @@ public class ViewController {
     private final com.capitall.service.WalletService walletService;
     private final com.capitall.service.EquitySnapshotter equitySnapshotter;
     private final com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository;
+    private final org.springframework.security.web.context.SecurityContextRepository securityContextRepository;
+    private final com.capitall.service.EmailService emailService;
+    private final com.capitall.service.TotpService totpService;
 
     public ViewController(ExchangeAccountService exchangeAccountService,
                           AnalyticsService analyticsService,
@@ -55,7 +59,10 @@ public class ViewController {
                           com.capitall.config.MaintenanceModeState maintenanceModeState,
                           com.capitall.service.WalletService walletService,
                           com.capitall.service.EquitySnapshotter equitySnapshotter,
-                          com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository) {
+                          com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository,
+                          org.springframework.security.web.context.SecurityContextRepository securityContextRepository,
+                          com.capitall.service.EmailService emailService,
+                          com.capitall.service.TotpService totpService) {
         this.exchangeAccountService = exchangeAccountService;
         this.analyticsService = analyticsService;
         this.userService = userService;
@@ -71,6 +78,9 @@ public class ViewController {
         this.walletService = walletService;
         this.equitySnapshotter = equitySnapshotter;
         this.equitySnapshotRepository = equitySnapshotRepository;
+        this.securityContextRepository = securityContextRepository;
+        this.emailService = emailService;
+        this.totpService = totpService;
     }
 
     @GetMapping("/")
@@ -94,22 +104,150 @@ public class ViewController {
         if (principal != null) {
             return "redirect:/dashboard";
         }
-        model.addAttribute("registerForm", new com.capitall.dto.RegisterRequest("", "", ""));
+        model.addAttribute("registerForm", new com.capitall.dto.RegisterRequest("", "", "", ""));
         return "register";
     }
 
     @PostMapping("/register")
-    public String processRegistration(@Valid @ModelAttribute("registerForm") com.capitall.dto.RegisterRequest request, BindingResult result, Model model) {
+    public String processRegistration(@Valid @ModelAttribute("registerForm") com.capitall.dto.RegisterRequest request,
+                                      BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "register";
         }
         try {
             userService.registerUser(request);
-            return "redirect:/?registered=true";
+            com.capitall.model.User newUser = userRepository.findByUsername(request.username()).orElseThrow();
+            emailService.sendActivationEmail(newUser.getEmail(), newUser.getActivationToken());
+            model.addAttribute("email", newUser.getEmail());
+            return "register-pending";
         } catch (Exception e) {
             model.addAttribute("error", "Email jest już zajęty lub wystąpił błąd.");
             return "register";
         }
+    }
+
+    @GetMapping("/activate")
+    public String activateAccount(@RequestParam String token, Model model) {
+        com.capitall.model.User user = userRepository.findByActivationToken(token).orElse(null);
+        if (user == null
+                || user.getActivationTokenExpires() == null
+                || user.getActivationTokenExpires().isBefore(java.time.LocalDateTime.now())) {
+            model.addAttribute("error", "Link aktywacyjny jest nieprawidłowy lub wygasł. Skontaktuj się z supportem.");
+            return "activation-failed";
+        }
+        if (!user.isEmailVerified()) {
+            user.setEmailVerified(true);
+            userRepository.save(user);
+        }
+        if (user.isTotpEnabled()) {
+            return "redirect:/login?activated=true";
+        }
+        if (user.getTotpSecret() == null) {
+            user.setTotpSecret(totpService.generateSecret());
+            userRepository.save(user);
+        }
+        model.addAttribute("qrDataUri", totpService.buildQrDataUri(user.getTotpSecret(), user.getEmail()));
+        model.addAttribute("secret", user.getTotpSecret());
+        model.addAttribute("token", token);
+        return "setup-2fa";
+    }
+
+    @PostMapping("/setup-2fa")
+    public String confirmTotpSetup(@RequestParam String token,
+                                   @RequestParam String code,
+                                   Model model,
+                                   HttpServletRequest httpRequest,
+                                   jakarta.servlet.http.HttpServletResponse httpResponse) {
+        com.capitall.model.User user = userRepository.findByActivationToken(token).orElse(null);
+        if (user == null
+                || user.getActivationTokenExpires() == null
+                || user.getActivationTokenExpires().isBefore(java.time.LocalDateTime.now())) {
+            model.addAttribute("error", "Token aktywacyjny wygasł.");
+            return "activation-failed";
+        }
+        if (!totpService.verify(user.getTotpSecret(), code)) {
+            model.addAttribute("error", "Kod TOTP jest nieprawidłowy. Spróbuj ponownie.");
+            model.addAttribute("qrDataUri", totpService.buildQrDataUri(user.getTotpSecret(), user.getEmail()));
+            model.addAttribute("secret", user.getTotpSecret());
+            model.addAttribute("token", token);
+            return "setup-2fa";
+        }
+        user.setTotpEnabled(true);
+        user.setEnabled(true);
+        user.setActivationToken(null);
+        user.setActivationTokenExpires(null);
+        userRepository.save(user);
+
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        user, null, user.getAuthorities());
+        org.springframework.security.core.context.SecurityContext context =
+                org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+        return "redirect:/dashboard";
+    }
+
+    @GetMapping("/login/2fa")
+    public String show2faChallenge(jakarta.servlet.http.HttpSession session, Model model) {
+        Object pre = session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+        if (pre == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("username", session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
+        return "login-2fa";
+    }
+
+    @PostMapping("/login/2fa")
+    public String process2faChallenge(@RequestParam String code,
+                                      jakarta.servlet.http.HttpSession session,
+                                      HttpServletRequest httpRequest,
+                                      jakarta.servlet.http.HttpServletResponse httpResponse,
+                                      Model model) {
+        Object preIdObj = session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+        if (preIdObj == null) {
+            return "redirect:/login";
+        }
+        UUID userId;
+        try {
+            userId = UUID.fromString(preIdObj.toString());
+        } catch (IllegalArgumentException e) {
+            session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+            return "redirect:/login";
+        }
+        com.capitall.model.User user = userRepository.findById(userId).orElse(null);
+        if (user == null || !user.isTotpEnabled() || user.getTotpSecret() == null) {
+            session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+            return "redirect:/login";
+        }
+        if (!totpService.verify(user.getTotpSecret(), code)) {
+            model.addAttribute("error", "Kod jest nieprawidłowy. Spróbuj ponownie.");
+            model.addAttribute("username", session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
+            auditLogService.log(user.getId(), user.getUsername(), "2FA: nieudana próba weryfikacji kodu",
+                    com.capitall.security.ClientIpResolver.resolve(httpRequest));
+            return "login-2fa";
+        }
+
+        session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+        session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME);
+
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        user, null, user.getAuthorities());
+        org.springframework.security.core.context.SecurityContext context =
+                org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+        auditLogService.log(user.getId(), user.getUsername(), "Zalogowano (2FA OK)",
+                com.capitall.security.ClientIpResolver.resolve(httpRequest));
+        return "redirect:/dashboard";
+    }
+
+    @GetMapping("/login/2fa/help")
+    public String show2faHelp() {
+        return "login-2fa-help";
     }
 
     @GetMapping("/dashboard")
@@ -388,7 +526,8 @@ public class ViewController {
             @RequestParam java.math.BigDecimal price,
             @RequestParam java.math.BigDecimal usdAmount,
             @RequestParam(required = false, defaultValue = "MARKET") String orderType,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
+            HttpServletRequest request) {
         try {
             com.capitall.service.WalletService.TradeResult r = walletService.buy(user.getId(), symbol, price, usdAmount);
             String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -397,7 +536,7 @@ public class ViewController {
                     r.coinAmount().stripTrailingZeros().toPlainString(), symbol,
                     price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     r.fee().toPlainString(), orderId);
-            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
             try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
             return java.util.Map.of(
                     "status", "FILLED",
@@ -422,7 +561,8 @@ public class ViewController {
             @RequestParam String symbol,
             @RequestParam java.math.BigDecimal price,
             @RequestParam java.math.BigDecimal coinAmount,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
+            HttpServletRequest request) {
         try {
             com.capitall.service.WalletService.TradeResult r = walletService.sell(user.getId(), symbol, price, coinAmount);
             String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -433,7 +573,7 @@ public class ViewController {
                     price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     gross.subtract(r.fee()).toPlainString(),
                     r.fee().toPlainString(), orderId);
-            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
             try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
             return java.util.Map.of(
                     "status", "FILLED",
@@ -456,12 +596,13 @@ public class ViewController {
     @ResponseBody
     public java.util.Map<String, Object> depositFunds(
             @RequestParam java.math.BigDecimal amount,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
+            HttpServletRequest request) {
         try {
             com.capitall.model.Wallet wallet = walletService.deposit(user.getId(), amount);
             String action = String.format("DEPOSIT: Doładowano konto kwotą $%s",
                     amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
-            auditLogService.log(user.getId(), user.getUsername(), action, "127.0.0.1");
+            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
             try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
             return java.util.Map.of(
                     "status", "SUCCESS",
@@ -476,9 +617,10 @@ public class ViewController {
 
     @PostMapping("/tools/test-api")
     @ResponseBody
-    public java.util.Map<String, String> testApiKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public java.util.Map<String, String> testApiKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
+                                                     HttpServletRequest request) {
         long ping = 25 + (long)(Math.random() * 40);
-        auditLogService.log(user.getId(), user.getUsername(), "Przetestowano połączenie API (Status: Sukces, Ping: " + ping + "ms)", "127.0.0.1");
+        auditLogService.log(user.getId(), user.getUsername(), "Przetestowano połączenie API (Status: Sukces, Ping: " + ping + "ms)", com.capitall.security.ClientIpResolver.resolve(request));
         return java.util.Map.of("status", "SUCCESS", "message", "Klucze poprawne (Ping: " + ping + "ms)");
     }
 
@@ -503,13 +645,15 @@ public class ViewController {
             @RequestParam String newPassword,
             @RequestParam String confirmPassword,
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
-            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Nowe hasła nie są identyczne.");
             return "redirect:/settings";
         }
-        if (newPassword.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Nowe hasło musi mieć co najmniej 6 znaków.");
+        String policyError = com.capitall.security.PasswordPolicy.validate(newPassword);
+        if (policyError != null) {
+            redirectAttributes.addFlashAttribute("error", policyError);
             return "redirect:/settings";
         }
 
@@ -521,7 +665,7 @@ public class ViewController {
 
         dbUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(dbUser);
-        auditLogService.log(user.getId(), user.getUsername(), "Zmieniono hasło użytkownika", "127.0.0.1");
+        auditLogService.log(user.getId(), user.getUsername(), "Zmieniono hasło użytkownika", com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Hasło zostało pomyślnie zmienione.");
         return "redirect:/settings";
     }
@@ -540,22 +684,31 @@ public class ViewController {
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/role")
-    public String changeUserRole(@PathVariable UUID id, @RequestParam com.capitall.model.UserRole role, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin) {
+    public String changeUserRole(@PathVariable UUID id, @RequestParam com.capitall.model.UserRole role,
+                                 @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+                                 org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+                                 HttpServletRequest request) {
+        if (id.equals(admin.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Nie możesz zmienić własnej roli.");
+            return "redirect:/admin";
+        }
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setRole(role);
         userRepository.save(user);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Zmieniono rolę użytkownika " + user.getUsername() + " na " + role, "127.0.0.1");
+        auditLogService.log(admin.getId(), admin.getUsername(), "Zmieniono rolę użytkownika " + user.getUsername() + " na " + role, com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/toggle-status")
-    public String toggleUserStatus(@PathVariable UUID id, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin) {
+    public String toggleUserStatus(@PathVariable UUID id,
+                                   @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+                                   HttpServletRequest request) {
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setEnabled(!user.isEnabled());
         userRepository.save(user);
         String action = user.isEnabled() ? "Aktywowano" : "Zablokowano";
-        auditLogService.log(admin.getId(), admin.getUsername(), action + " konto użytkownika " + user.getUsername(), "127.0.0.1");
+        auditLogService.log(admin.getId(), admin.getUsername(), action + " konto użytkownika " + user.getUsername(), com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
@@ -564,7 +717,8 @@ public class ViewController {
     @org.springframework.transaction.annotation.Transactional
     public String deleteUser(@PathVariable UUID id,
                              @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+                             HttpServletRequest request) {
         if (id.equals(admin.getId())) {
             redirectAttributes.addFlashAttribute("error", "Nie możesz usunąć własnego konta.");
             return "redirect:/admin";
@@ -579,46 +733,103 @@ public class ViewController {
         holdingRepository.deleteAll(holdingRepository.findByUserId(id));
         walletRepository.findByUserId(id).ifPresent(walletRepository::delete);
         userRepository.delete(target);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Usunięto konto użytkownika " + username, "127.0.0.1");
+        auditLogService.log(admin.getId(), admin.getUsername(), "Usunięto konto użytkownika " + username, com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Usunięto konto " + username + ".");
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/reset-password")
-    public String resetUserPassword(@PathVariable UUID id, @RequestParam String newPassword, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        if (newPassword.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Hasło musi mieć co najmniej 6 znaków.");
+    public String resetUserPassword(@PathVariable UUID id, @RequestParam String newPassword, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        String policyError = com.capitall.security.PasswordPolicy.validate(newPassword);
+        if (policyError != null) {
+            redirectAttributes.addFlashAttribute("error", policyError);
             return "redirect:/admin";
         }
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Zresetowano hasło dla użytkownika " + user.getUsername(), "127.0.0.1");
+        auditLogService.log(admin.getId(), admin.getUsername(), "Zresetowano hasło dla użytkownika " + user.getUsername(), com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Zresetowano hasło dla " + user.getUsername());
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/user/{id}/credit-funds")
+    public String creditUserFunds(@PathVariable UUID id,
+                                  @RequestParam BigDecimal amount,
+                                  @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+                                  HttpServletRequest request) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Kwota doładowania musi być większa od zera.");
+            return "redirect:/admin";
+        }
+        if (amount.compareTo(new BigDecimal("1000000")) > 0) {
+            redirectAttributes.addFlashAttribute("error", "Kwota doładowania przekracza dopuszczalny limit (1 000 000).");
+            return "redirect:/admin";
+        }
+        com.capitall.model.User target = userRepository.findById(id).orElse(null);
+        if (target == null) {
+            redirectAttributes.addFlashAttribute("error", "Użytkownik nie istnieje.");
+            return "redirect:/admin";
+        }
+        walletService.deposit(target.getId(), amount);
+        auditLogService.log(admin.getId(), admin.getUsername(),
+                "Doładowano saldo użytkownika " + target.getUsername() + " kwotą " + amount,
+                com.capitall.security.ClientIpResolver.resolve(request));
+        redirectAttributes.addFlashAttribute("success",
+                "Doładowano saldo " + target.getUsername() + " o " + amount);
+        return "redirect:/admin";
+    }
+
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/user/{id}/reset-2fa")
+    public String resetUser2fa(@PathVariable UUID id,
+                               @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+                               org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+                               HttpServletRequest request) {
+        com.capitall.model.User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "Użytkownik nie istnieje.");
+            return "redirect:/admin";
+        }
+        user.setTotpEnabled(false);
+        user.setTotpSecret(null);
+        String newToken = java.util.UUID.randomUUID().toString().replace("-", "")
+                + java.util.UUID.randomUUID().toString().replace("-", "");
+        user.setActivationToken(newToken);
+        user.setActivationTokenExpires(java.time.LocalDateTime.now().plusHours(24));
+        userRepository.save(user);
+        emailService.sendActivationEmail(user.getEmail(), newToken);
+        auditLogService.log(admin.getId(), admin.getUsername(),
+                "Zresetowano 2FA dla użytkownika " + user.getUsername() + " (wysłano nowy link aktywacyjny)",
+                com.capitall.security.ClientIpResolver.resolve(request));
+        redirectAttributes.addFlashAttribute("success",
+                "Zresetowano 2FA dla " + user.getUsername() + ". Wysłano nowy link aktywacyjny na " + user.getEmail() + ".");
+        return "redirect:/admin";
+    }
+
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/maintenance")
-    public String toggleMaintenanceMode(@RequestParam boolean active, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin) {
+    public String toggleMaintenanceMode(@RequestParam boolean active, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, HttpServletRequest request) {
         maintenanceModeState.setMaintenanceMode(active);
-        auditLogService.log(admin.getId(), admin.getUsername(), (active ? "Włączono" : "Wyłączono") + " tryb przerwy technicznej", "127.0.0.1");
+        auditLogService.log(admin.getId(), admin.getUsername(), (active ? "Włączono" : "Wyłączono") + " tryb przerwy technicznej", com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/clear-cache")
-    public String clearCache(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        auditLogService.log(admin.getId(), admin.getUsername(), "Wyczyszczono pamięć podręczną systemu", "127.0.0.1");
+    public String clearCache(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        auditLogService.log(admin.getId(), admin.getUsername(), "Wyczyszczono pamięć podręczną systemu", com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Pamięć podręczna systemu została wyczyszczona.");
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/rotate-keys")
-    public String rotateKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        auditLogService.log(admin.getId(), admin.getUsername(), "Rozpoczęto rotację kluczy szyfrujących API", "127.0.0.1");
+    public String rotateKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        auditLogService.log(admin.getId(), admin.getUsername(), "Rozpoczęto rotację kluczy szyfrujących API", com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Rotacja kluczy szyfrujących przebiegła pomyślnie (AES-GCM-256).");
         return "redirect:/admin";
     }

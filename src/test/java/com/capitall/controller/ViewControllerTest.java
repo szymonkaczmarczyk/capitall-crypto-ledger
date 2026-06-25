@@ -85,12 +85,21 @@ class ViewControllerTest {
         @MockBean
         private com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository;
 
+        @MockBean
+        private org.springframework.security.web.context.SecurityContextRepository securityContextRepository;
+
+        @MockBean
+        private com.capitall.service.EmailService emailService;
+
+        @MockBean
+        private com.capitall.service.TotpService totpService;
+
         @Test
         void dashboard_ShouldPopulateStatsAndRenderView() throws Exception {
                 DashboardStatsResponse stats = new DashboardStatsResponse(
                                 BigDecimal.valueOf(150000), Map.of("BINANCE", 100.0));
                 UUID userId = UUID.randomUUID();
-                UserDto user = new UserDto(userId, "bob", "bob@example.com", UserRole.USER, true);
+                UserDto user = new UserDto(userId, "bob", "bob@example.com", "+48 600 000 000", UserRole.USER, true);
 
                 when(analyticsService.getDashboardStats()).thenReturn(stats);
                 when(userService.getAllUsers()).thenReturn(List.of(user));

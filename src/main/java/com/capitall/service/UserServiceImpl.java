@@ -50,12 +50,19 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException("Email " + request.email() + " is already in use");
         }
 
+        String activationToken = java.util.UUID.randomUUID().toString().replace("-", "")
+                + java.util.UUID.randomUUID().toString().replace("-", "");
+
         User user = User.builder()
                 .username(request.username())
                 .email(request.email())
+                .phoneNumber(normalizePhone(request.phoneNumber()))
                 .password(passwordEncoder.encode(request.password()))
                 .role(com.capitall.model.UserRole.USER)
+                .enabled(false)
                 .build();
+        user.setActivationToken(activationToken);
+        user.setActivationTokenExpires(java.time.LocalDateTime.now().plusHours(24));
 
         User savedUser = userRepository.save(user);
         return mapToDto(savedUser);
@@ -89,8 +96,15 @@ public class UserServiceImpl implements UserService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getPhoneNumber(),
                 user.getRole(),
                 user.isEnabled()
         );
+    }
+
+    private String normalizePhone(String raw) {
+        if (raw == null) return null;
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
