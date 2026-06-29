@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitall - Wirtualny kantor</title>
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        qv: {
+                            bg: 'var(--qv-bg)',
+                            surface: 'var(--qv-surface)',
+                            border: 'var(--qv-border)',
+                            text: 'var(--qv-text)',
+                            muted: 'var(--qv-muted)',
+                            accent: 'var(--qv-accent)'
+                        }
+                    },
+                    boxShadow: { 'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1)', 'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --qv-bg: #e7ecf3;
+            --qv-surface: #ffffff;
+            --qv-border: #94a3b8;
+            --qv-text: #0a0f1e;
+            --qv-muted: #334155;
+            --qv-accent: #5b21b6;
+        }
+
+        .dark {
+            --qv-bg: #0b1120;
+            --qv-surface: #1e293b;
+            --qv-border: #334155;
+            --qv-text: #f8fafc;
+            --qv-muted: #94a3b8;
+            --qv-accent: #8b5cf6;
+        }
+
+        body {
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .transition-colors-all {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 400ms;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+
+        .live-dot {
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+
+        .modal-backdrop {
+            transition: opacity 0.25s ease-in-out;
+            opacity: 0;
+        }
+
+        .modal-backdrop.modal-open {
+            opacity: 1;
+        }
+
+        .modal-card {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease-in-out;
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        .modal-open .modal-card {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+    </script>
+</head>
+
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-qv-surface border-r border-qv-border flex flex-col hidden md:flex transition-colors-all">
+        <div class="h-16 flex items-center px-6 border-b border-qv-border">
+            <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
+            <span class="font-bold text-lg text-qv-text transition-colors-all">Capitall</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-1">
+            <a href="/dashboard"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                </svg>
+                Dashboard
+            </a>
+            <a href="/market"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3v18h18M7 14l4-4 4 4 6-6" />
+                </svg>
+                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
+            </a>
+            <a sec:authorize="hasRole('ADMIN')" href="/allocations"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Alokacje
+            </a>
+            <a href="/assets"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" />
+                </svg>
+                Aktywa
+            </a>
+            <a href="/securities"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Papiery wartościowe
+            </a>
+            <a href="/exchange"
+                class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Wirtualny kantor
+            </a>
+            <a href="/alerts"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Alerty cenowe
+            </a>
+            <a href="/tools"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                </svg>
+                Narzędzia
+            </a>
+            <a href="/settings"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Ustawienia
+            </a>
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin"
+                class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Administracja
+            </a>
+        </nav>
+        <div class="p-4 border-t border-qv-border">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                    class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Wyloguj się
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header
+            class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <h2 class="text-lg font-bold text-qv-text transition-colors-all">Wirtualny kantor walutowy</h2>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-qv-bg border border-qv-border flex items-center justify-center text-qv-text font-bold text-xs transition-colors-all"
+                        th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
+                    <span class="text-sm font-medium text-qv-text transition-colors-all"
+                        th:text="${traderName}">Użytkownik</span>
+                </div>
+                <button onclick="toggleTheme()"
+                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    title="Przełącz motyw">
+                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+
+            <!-- Dynamic Notification Modal -->
+            <div id="notificationModal" th:if="${successMessage != null || errorMessage != null}"
+                 class="fixed inset-0 z-50 flex modal-backdrop bg-slate-900/60 items-center justify-center p-4">
+                <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-sm w-full p-6 text-center space-y-4">
+                    <!-- Icon -->
+                    <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold"
+                         th:classappend="${successMessage != null ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">
+                        <span th:text="${successMessage != null ? '✓' : '✕'}">✓</span>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="space-y-1">
+                        <h4 class="text-base font-bold text-qv-text" 
+                            th:text="${successMessage != null ? 'Operacja udana' : 'Błąd operacji'}">Status</h4>
+                        <p class="text-sm text-qv-muted leading-relaxed" 
+                           th:text="${successMessage != null ? successMessage : errorMessage}">Opis operacji...</p>
+                    </div>
+
+                    <!-- Close Button -->
+                    <button onclick="closeNotificationModal()"
+                            class="w-full py-2.5 bg-qv-accent hover:opacity-90 text-white text-sm font-bold rounded-md transition-all shadow-sm">
+                        Zamknij
+                    </button>
+                </div>
+            </div>
+
+            <!-- Currency Balances Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
+                    <p class="text-xs font-semibold text-red-500 mb-1">Saldo PLN</p>
+                    <h3 class="text-2xl font-bold text-qv-text" id="plnBalanceLabel" th:text="${#numbers.formatDecimal(wallet.plnBalance, 1, 'COMMA', 2, 'POINT') + ' PLN'}">0.00 PLN</h3>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1">Polski Złoty</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
+                    <p class="text-xs font-semibold text-green-500 mb-1">Saldo USD</p>
+                    <h3 class="text-2xl font-bold text-qv-text" id="usdBalanceLabel" th:text="${'$' + #numbers.formatDecimal(wallet.usdBalance, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1">Dolar Amerykański</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
+                    <p class="text-xs font-semibold text-blue-500 mb-1">Saldo EUR</p>
+                    <h3 class="text-2xl font-bold text-qv-text" id="eurBalanceLabel" th:text="${#numbers.formatDecimal(wallet.eurBalance, 1, 'COMMA', 2, 'POINT') + ' EUR'}">0.00 EUR</h3>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1">Euro</p>
+                </div>
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
+                    <p class="text-xs font-semibold text-yellow-600 mb-1">Saldo GBP</p>
+                    <h3 class="text-2xl font-bold text-qv-text" id="gbpBalanceLabel" th:text="${#numbers.formatDecimal(wallet.gbpBalance, 1, 'COMMA', 2, 'POINT') + ' GBP'}">0.00 GBP</h3>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1">Funt Brytyjski</p>
+                </div>
+            </div>
+
+            <!-- Exchange & Banking Simulator Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Exchange Bureau Form -->
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 lg:col-span-2 transition-colors-all flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-qv-text mb-4">Wymiana Walutowa</h3>
+                        <form th:action="@{/exchange/convert}" method="post" class="space-y-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta źródłowa</label>
+                                    <select id="fromCurrency" name="from" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="calculateExchangeResult()">
+                                        <option value="PLN">PLN</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta docelowa</label>
+                                    <select id="toCurrency" name="to" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="calculateExchangeResult()">
+                                        <option value="USD" selected>USD</option>
+                                        <option value="PLN">PLN</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-muted mb-1">Kwota do sprzedaży</label>
+                                <input type="number" step="0.01" id="exchangeAmount" name="amount" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" oninput="calculateExchangeResult()">
+                            </div>
+
+                            <!-- Live Estimation display -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-qv-bg border border-qv-border rounded-lg p-6 text-center flex flex-col justify-center">
+                                    <span class="block text-xs font-semibold text-qv-muted uppercase tracking-wider mb-1.5">Kurs Wymiany</span>
+                                    <span id="exchangeRateEst" class="text-base font-bold text-qv-text tracking-wide">0.00</span>
+                                </div>
+                                <div class="bg-qv-accent/10 border border-qv-accent/30 rounded-lg p-6 text-center flex flex-col justify-center">
+                                    <span class="block text-xs font-semibold text-qv-accent uppercase tracking-wider mb-1.5">Szacowany Wynik</span>
+                                    <span id="exchangeResultEst" class="text-xl font-black text-qv-accent tracking-wide">0.00</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-3.5 bg-qv-accent text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
+                                Wykonaj wymianę
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Transaction details footer -->
+                    <div class="mt-6 pt-6 border-t border-qv-border/40 grid grid-cols-3 gap-4 text-center">
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-qv-accent uppercase tracking-wider">Spread kantoru</p>
+                            <p class="text-sm font-semibold text-qv-text">0.80%</p>
+                            <p class="text-[10px] text-qv-muted">Wliczony w kurs</p>
+                        </div>
+                        <div class="space-y-1 border-x border-qv-border/30">
+                            <p class="text-[10px] font-bold text-green-500 uppercase tracking-wider">Aktualizacja</p>
+                            <p class="text-sm font-semibold text-qv-text flex items-center justify-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>Co 6 sek.
+                            </p>
+                            <p class="text-[10px] text-qv-muted">NBP Live Feed</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Rozliczenie</p>
+                            <p class="text-sm font-semibold text-qv-text">Natychmiastowe</p>
+                            <p class="text-[10px] text-qv-muted">Księgowanie online</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Redesigned Banking Simulator Card (Deposit/Withdraw) -->
+                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-qv-text mb-4">Wirtualny Terminal Bankowy</h3>
+                        
+                        <!-- Sleek Bank Card Mockup -->
+                        <div class="relative w-full h-36 rounded-xl bg-gradient-to-br from-indigo-900 via-purple-800 to-slate-900 text-white p-4 shadow-lg mb-6 overflow-hidden flex flex-col justify-between">
+                            <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-white/5 rounded-full blur-xl"></div>
+                            <div class="flex items-center justify-between z-10">
+                                <span class="text-xs font-semibold uppercase tracking-widest text-white/70">Wirtualny Przelew Bankowy</span>
+                                <span class="text-xs font-bold text-white/50" id="cardModeLabel">WPŁATA</span>
+                            </div>
+                            <div class="z-10 my-2">
+                                <div class="text-[10px] text-white/60 uppercase">Środki w wybranej walucie</div>
+                                <div class="text-xl font-bold tracking-tight" id="cardBalanceLabel">0.00 PLN</div>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] font-mono text-white/70 z-10">
+                                <span>**** **** **** 2026</span>
+                                <span class="font-semibold" id="cardCurrLabel">PLN</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Toggle Mode (Pill Switcher) -->
+                            <div class="grid grid-cols-2 gap-1 bg-qv-bg p-1 rounded-lg border border-qv-border">
+                                <button type="button" id="btnModeDeposit" onclick="setBankingMode('DEPOSIT')" class="py-2 text-center text-xs font-bold rounded-md bg-qv-surface text-qv-text shadow-sm border border-qv-border/40 transition-all">
+                                    Wpłata
+                                </button>
+                                <button type="button" id="btnModeWithdraw" onclick="setBankingMode('WITHDRAW')" class="py-2 text-center text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all">
+                                    Wypłata
+                                </button>
+                            </div>
+
+                            <!-- Deposit Form -->
+                            <form id="bankingForm" th:action="@{/exchange/deposit}" method="post" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Wybierz walutę konta</label>
+                                    <select name="currency" id="bankingCurrency" onchange="onBankingCurrencyChange()" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                        <option value="PLN">PLN (Polski Złoty)</option>
+                                        <option value="USD">USD (Dolar amerykański)</option>
+                                        <option value="EUR">EUR (Euro)</option>
+                                        <option value="GBP">GBP (Funt szterling)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Kwota transakcji</label>
+                                    <input type="number" step="0.01" name="amount" id="bankingAmount" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                </div>
+
+                                <!-- Quick Amount Presets -->
+                                <div class="grid grid-cols-4 gap-1.5">
+                                    <button type="button" onclick="setQuickAmount(100)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+100</button>
+                                    <button type="button" onclick="setQuickAmount(500)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+500</button>
+                                    <button type="button" onclick="setQuickAmount(1000)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+1k</button>
+                                    <button type="button" onclick="setQuickAmount(5000)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+5k</button>
+                                </div>
+
+                                <button type="submit" id="bankingSubmitBtn" class="w-full py-3 bg-green-600 text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
+                                    Autoryzuj Wpłatę Bankową
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchange Rates Table -->
+            <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all">
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
+                        Tabela Kursów Walutowych (Baza: PLN)
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>NBP LIVE
+                        </span>
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-qv-border text-xs font-semibold text-qv-muted">
+                                <th class="py-3 px-2">Kod waluty</th>
+                                <th class="py-3 px-2">Nazwa waluty</th>
+                                <th class="py-3 px-2">Kurs średni NBP</th>
+                                <th class="py-3 px-2">Kurs kupna (kantor)</th>
+                                <th class="py-3 px-2">Kurs sprzedaży (kantor)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ratesTableBody">
+                            <tr th:each="rate : ${rates}" class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="py-4 px-2 font-bold text-qv-text" th:text="${rate.code}">USD</td>
+                                <td class="py-4 px-2 text-qv-muted" th:text="${rate.code == 'USD' ? 'Dolar amerykański' : rate.code == 'EUR' ? 'Euro' : 'Funt szterling'}">Dolar amerykański</td>
+                                <td class="py-4 px-2" th:text="${rate.midRate + ' PLN'}">4.00 PLN</td>
+                                <td class="py-4 px-2 font-semibold text-green-500" th:text="${rate.buyRate + ' PLN'}">3.9680 PLN</td>
+                                <td class="py-4 px-2 font-semibold text-red-500" th:text="${rate.sellRate + ' PLN'}">4.0320 PLN</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        // Cash rates dictionary fetched live
+        let ratesDict = {};
+        const SPREAD = 0.008;
+
+        // Auto-animate and dismiss notification modal
+        const notifModal = document.getElementById('notificationModal');
+        if (notifModal) {
+            requestAnimationFrame(() => notifModal.classList.add('modal-open'));
+            setTimeout(closeNotificationModal, 20000);
+        }
+
+        function closeNotificationModal() {
+            const modal = document.getElementById('notificationModal');
+            if (modal) {
+                modal.classList.remove('modal-open');
+                setTimeout(() => modal.remove(), 250);
+            }
+        }
+
+        function setBankingMode(mode) {
+            const form = document.getElementById('bankingForm');
+            const btnDep = document.getElementById('btnModeDeposit');
+            const btnWit = document.getElementById('btnModeWithdraw');
+            const submitBtn = document.getElementById('bankingSubmitBtn');
+            const cardMode = document.getElementById('cardModeLabel');
+
+            if (mode === 'DEPOSIT') {
+                form.action = '/exchange/deposit';
+                btnDep.className = "py-2 text-center text-xs font-bold rounded-md bg-qv-surface text-qv-text shadow-sm border border-qv-border/40 transition-all";
+                btnWit.className = "py-2 text-center text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all";
+                submitBtn.textContent = 'Autoryzuj Wpłatę Bankową';
+                submitBtn.className = "w-full py-3 bg-green-600 text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm";
+                cardMode.textContent = 'WPŁATA';
+            } else {
+                form.action = '/exchange/withdraw';
+                btnDep.className = "py-2 text-center text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all";
+                btnWit.className = "py-2 text-center text-xs font-bold rounded-md bg-qv-surface text-qv-text shadow-sm border border-qv-border/40 transition-all";
+                submitBtn.textContent = 'Autoryzuj Wypłatę Bankową';
+                submitBtn.className = "w-full py-3 bg-red-600 text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm";
+                cardMode.textContent = 'WYPŁATA';
+            }
+            onBankingCurrencyChange();
+        }
+
+        function setQuickAmount(val) {
+            const input = document.getElementById('bankingAmount');
+            const curVal = parseFloat(input.value) || 0;
+            input.value = (curVal + val).toFixed(2);
+        }
+
+        function filterExchangeCurrencies() {
+            const fromSelect = document.getElementById('fromCurrency');
+            const toSelect = document.getElementById('toCurrency');
+            
+            const fromVal = fromSelect.value;
+            const toVal = toSelect.value;
+
+            // Enable all options in toSelect
+            Array.from(toSelect.options).forEach(opt => {
+                opt.disabled = false;
+                opt.style.display = '';
+            });
+
+            // Disable corresponding fromVal option in toSelect
+            Array.from(toSelect.options).forEach(opt => {
+                if (opt.value === fromVal) {
+                    opt.disabled = true;
+                    opt.style.display = 'none';
+                }
+            });
+
+            // If they are now the same, select the next available one
+            if (fromVal === toVal) {
+                const nextAvailable = Array.from(toSelect.options).find(opt => opt.value !== fromVal);
+                if (nextAvailable) {
+                    toSelect.value = nextAvailable.value;
+                }
+            }
+        }
+
+        function onBankingCurrencyChange() {
+            const curr = document.getElementById('bankingCurrency').value;
+            document.getElementById('cardCurrLabel').textContent = curr;
+            localStorage.setItem('banking_currency', curr);
+            
+            // Set dynamic card balance preview
+            let balText = "0.00 " + curr;
+            const wallet = window._walletData;
+            if (wallet) {
+                const val = curr === 'PLN' ? wallet.plnBalance :
+                            curr === 'USD' ? wallet.usdBalance :
+                            curr === 'EUR' ? wallet.eurBalance : wallet.gbpBalance;
+                if (curr === 'USD') {
+                    balText = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                } else {
+                    balText = val.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) + ' ' + curr;
+                }
+            } else {
+                // Fallback to static labels on page load
+                const labels = {
+                    PLN: document.getElementById('plnBalanceLabel').textContent,
+                    USD: document.getElementById('usdBalanceLabel').textContent,
+                    EUR: document.getElementById('eurBalanceLabel').textContent,
+                    GBP: document.getElementById('gbpBalanceLabel').textContent
+                };
+                balText = labels[curr] || balText;
+            }
+            document.getElementById('cardBalanceLabel').textContent = balText;
+        }
+
+        function calculateExchangeResult() {
+            filterExchangeCurrencies();
+            const from = document.getElementById('fromCurrency').value;
+            const to = document.getElementById('toCurrency').value;
+            localStorage.setItem('exchange_from', from);
+            localStorage.setItem('exchange_to', to);
+            const amount = parseFloat(document.getElementById('exchangeAmount').value) || 0;
+
+            const rateEstEl = document.getElementById('exchangeRateEst');
+            const resultEstEl = document.getElementById('exchangeResultEst');
+
+            if (from === to) {
+                rateEstEl.textContent = '1.00';
+                resultEstEl.textContent = amount.toFixed(2) + ' ' + to;
+                return;
+            }
+
+            // Extract mid rates relative to PLN
+            const rateFrom = from === 'PLN' ? 1.0 : (ratesDict[from]?.midRate || 1.0);
+            const rateTo = to === 'PLN' ? 1.0 : (ratesDict[to]?.midRate || 1.0);
+
+            // Apply spread:
+            // selling from to get PLN -> use sellRateFrom (smaller)
+            const sellRateFrom = from === 'PLN' ? 1.0 : (rateFrom * (1 - SPREAD));
+            // buying to using PLN -> use buyRateTo (larger)
+            const buyRateTo = to === 'PLN' ? 1.0 : (rateTo * (1 + SPREAD));
+
+            const finalRate = sellRateFrom / buyRateTo;
+            const result = amount * finalRate;
+
+            rateEstEl.textContent = `1 ${from} = ${finalRate.toFixed(4)} ${to}`;
+            resultEstEl.textContent = `${result.toFixed(2)} ${to}`;
+        }
+
+        async function updateLiveRates() {
+            try {
+                const res = await fetch('/exchange/rates');
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.rates) {
+                    ratesDict = {};
+                    data.rates.forEach(r => {
+                        ratesDict[r.code] = r;
+                    });
+
+                    // Update UI table
+                    const tbody = document.getElementById('ratesTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = data.rates.map(r => {
+                            const name = r.code === 'USD' ? 'Dolar amerykański' : r.code === 'EUR' ? 'Euro' : 'Funt szterling';
+                            return `<tr class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="py-4 px-2 font-bold text-qv-text">${r.code}</td>
+                                <td class="py-4 px-2 text-qv-muted">${name}</td>
+                                <td class="py-4 px-2">${r.midRate.toFixed(4)} PLN</td>
+                                <td class="py-4 px-2 font-semibold text-green-500">${r.buyRate.toFixed(4)} PLN</td>
+                                <td class="py-4 px-2 font-semibold text-red-500">${r.sellRate.toFixed(4)} PLN</td>
+                            </tr>`;
+                        }).join('');
+                    }
+                }
+
+                if (data.wallet) {
+                    window._walletData = data.wallet;
+                    document.getElementById('plnBalanceLabel').textContent = data.wallet.plnBalance.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) + ' PLN';
+                    document.getElementById('usdBalanceLabel').textContent = '$' + data.wallet.usdBalance.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('eurBalanceLabel').textContent = data.wallet.eurBalance.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) + ' EUR';
+                    document.getElementById('gbpBalanceLabel').textContent = data.wallet.gbpBalance.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) + ' GBP';
+                    onBankingCurrencyChange();
+                }
+
+                calculateExchangeResult();
+            } catch (e) {}
+        }
+
+        // Initialize rates
+        /*[# th:each="r : ${rates}"]*/
+        ratesDict['[[${r.code}]]'] = {
+            code: '[[${r.code}]]',
+            midRate: parseFloat('[[${r.midRate}]]'),
+            buyRate: parseFloat('[[${r.buyRate}]]'),
+            sellRate: parseFloat('[[${r.sellRate}]]')
+        };
+        /*[/]*/
+
+        const savedBankCurr = localStorage.getItem('banking_currency');
+        if (savedBankCurr) {
+            document.getElementById('bankingCurrency').value = savedBankCurr;
+        }
+
+        const savedFrom = localStorage.getItem('exchange_from');
+        const savedTo = localStorage.getItem('exchange_to');
+        if (savedFrom) {
+            document.getElementById('fromCurrency').value = savedFrom;
+            filterExchangeCurrencies();
+        }
+        if (savedTo) {
+            document.getElementById('toCurrency').value = savedTo;
+        }
+
+        calculateExchangeResult();
+        filterExchangeCurrencies();
+        onBankingCurrencyChange();
+
+        // Refresh rates and balances every 6 seconds
+        setInterval(updateLiveRates, 6000);
+    </script>
+    <script src="/js/alerts-toast.js"></script>
+</body>
+
+</html>

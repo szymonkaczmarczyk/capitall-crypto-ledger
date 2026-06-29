@@ -199,9 +199,9 @@ class ViewControllerTest {
                                 .email("bob@example.com")
                                 .role(com.capitall.model.UserRole.USER)
                                 .build();
-                
+
                 com.capitall.model.Wallet mockWallet = new com.capitall.model.Wallet(userId, BigDecimal.valueOf(2500));
-                
+
                 when(walletService.deposit(eq(userId), eq(BigDecimal.valueOf(1000))))
                                 .thenReturn(mockWallet);
 
@@ -214,5 +214,28 @@ class ViewControllerTest {
                                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                                 .andExpect(jsonPath("$.amount").value("1000.00"))
                                 .andExpect(jsonPath("$.balance").value("2500.00"));
+        }
+
+        @Test
+        void processRegistration_ShouldRegisterAndRedirectToDashboard() throws Exception {
+                UUID userId = UUID.randomUUID();
+                com.capitall.model.User mockUser = com.capitall.model.User.builder()
+                                .id(userId)
+                                .username("newuser")
+                                .email("newuser@example.com")
+                                .role(com.capitall.model.UserRole.USER)
+                                .build();
+
+                when(userRepository.findByUsername(eq("newuser"))).thenReturn(java.util.Optional.of(mockUser));
+
+                mockMvc.perform(post("/register")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                                .param("username", "newuser")
+                                .param("email", "newuser@example.com")
+                                .param("phoneNumber", "+48 123 456 789")
+                                .param("password", "StrongPass123!@#"))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("register-pending"));
         }
 }

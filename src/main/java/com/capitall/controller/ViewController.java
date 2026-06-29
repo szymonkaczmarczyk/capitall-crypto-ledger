@@ -474,7 +474,7 @@ public class ViewController {
     public String showMarket(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
         java.util.List<com.capitall.model.Holding> holdings = walletService.getHoldings(user.getId());
-        model.addAttribute("availableBalance", wallet.getUsdBalance());
+        model.addAttribute("availableBalance", walletService.getTotalValuationInUsd(wallet));
         model.addAttribute("holdings", holdings);
         model.addAttribute("recentLogs", auditLogService.getLogsForUser(user.getId()).stream()
                 .filter(l -> l.getAction() != null && (l.getAction().startsWith("ORDER:") || l.getAction().startsWith("SELL:")))
@@ -496,7 +496,7 @@ public class ViewController {
                     return m;
                 }).collect(java.util.stream.Collectors.toList());
         return java.util.Map.of(
-                "balance", wallet.getUsdBalance().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                "balance", walletService.getTotalValuationInUsd(wallet).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                 "holdings", holdings
         );
     }
@@ -672,13 +672,14 @@ public class ViewController {
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public String adminPanel(Model model) {
+    public String adminPanel(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("assetsCount", exchangeAccountService.getAllExchangeAccounts().size());
         model.addAttribute("maintenanceActive", maintenanceModeState.isMaintenanceMode());
 
         model.addAttribute("dbSize", "2.8 MB");
         model.addAttribute("activeUsersCount", userRepository.count());
+        model.addAttribute("traderName", user != null ? user.getUsername() : "Admin");
         return "admin";
     }
 

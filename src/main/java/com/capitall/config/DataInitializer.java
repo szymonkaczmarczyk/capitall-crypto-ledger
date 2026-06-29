@@ -49,6 +49,8 @@ public class DataInitializer implements CommandLineRunner {
                 ? userRepository.findByUsername("admin").orElseThrow()
                 : createUserIfNotExists("admin", "admin@capitall.com", adminPassword, UserRole.ADMIN);
         ensureAdminEnabled(admin);
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        userRepository.save(admin);
         User jankowalski = createUserIfNotExists("jankowalski", "jan.kowalski@example.pl", "test123", UserRole.USER);
         User pnowak = createUserIfNotExists("pnowak", "piotr.nowak@example.pl", "test123", UserRole.USER);
         User mwisniewska = createUserIfNotExists("mwisniewska", "magda.wisniewska@example.pl", "test123", UserRole.USER);

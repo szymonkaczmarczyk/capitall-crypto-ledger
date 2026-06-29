@@ -40,14 +40,17 @@ public class EquitySnapshotter {
     private final WalletRepository walletRepository;
     private final HoldingRepository holdingRepository;
     private final EquitySnapshotRepository snapshotRepository;
+    private final ExchangeRateService exchangeRateService;
     private final HttpClient httpClient;
 
     public EquitySnapshotter(WalletRepository walletRepository,
                              HoldingRepository holdingRepository,
-                             EquitySnapshotRepository snapshotRepository) {
+                             EquitySnapshotRepository snapshotRepository,
+                             ExchangeRateService exchangeRateService) {
         this.walletRepository = walletRepository;
         this.holdingRepository = holdingRepository;
         this.snapshotRepository = snapshotRepository;
+        this.exchangeRateService = exchangeRateService;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(4))
                 .build();
@@ -88,6 +91,10 @@ public class EquitySnapshotter {
     @Transactional
     protected void snapshotUserInternal(Wallet w, Map<String, BigDecimal> prices) {
         BigDecimal cash = w.getUsdBalance() == null ? BigDecimal.ZERO : w.getUsdBalance();
+        cash = cash.add(exchangeRateService.convert(w.getPlnBalance(), "PLN", "USD"));
+        cash = cash.add(exchangeRateService.convert(w.getEurBalance(), "EUR", "USD"));
+        cash = cash.add(exchangeRateService.convert(w.getGbpBalance(), "GBP", "USD"));
+
         BigDecimal crypto = BigDecimal.ZERO;
         for (Holding h : holdingRepository.findByUserId(w.getUserId())) {
             BigDecimal price = prices.get(h.getSymbol() + "USDT");

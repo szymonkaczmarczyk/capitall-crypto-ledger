@@ -1,3 +1,16 @@
 .local_jdk/
 jdk21.tar.gz
 target/
+README.md
+data/
+*.log
+.local_maven/
+.DS_Store
+.idea/
+*.iml
+*.class
+.project
+.classpath
+.settings/
+postgres_server.log
+bin/

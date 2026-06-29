@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <title>Capitall - Alerty cenowe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        qv: {
+                            bg: 'var(--qv-bg)', surface: 'var(--qv-surface)', border: 'var(--qv-border)',
+                            text: 'var(--qv-text)', muted: 'var(--qv-muted)', accent: 'var(--qv-accent)'
+                        }
+                    },
+                    boxShadow: {
+                        'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                        'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --qv-bg:#e7ecf3;--qv-surface:#ffffff;--qv-border:#94a3b8;--qv-text:#0a0f1e;--qv-muted:#334155;--qv-accent:#5b21b6; }
+        .dark { --qv-bg:#0b1120;--qv-surface:#1e293b;--qv-border:#334155;--qv-text:#f8fafc;--qv-muted:#94a3b8;--qv-accent:#8b5cf6; }
+        body { transition: background-color 0.4s cubic-bezier(0.4,0,0.2,1), color 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .transition-colors-all { transition-property:background-color,border-color,color,fill,stroke,box-shadow; transition-timing-function:cubic-bezier(0.4,0,0.2,1); transition-duration:400ms; }
+
+        /* Modal */
+        .modal-overlay { display:none; position:fixed; inset:0; z-index:50; background:rgba(15,23,42,0.65); backdrop-filter:blur(2px); align-items:center; justify-content:center; padding:1rem; }
+        .modal-overlay.open { display:flex; }
+        .modal-card { transform:scale(0.92); opacity:0; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s; }
+        .modal-overlay.open .modal-card { transform:scale(1); opacity:1; }
+
+        /* Notification modal */
+        .notif-overlay { display:none; position:fixed; inset:0; z-index:60; background:rgba(15,23,42,0.65); align-items:center; justify-content:center; padding:1rem; }
+        .notif-overlay.open { display:flex; }
+
+        /* Toggle pill */
+        .toggle-pill { display:inline-flex; background:var(--qv-bg); border:1px solid var(--qv-border); border-radius:9999px; padding:3px; gap:2px; }
+        .toggle-pill label { cursor:pointer; padding:4px 14px; border-radius:9999px; font-size:12px; font-weight:600; color:var(--qv-muted); transition:all 0.2s; white-space:nowrap; }
+        .toggle-pill input[type=radio]:checked + label { background:var(--qv-accent); color:#fff; }
+        .toggle-pill input[type=radio] { display:none; }
+
+        /* Alert row */
+        .alert-row { animation:slideIn 0.3s ease-out; }
+        @keyframes slideIn { from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)} }
+
+        /* Badges */
+        .badge-crypto{background:rgba(139,92,246,.15);color:#8b5cf6}
+        .badge-stock{background:rgba(16,185,129,.15);color:#10b981}
+        .badge-above{background:rgba(16,185,129,.15);color:#10b981}
+        .badge-below{background:rgba(239,68,68,.15);color:#ef4444}
+        .badge-recurring{background:rgba(245,158,11,.15);color:#f59e0b}
+        .badge-once{background:rgba(100,116,139,.15);color:#64748b}
+
+        /* Log action colours */
+        .log-CREATED{background:rgba(16,185,129,.12);color:#10b981}
+        .log-EDITED{background:rgba(59,130,246,.12);color:#3b82f6}
+        .log-DELETED{background:rgba(239,68,68,.12);color:#ef4444}
+        .log-TRIGGERED{background:rgba(245,158,11,.12);color:#f59e0b}
+    </style>
+    <script>
+        if (localStorage.getItem('theme')==='dark'||(!('theme' in localStorage)&&window.matchMedia('(prefers-color-scheme: dark)').matches))
+            document.documentElement.classList.add('dark');
+        function toggleTheme(){
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light');
+        }
+    </script>
+</head>
+
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+<!-- ═══ SIDEBAR ══════════════════════════════════════════════════════════════ -->
+<aside class="w-64 bg-qv-surface border-r border-qv-border flex-col hidden md:flex transition-colors-all flex-shrink-0">
+    <div class="h-16 flex items-center px-6 border-b border-qv-border">
+        <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
+        <span class="font-bold text-lg text-qv-text">Capitall</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
+            Dashboard
+        </a>
+        <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+            Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
+        </a>
+        <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            Alokacje
+        </a>
+        <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1"/></svg>
+            Aktywa
+        </a>
+        <a href="/securities" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Papiery wartościowe
+        </a>
+        <a href="/exchange" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Wirtualny kantor
+        </a>
+        <a href="/alerts" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md">
+            <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            Alerty cenowe
+        </a>
+        <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+            Narzędzia
+        </a>
+        <a href="/settings" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            Ustawienia
+        </a>
+        <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin"
+           class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
+            <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Administracja
+        </a>
+    </nav>
+    <div class="p-4 border-t border-qv-border">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Wyloguj się
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════════════════ -->
+<main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all flex-shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-qv-accent/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-qv-text">Alerty cenowe</h2>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </button>
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-qv-accent/10 border border-qv-accent/30 flex items-center justify-center text-qv-accent font-bold text-xs"
+                     th:text="${#strings.substring(traderName,0,1).toUpperCase()}">U</div>
+                <span class="text-sm font-medium text-qv-text" th:text="${traderName}">Użytkownik</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+
+        <!-- ── Notification modal ──────────────────────────────────────────── -->
+        <div id="notifModal" th:if="${successMessage != null || errorMessage != null}"
+             class="notif-overlay">
+            <div class="bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-sm w-full p-6 text-center space-y-4"
+                 style="transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;transform:scale(.9);opacity:0" id="notifCard">
+                <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold"
+                     th:classappend="${successMessage!=null?'bg-green-500/20 text-green-500':'bg-red-500/20 text-red-500'}">
+                    <span th:text="${successMessage!=null?'✓':'✕'}">✓</span>
+                </div>
+                <div>
+                    <h4 class="text-base font-bold text-qv-text"
+                        th:text="${successMessage!=null?'Operacja udana':'Błąd operacji'}"></h4>
+                    <p class="text-sm text-qv-muted mt-1"
+                       th:text="${successMessage!=null?successMessage:errorMessage}"></p>
+                </div>
+                <button onclick="closeNotif()" class="w-full py-2.5 bg-qv-accent text-white text-sm font-bold rounded-lg hover:opacity-90 transition-all">Zamknij</button>
+            </div>
+        </div>
+
+        <!-- ── Stat cards ─────────────────────────────────────────────────── -->
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-qv-surface border border-qv-border rounded-lg p-4 flex items-center gap-3 transition-colors-all">
+                <div class="w-10 h-10 rounded-lg bg-qv-accent/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                </div>
+                <div>
+                    <div class="text-xl font-black text-qv-text" th:text="${alerts.size()}">0</div>
+                    <div class="text-xs text-qv-muted font-medium">Aktywnych alertów</div>
+                </div>
+            </div>
+            <div class="bg-qv-surface border border-qv-border rounded-lg p-4 flex items-center gap-3 transition-colors-all">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <div>
+                    <div class="text-xl font-black text-qv-text" th:text="${cryptoCount}">0</div>
+                    <div class="text-xs text-qv-muted font-medium">Kryptowaluty</div>
+                </div>
+            </div>
+            <div class="bg-qv-surface border border-qv-border rounded-lg p-4 flex items-center gap-3 transition-colors-all">
+                <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <div>
+                    <div class="text-xl font-black text-qv-text" th:text="${stockCount}">0</div>
+                    <div class="text-xs text-qv-muted font-medium">Akcje / ETF</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Form + Alerts grid ─────────────────────────────────────────── -->
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+
+            <!-- CREATE FORM -->
+            <div class="xl:col-span-2 bg-qv-surface border border-qv-border rounded-xl shadow-qv p-6 transition-colors-all">
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="w-7 h-7 rounded-md bg-qv-accent/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-qv-text">Nowy alert</h3>
+                </div>
+                <form th:action="@{/alerts/create}" method="post" class="space-y-4" id="alertForm">
+
+                    <!-- Asset type -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-2">Klasa aktywów</label>
+                        <div class="toggle-pill w-full">
+                            <input type="radio" name="assetType" id="typeCrypto" value="CRYPTO" checked onchange="onAssetTypeChange()">
+                            <label for="typeCrypto" class="flex-1 text-center">🪙 Kryptowaluty</label>
+                            <input type="radio" name="assetType" id="typeStock" value="STOCK" onchange="onAssetTypeChange()">
+                            <label for="typeStock" class="flex-1 text-center">📊 Akcje / ETF</label>
+                        </div>
+                    </div>
+
+                    <!-- Symbol -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Symbol waloru</label>
+                        <select id="symbolSelect" name="symbol" required
+                                class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent"></select>
+                    </div>
+
+                    <!-- Condition -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-2">Warunek wyzwolenia</label>
+                        <div class="toggle-pill w-full">
+                            <input type="radio" name="conditionType" id="condAbove" value="ABOVE" checked>
+                            <label for="condAbove" class="flex-1 text-center">📈 Powyżej</label>
+                            <input type="radio" name="conditionType" id="condBelow" value="BELOW">
+                            <label for="condBelow" class="flex-1 text-center">📉 Poniżej</label>
+                        </div>
+                    </div>
+
+                    <!-- Price -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Cena docelowa (USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-qv-muted text-sm font-bold">$</span>
+                            <input type="number" step="0.00000001" name="targetPrice" required placeholder="0.00"
+                                   class="w-full h-10 pl-7 pr-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                        </div>
+                    </div>
+
+                    <!-- Recurring -->
+                    <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold text-qv-text">Typ powiadomienia</div>
+                                <div class="text-[11px] text-qv-muted mt-0.5" id="recurringHint">Jednorazowy — wyśle się raz i zniknie.</div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                <input type="checkbox" name="recurring" id="recurringToggle" value="true" class="sr-only peer" onchange="updateRecurringHint()">
+                                <div class="w-10 h-5 bg-slate-300 dark:bg-slate-600 rounded-full peer peer-checked:after:translate-x-5 peer-checked:bg-qv-accent after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-qv-accent text-white font-bold rounded-lg hover:opacity-90 transition-all text-sm flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        Utwórz alert
+                    </button>
+                </form>
+            </div>
+
+            <!-- ACTIVE ALERTS LIST -->
+            <div class="xl:col-span-3 bg-qv-surface border border-qv-border rounded-xl shadow-qv transition-colors-all flex flex-col">
+                <div class="p-5 border-b border-qv-border flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-md bg-qv-accent/10 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-qv-text">Aktywne alerty</h3>
+                    </div>
+                    <span class="text-xs text-qv-muted">Sprawdzane co 6 sekund</span>
+                </div>
+
+                <!-- Empty state -->
+                <div th:if="${#lists.isEmpty(alerts)}" class="flex-1 flex flex-col items-center justify-center py-16 px-8 text-center">
+                    <div class="w-20 h-20 rounded-full bg-qv-bg flex items-center justify-center mb-4">
+                        <svg class="w-9 h-9 text-qv-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <h4 class="font-bold text-qv-text mb-1">Brak aktywnych alertów</h4>
+                    <p class="text-sm text-qv-muted max-w-xs">Utwórz alert cenowy, aby otrzymywać powiadomienia o zmianach rynkowych w czasie rzeczywistym.</p>
+                </div>
+
+                <!-- Alert rows -->
+                <div th:if="${!#lists.isEmpty(alerts)}" class="flex-1 overflow-y-auto divide-y divide-qv-border/50">
+                    <div th:each="alert : ${alerts}" class="alert-row p-4 hover:bg-qv-bg/40 transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <!-- Icon -->
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-black text-xs"
+                                 th:classappend="${alert.assetType=='CRYPTO'?'bg-violet-500/10 text-violet-500':'bg-emerald-500/10 text-emerald-500'}"
+                                 th:text="${alert.symbol}">BTC</div>
+
+                            <!-- Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                          th:classappend="${alert.assetType=='CRYPTO'?'badge-crypto':'badge-stock'}"
+                                          th:text="${alert.assetType=='CRYPTO'?'Kryptowaluta':'Akcja / ETF'}"></span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                          th:classappend="${alert.conditionType=='ABOVE'?'badge-above':'badge-below'}"
+                                          th:text="${alert.conditionType=='ABOVE'?'↑ Powyżej':'↓ Poniżej'}"></span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                          th:classappend="${alert.recurring?'badge-recurring':'badge-once'}"
+                                          th:text="${alert.recurring?'🔁 Cykliczny (1×/dzień)':'1× Jednorazowy'}"></span>
+                                </div>
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-lg font-black text-qv-text"
+                                          th:text="${'$'+#numbers.formatDecimal(alert.targetPrice,1,'COMMA',2,'POINT')}">$0.00</span>
+                                    <span class="text-xs text-qv-muted">USD</span>
+                                </div>
+                                <div class="text-[11px] text-qv-muted mt-0.5"
+                                     th:text="${'Dodano: '+#temporals.format(alert.createdAt,'dd.MM.yyyy HH:mm')}"></div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <!-- Edit -->
+                                <button type="button"
+                                        th:onclick="'openEditModal('''+${alert.id}+''','''+${alert.conditionType}+''','+${alert.targetPrice}+','+${alert.recurring}+')'"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-qv-muted hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <!-- Delete -->
+                                <form th:action="@{'/alerts/delete/'+${alert.id}}" method="post">
+                                    <button type="submit"
+                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-qv-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div th:if="${!#lists.isEmpty(alerts)}" class="p-4 border-t border-qv-border bg-qv-bg/30">
+                    <div class="flex items-center gap-2 text-[11px] text-qv-muted">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        Alerty cykliczne: max 1 powiadomienie dziennie. Jednorazowe: usuwane po pierwszym wyzwoleniu.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Activity Log ────────────────────────────────────────────────── -->
+        <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv transition-colors-all">
+            <div class="p-5 border-b border-qv-border flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-md bg-slate-500/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-qv-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-qv-text">Dziennik zdarzeń</h3>
+                </div>
+                <span class="text-xs text-qv-muted" th:text="${alertLogs.size()+' wpisów'}">0 wpisów</span>
+            </div>
+
+            <!-- Empty log -->
+            <div th:if="${#lists.isEmpty(alertLogs)}" class="py-10 text-center text-sm text-qv-muted">
+                Brak zapisanych zdarzeń. Aktywność pojawi się tutaj po pierwszym alertcie.
+            </div>
+
+            <!-- Log table -->
+            <div th:if="${!#lists.isEmpty(alertLogs)}" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-qv-border text-xs font-semibold text-qv-muted bg-qv-bg/40">
+                            <th class="py-3 px-4 w-36">Czas</th>
+                            <th class="py-3 px-4 w-28">Zdarzenie</th>
+                            <th class="py-3 px-4 w-24">Symbol</th>
+                            <th class="py-3 px-4 w-24">Klasa</th>
+                            <th class="py-3 px-4">Szczegóły</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="log,stat : ${alertLogs}"
+                            th:classappend="${stat.index%2==0?'':'bg-qv-bg/20'}"
+                            class="border-b border-qv-border/30 hover:bg-qv-bg/40 transition-colors">
+                            <td class="py-3 px-4 text-xs text-qv-muted whitespace-nowrap"
+                                th:text="${#temporals.format(log.occurredAt,'dd.MM.yyyy HH:mm')}"></td>
+                            <td class="py-3 px-4">
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                      th:classappend="${'log-'+log.action}"
+                                      th:text="${log.action=='CREATED'?'Dodano':log.action=='EDITED'?'Edytowano':log.action=='DELETED'?'Usunięto':'Wyzwolono'}">Dodano</span>
+                            </td>
+                            <td class="py-3 px-4 font-bold text-qv-text text-xs" th:text="${log.symbol}">BTC</td>
+                            <td class="py-3 px-4 text-xs text-qv-muted"
+                                th:text="${log.assetType=='CRYPTO'?'Kryptowaluta':'Akcja / ETF'}"></td>
+                            <td class="py-3 px-4 text-xs text-qv-muted" th:text="${log.details}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /scroll container -->
+</main>
+
+<!-- ═══ EDIT MODAL ════════════════════════════════════════════════════════════ -->
+<div id="editModal" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg w-full max-w-md p-6 space-y-5">
+        <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-qv-text">Edytuj alert</h3>
+            <button onclick="closeEditModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-qv-muted hover:bg-qv-bg transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="editForm" method="post" class="space-y-4">
+
+            <!-- Condition -->
+            <div>
+                <label class="block text-xs font-semibold text-qv-muted mb-2">Warunek wyzwolenia</label>
+                <div class="toggle-pill w-full">
+                    <input type="radio" name="conditionType" id="editAbove" value="ABOVE">
+                    <label for="editAbove" class="flex-1 text-center">📈 Powyżej</label>
+                    <input type="radio" name="conditionType" id="editBelow" value="BELOW">
+                    <label for="editBelow" class="flex-1 text-center">📉 Poniżej</label>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div>
+                <label class="block text-xs font-semibold text-qv-muted mb-1">Cena docelowa (USD)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-qv-muted text-sm font-bold">$</span>
+                    <input type="number" step="0.00000001" name="targetPrice" id="editTargetPrice" required placeholder="0.00"
+                           class="w-full h-10 pl-7 pr-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                </div>
+            </div>
+
+            <!-- Recurring -->
+            <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-qv-text">Typ powiadomienia</div>
+                        <div class="text-[11px] text-qv-muted mt-0.5" id="editRecurringHint">Jednorazowy</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input type="checkbox" name="recurring" id="editRecurringToggle" value="true" class="sr-only peer" onchange="updateEditRecurringHint()">
+                        <div class="w-10 h-5 bg-slate-300 dark:bg-slate-600 rounded-full peer peer-checked:after:translate-x-5 peer-checked:bg-qv-accent after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-1">
+                <button type="button" onclick="closeEditModal()"
+                        class="flex-1 py-2.5 border border-qv-border text-qv-muted text-sm font-semibold rounded-lg hover:bg-qv-bg transition-all">Anuluj</button>
+                <button type="submit"
+                        class="flex-1 py-2.5 bg-qv-accent text-white text-sm font-bold rounded-lg hover:opacity-90 transition-all">Zapisz zmiany</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const CRYPTO_SYMBOLS = ['BTC','ETH','BNB','SOL','XRP','ADA','AVAX','DOGE','DOT','SHIB','MATIC','LTC','LINK','UNI','ATOM','XLM','ALGO','FIL','SAND','MANA','NEAR','ICP','HBAR','ETC','VET','AAVE','GRT','THETA','FTM','CHZ'];
+    const STOCK_SYMBOLS  = ['AAPL','MSFT','GOOGL','AMZN','TSLA','NVDA','META','NFLX','AMD','INTC','JPM','BAC','WMT','KO','PEP','DIS','BA','GE','F','GM','CDR','PKN','KGH','PZU','LPP','DNP','ALR','JSW','MBK','OPL'];
+
+    function onAssetTypeChange() { populateSymbols(); }
+    function populateSymbols() {
+        const isCrypto = document.getElementById('typeCrypto').checked;
+        const sel = document.getElementById('symbolSelect');
+        sel.innerHTML = '';
+        (isCrypto ? CRYPTO_SYMBOLS : STOCK_SYMBOLS).forEach(s => {
+            const o = document.createElement('option'); o.value = o.textContent = s; sel.appendChild(o);
+        });
+    }
+    function updateRecurringHint() {
+        const on = document.getElementById('recurringToggle').checked;
+        document.getElementById('recurringHint').textContent = on
+            ? 'Cykliczny — max 1 powiadomienie dziennie, po zalogowaniu.'
+            : 'Jednorazowy — wyśle się raz i zniknie.';
+    }
+
+    // ── Edit modal ──────────────────────────────────────────────────────────
+    function openEditModal(id, conditionType, targetPrice, recurring) {
+        document.getElementById('editForm').action = '/alerts/update/' + id;
+        document.getElementById('editAbove').checked = conditionType === 'ABOVE';
+        document.getElementById('editBelow').checked = conditionType === 'BELOW';
+        document.getElementById('editTargetPrice').value = targetPrice;
+        document.getElementById('editRecurringToggle').checked = recurring === true || recurring === 'true';
+        updateEditRecurringHint();
+        const modal = document.getElementById('editModal');
+        modal.classList.add('open');
+    }
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('open');
+    }
+    function updateEditRecurringHint() {
+        const on = document.getElementById('editRecurringToggle').checked;
+        document.getElementById('editRecurringHint').textContent = on
+            ? 'Cykliczny — max 1 powiadomienie dziennie, po zalogowaniu.'
+            : 'Jednorazowy — wyśle się raz i zniknie.';
+    }
+
+    // ── Notification modal ──────────────────────────────────────────────────
+    const notifModal = document.getElementById('notifModal');
+    if (notifModal) {
+        notifModal.classList.add('open');
+        const card = document.getElementById('notifCard');
+        requestAnimationFrame(() => { card.style.transform='scale(1)'; card.style.opacity='1'; });
+        setTimeout(closeNotif, 15000);
+    }
+    function closeNotif() {
+        const m = document.getElementById('notifModal');
+        if (!m) return;
+        const card = document.getElementById('notifCard');
+        card.style.transform='scale(0.9)'; card.style.opacity='0';
+        setTimeout(() => m.remove(), 250);
+    }
+
+    // Init
+    populateSymbols();
+</script>
+
+<script src="/js/alerts-toast.js"></script>
+</body>
+</html>

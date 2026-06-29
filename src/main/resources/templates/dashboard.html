@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,6 +38,7 @@
             --qv-muted: #334155;
             --qv-accent: #5b21b6;
         }
+
         .dark {
             --qv-bg: #0b1120;
             --qv-surface: #1e293b;
@@ -45,33 +47,85 @@
             --qv-muted: #94a3b8;
             --qv-accent: #8b5cf6;
         }
+
         body {
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .transition-colors-all {
             transition-property: background-color, border-color, color, fill, stroke, box-shadow;
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 400ms;
         }
+
         @keyframes pulseDot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.4); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.4);
+            }
         }
-        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+
+        .live-dot {
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+
         @keyframes flashGreen {
-            0% { color: #10b981; transform: translateY(-2px); }
-            100% { color: inherit; transform: translateY(0); }
+            0% {
+                color: #10b981;
+                transform: translateY(-2px);
+            }
+
+            100% {
+                color: inherit;
+                transform: translateY(0);
+            }
         }
+
         @keyframes flashRed {
-            0% { color: #ef4444; transform: translateY(2px); }
-            100% { color: inherit; transform: translateY(0); }
+            0% {
+                color: #ef4444;
+                transform: translateY(2px);
+            }
+
+            100% {
+                color: inherit;
+                transform: translateY(0);
+            }
         }
-        .flash-up { animation: flashGreen 0.8s ease-out; }
-        .flash-down { animation: flashRed 0.8s ease-out; }
-        .ticker-card { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s; }
-        .ticker-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -8px rgba(0,0,0,0.2); }
-        .price-value { transition: color 0.4s ease; font-variant-numeric: tabular-nums; }
-        .spark { width: 100%; height: 38px; }
+
+        .flash-up {
+            animation: flashGreen 0.8s ease-out;
+        }
+
+        .flash-down {
+            animation: flashRed 0.8s ease-out;
+        }
+
+        .ticker-card {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+        }
+
+        .ticker-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.2);
+        }
+
+        .price-value {
+            transition: color 0.4s ease;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .spark {
+            width: 100%;
+            height: 38px;
+        }
     </style>
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -85,6 +139,7 @@
         }
     </script>
 </head>
+
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
     <aside class="w-64 bg-qv-surface border-r border-qv-border flex flex-col hidden md:flex transition-colors-all">
@@ -93,39 +148,96 @@
             <span class="font-bold text-lg text-qv-text transition-colors-all">Capitall</span>
         </div>
         <nav class="flex-1 p-4 space-y-1">
-            <a href="/dashboard" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
+            <a href="/dashboard"
+                class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                </svg>
                 Dashboard
             </a>
-            <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
+            <a href="/market"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3v18h18M7 14l4-4 4 4 6-6" />
+                </svg>
+                Rynek <span
+                    class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
             </a>
-            <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            <a sec:authorize="hasRole('ADMIN')" href="/allocations"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
                 Alokacje
             </a>
-            <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" /></svg>
+            <a href="/assets"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" />
+                </svg>
                 Aktywa
             </a>
-            <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+            <a href="/securities"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Papiery wartościowe
+            </a>
+            <a href="/exchange"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Wirtualny kantor
+            </a>
+            <a href="/alerts"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Alerty cenowe
+            </a>
+            <a href="/tools"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                </svg>
                 Narzędzia
             </a>
-            <a href="/settings" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+            <a href="/settings"
+                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
                 Ustawienia
             </a>
-            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin" class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin"
+                class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
+                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
                 Administracja
             </a>
         </nav>
         <div class="p-4 border-t border-qv-border">
             <form th:action="@{/logout}" method="post">
-                <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <button type="submit"
+                    class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     Wyloguj się
                 </button>
             </form>
@@ -133,16 +245,29 @@
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+        <header
+            class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
             <h2 class="text-lg font-bold text-qv-text transition-colors-all">Przegląd portfela</h2>
             <div class="flex items-center space-x-6">
-                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Przełącz motyw">
-                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <button onclick="toggleTheme()"
+                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    title="Przełącz motyw">
+                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
                 </button>
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-qv-bg border border-qv-border flex items-center justify-center text-qv-text font-bold text-xs transition-colors-all" th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
-                    <span class="text-sm font-medium text-qv-text transition-colors-all" th:text="${traderName}">Użytkownik</span>
+                    <div class="w-8 h-8 rounded-full bg-qv-bg border border-qv-border flex items-center justify-center text-qv-text font-bold text-xs transition-colors-all"
+                        th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
+                    <span class="text-sm font-medium text-qv-text transition-colors-all"
+                        th:text="${traderName}">Użytkownik</span>
                 </div>
             </div>
         </header>
@@ -150,13 +275,17 @@
         <div class="flex-1 overflow-y-auto p-6 lg:p-8">
 
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="tickerGrid">
-                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="bitcoin" data-symbol="BTC">
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4"
+                    data-coin="bitcoin" data-symbol="BTC">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs">₿</div>
+                            <div
+                                class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs">
+                                ₿</div>
                             <span class="text-xs font-semibold text-qv-muted">BTC/USD</span>
                         </div>
-                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                     </div>
                     <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
                     <div class="flex items-end justify-between">
@@ -164,13 +293,17 @@
                         <canvas class="spark" data-spark></canvas>
                     </div>
                 </div>
-                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="ethereum" data-symbol="ETH">
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4"
+                    data-coin="ethereum" data-symbol="ETH">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-500 flex items-center justify-center font-bold text-xs">Ξ</div>
+                            <div
+                                class="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-500 flex items-center justify-center font-bold text-xs">
+                                Ξ</div>
                             <span class="text-xs font-semibold text-qv-muted">ETH/USD</span>
                         </div>
-                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                     </div>
                     <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
                     <div class="flex items-end justify-between">
@@ -178,13 +311,17 @@
                         <canvas class="spark" data-spark></canvas>
                     </div>
                 </div>
-                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="solana" data-symbol="SOL">
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4"
+                    data-coin="solana" data-symbol="SOL">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-fuchsia-500/20 text-fuchsia-500 flex items-center justify-center font-bold text-xs">◎</div>
+                            <div
+                                class="w-7 h-7 rounded-full bg-fuchsia-500/20 text-fuchsia-500 flex items-center justify-center font-bold text-xs">
+                                ◎</div>
                             <span class="text-xs font-semibold text-qv-muted">SOL/USD</span>
                         </div>
-                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                     </div>
                     <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
                     <div class="flex items-end justify-between">
@@ -192,13 +329,17 @@
                         <canvas class="spark" data-spark></canvas>
                     </div>
                 </div>
-                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4" data-coin="binancecoin" data-symbol="BNB">
+                <div class="ticker-card bg-qv-surface border border-qv-border rounded-lg shadow-qv p-4"
+                    data-coin="binancecoin" data-symbol="BNB">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold text-xs">B</div>
+                            <div
+                                class="w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold text-xs">
+                                B</div>
                             <span class="text-xs font-semibold text-qv-muted">BNB/USD</span>
                         </div>
-                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                        <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                     </div>
                     <div class="price-value text-xl font-bold text-qv-text" data-price>—</div>
                     <div class="flex items-end justify-between">
@@ -211,7 +352,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5">
                     <p class="text-sm font-medium text-qv-muted mb-1">Całkowite AUM</p>
-                    <h3 class="text-2xl font-bold text-qv-text price-value" id="aumValue" th:attr="data-base=${stats.totalAum}">$0.00</h3>
+                    <h3 class="text-2xl font-bold text-qv-text price-value" id="aumValue"
+                        th:attr="data-base=${stats.totalAum}">$0.00</h3>
                     <p class="text-[11px] font-medium text-qv-muted mt-1">Wartość koryguje się żywym ruchem rynku</p>
                 </div>
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5">
@@ -224,7 +366,8 @@
                         <div class="w-2.5 h-2.5 rounded-full bg-green-500 mr-2 live-dot"></div>
                         <h3 class="text-lg font-bold text-qv-text">Online · Stream OK</h3>
                     </div>
-                    <p class="text-[11px] font-medium text-qv-muted mt-1" id="lastTick">Oczekiwanie na pierwszy tick…</p>
+                    <p class="text-[11px] font-medium text-qv-muted mt-1" id="lastTick">Oczekiwanie na pierwszy tick…
+                    </p>
                 </div>
             </div>
 
@@ -235,15 +378,20 @@
                         <div>
                             <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
                                 Symulacja zysków (PnL)
-                                <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                                <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                        class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                             </h3>
                             <p class="text-xs text-qv-muted">Strumień powiązany z kursem BTC z Binance (30 dni)</p>
                         </div>
                         <div class="flex gap-1" id="rangeBtns">
-                            <button data-days="1" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">24H</button>
-                            <button data-days="7" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">7D</button>
-                            <button data-days="30" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border bg-qv-accent text-white">30D</button>
-                            <button data-days="90" class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">90D</button>
+                            <button data-days="1"
+                                class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">24H</button>
+                            <button data-days="7"
+                                class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">7D</button>
+                            <button data-days="30"
+                                class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border bg-qv-accent text-white">30D</button>
+                            <button data-days="90"
+                                class="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-qv-border text-qv-muted hover:text-qv-text">90D</button>
                         </div>
                     </div>
                     <div class="w-full h-80">
@@ -265,7 +413,8 @@
                                 <span th:text="${entry.value + '%'}">0.0%</span>
                             </div>
                             <div class="w-full bg-qv-bg rounded-sm h-1.5">
-                                <div class="bg-qv-accent h-1.5 rounded-sm" th:style="'width: ' + ${entry.value} + '%'"></div>
+                                <div class="bg-qv-accent h-1.5 rounded-sm" th:style="'width: ' + ${entry.value} + '%'">
+                                </div>
                             </div>
                         </div>
                         <div th:if="${stats.diversification.isEmpty()}" class="text-center py-4 text-sm text-qv-muted">
@@ -280,9 +429,11 @@
                     <div>
                         <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
                             Wartość Twojego portfela
-                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                         </h3>
-                        <p class="text-xs text-qv-muted">Suma gotówki i krypto w czasie — snapshoty co 5 min oraz po każdej transakcji</p>
+                        <p class="text-xs text-qv-muted">Suma gotówki i krypto w czasie — snapshoty co 5 min oraz po
+                            każdej transakcji</p>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] font-semibold uppercase text-qv-muted">Obecna wartość</p>
@@ -293,30 +444,42 @@
                 <div class="w-full h-72">
                     <canvas id="equityChart"></canvas>
                 </div>
-                <p id="equityEmpty" class="hidden text-center text-xs text-qv-muted py-8">Brak danych historycznych. Wykonaj pierwszą transakcję w sekcji Rynek, aby uruchomić zapis snapshotów.</p>
+                <p id="equityEmpty" class="hidden text-center text-xs text-qv-muted py-8">Brak danych historycznych.
+                    Wykonaj pierwszą transakcję w sekcji Rynek, aby uruchomić zapis snapshotów.</p>
             </div>
 
         </div>
     </main>
 
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-qv-surface border-t border-qv-border z-50 flex justify-around py-3 px-2 shadow-qv">
+    <div
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-qv-surface border-t border-qv-border z-50 flex justify-around py-3 px-2 shadow-qv">
         <a href="/dashboard" class="flex flex-col items-center text-qv-accent">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
             <span class="text-[10px] font-medium mt-1">Panel</span>
         </a>
-        <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex flex-col items-center text-qv-muted hover:text-qv-text">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+        <a sec:authorize="hasRole('ADMIN')" href="/allocations"
+            class="flex flex-col items-center text-qv-muted hover:text-qv-text">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
             <span class="text-[10px] font-medium mt-1">Alokacje</span>
         </a>
         <a href="/assets" class="flex flex-col items-center text-qv-muted hover:text-qv-text">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <span class="text-[10px] font-medium mt-1">Aktywa</span>
         </a>
     </div>
 
     <script th:inline="javascript">
         /*<![CDATA[*/
-        const fallbackPnl = /*[[${pnlPoints}]]*/ [];
+        const fallbackPnl = /*[[${pnlPoints}]]*/[];
         const divMap = /*[[${stats.diversification}]]*/ {};
         const baseAum = parseFloat(/*[[${stats.totalAum}]]*/ 0) || 0;
         /*]]>*/
@@ -653,5 +816,7 @@
             });
         }
     </script>
+    <script src="/js/alerts-toast.js"></script>
 </body>
+
 </html>
