@@ -1,171 +1,31 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Panel administratora')}"></head>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capitall - Panel administratora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        qv: {
-                            bg: 'var(--qv-bg)',
-                            surface: 'var(--qv-surface)',
-                            border: 'var(--qv-border)',
-                            text: 'var(--qv-text)',
-                            muted: 'var(--qv-muted)',
-                            accent: 'var(--qv-accent)'
-                        }
-                    },
-                    boxShadow: { 'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1)', 'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05)' }
-                }
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --qv-bg: #e7ecf3;
-            --qv-surface: #ffffff;
-            --qv-border: #94a3b8;
-            --qv-text: #0a0f1e;
-            --qv-muted: #334155;
-            --qv-accent: #5b21b6;
-        }
-        .dark {
-            --qv-bg: #0b1120;
-            --qv-surface: #1e293b;
-            --qv-border: #334155;
-            --qv-text: #f8fafc;
-            --qv-muted: #94a3b8;
-            --qv-accent: #8b5cf6;
-        }
-        body {
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .transition-colors-all {
-            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 400ms;
-        }
         @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(1.4);} }
         .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
         @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
-        .shimmer { background: linear-gradient(90deg, rgba(139,92,246,0.0) 0%, rgba(139,92,246,0.15) 50%, rgba(139,92,246,0) 100%); background-size: 200% 100%; animation: shimmer 2.5s infinite; }
+        .shimmer { background: linear-gradient(90deg, rgba(99,102,241,0.0) 0%, rgba(99,102,241,0.15) 50%, rgba(99,102,241,0) 100%); background-size: 200% 100%; animation: shimmer 2.5s infinite; }
         .metric-value { font-variant-numeric: tabular-nums; transition: color 0.3s ease; }
         .metric-card { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s; }
         .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(0,0,0,0.25); }
         .ring-progress { transform: rotate(-90deg); }
         .ring-progress circle { transition: stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1); }
-        .row-hover:hover { background: rgba(139,92,246,0.04); }
+        .row-hover:hover { background: rgba(99,102,241,0.06); }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
-    </script>
 </head>
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
-    <aside class="w-64 bg-qv-surface border-r border-qv-border flex flex-col hidden md:flex transition-colors-all">
-        <div class="h-16 flex items-center px-6 border-b border-qv-border">
-            <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
-            <span class="font-bold text-lg text-qv-text transition-colors-all">Capitall</span>
-        </div>
-        <nav class="flex-1 p-4 space-y-1">
-            <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
-                Dashboard
-            </a>
-            <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
-            </a>
-            <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                Alokacje
-            </a>
-            <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" /></svg>
-                Aktywa
-            </a>
-            <a href="/securities"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Papiery wartościowe
-            </a>
-            <a href="/exchange"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                Wirtualny kantor
-            </a>
-            <a href="/alerts"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                Alerty cenowe
-            </a>
-            <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-                Narzędzia
-            </a>
-            <a href="/settings" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                Ustawienia
-            </a>
-            <a href="/admin" class="flex items-center px-3 py-2 bg-qv-bg text-red-500 font-semibold rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                Administracja
-            </a>
-        </nav>
-        <div class="p-4 border-t border-qv-border">
-            <form th:action="@{/logout}" method="post">
-                <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    Wyloguj się
-                </button>
-            </form>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/nav :: sidebar('admin')}"></aside>
 
     <main class="flex-1 flex flex-col overflow-y-auto">
-        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                </div>
-                <h2 class="text-lg font-bold text-qv-text">Panel administracyjny</h2>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Przełącz motyw">
-                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-qv-accent/10 border border-qv-accent/30 flex items-center justify-center text-qv-accent font-bold text-xs"
-                         th:text="${#strings.substring(traderName,0,1).toUpperCase()}">U</div>
-                    <span class="text-sm font-medium text-qv-text" th:text="${traderName}">Użytkownik</span>
-                </div>
-            </div>
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <h2 class="text-lg font-bold text-qv-text transition-colors-all">Panel administratora (ROLE_ADMIN)</h2>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
         </header>
 
         <div class="p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -181,7 +41,7 @@
                 <div class="metric-card bg-qv-surface border border-qv-border rounded-xl p-4 shadow-qv">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                             </div>
                             <span class="text-[11px] font-semibold text-qv-muted uppercase tracking-wide">Użytkownicy</span>
@@ -248,19 +108,19 @@
                     <div class="space-y-4">
                         <div>
                             <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">CPU</span><span class="text-qv-text" id="cpuVal">— %</span></div>
-                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="cpuBar" class="h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700" style="width:0%"></div></div>
+                            <div class="w-full bg-qv-surface-2 rounded-full h-2 overflow-hidden"><div id="cpuBar" class="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-700" style="width:0%"></div></div>
                         </div>
                         <div>
                             <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">RAM</span><span class="text-qv-text" id="ramVal">— %</span></div>
-                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="ramBar" class="h-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 transition-all duration-700" style="width:0%"></div></div>
+                            <div class="w-full bg-qv-surface-2 rounded-full h-2 overflow-hidden"><div id="ramBar" class="h-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 transition-all duration-700" style="width:0%"></div></div>
                         </div>
                         <div>
                             <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">Network I/O</span><span class="text-qv-text" id="netVal">— MB/s</span></div>
-                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="netBar" class="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700" style="width:0%"></div></div>
+                            <div class="w-full bg-qv-surface-2 rounded-full h-2 overflow-hidden"><div id="netBar" class="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700" style="width:0%"></div></div>
                         </div>
                         <div>
                             <div class="flex justify-between text-[11px] font-semibold mb-1.5"><span class="text-qv-muted">Disk usage</span><span class="text-qv-text" id="diskVal">— %</span></div>
-                            <div class="w-full bg-qv-bg rounded-full h-2 overflow-hidden"><div id="diskBar" class="h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-700" style="width:0%"></div></div>
+                            <div class="w-full bg-qv-surface-2 rounded-full h-2 overflow-hidden"><div id="diskBar" class="h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-700" style="width:0%"></div></div>
                         </div>
                     </div>
                     <div class="border-t border-qv-border mt-5 pt-4 flex items-center justify-between text-[11px]">
@@ -278,12 +138,12 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <form th:action="@{/admin/clear-cache}" method="POST">
-                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
+                            <button type="submit" class="w-full py-2 bg-qv-surface-2 border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
                                 Wyczyść Cache
                             </button>
                         </form>
                         <form th:action="@{/admin/rotate-keys}" method="POST">
-                            <button type="submit" class="w-full py-2 bg-qv-bg border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
+                            <button type="submit" class="w-full py-2 bg-qv-surface-2 border border-qv-border text-qv-text text-[11px] font-semibold rounded hover:border-qv-accent hover:text-qv-accent transition-colors">
                                 Rotuj Klucze
                             </button>
                         </form>
@@ -327,12 +187,12 @@
                         <h3 class="text-md font-bold text-qv-text">Zarządzanie użytkownikami</h3>
                         <p class="text-[11px] text-qv-muted mt-0.5">Role, status i reset haseł</p>
                     </div>
-                    <span class="text-[10px] font-semibold text-qv-muted bg-qv-bg border border-qv-border rounded-full px-3 py-1" th:text="${activeUsersCount + ' rekordów'}">0 rekordów</span>
+                    <span class="text-[10px] font-semibold text-qv-muted bg-qv-surface-2 border border-qv-border rounded-full px-3 py-1" th:text="${activeUsersCount + ' rekordów'}">0 rekordów</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-qv-bg text-qv-muted text-[10px] font-bold uppercase tracking-wider">
+                            <tr class="bg-qv-surface-2 text-qv-muted text-[10px] font-bold uppercase tracking-wider">
                                 <th class="py-3 px-6">Nazwa Użytkownika</th>
                                 <th class="py-3 px-6">E-mail</th>
                                 <th class="py-3 px-6">Telefon</th>
@@ -345,7 +205,7 @@
                             <tr th:each="user : ${users}" class="row-hover transition-colors">
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-qv-bg border border-qv-border flex items-center justify-center font-bold text-qv-accent text-xs" th:text="${#strings.toUpperCase(#strings.substring(user.username,0,1))}">U</div>
+                                        <div class="w-8 h-8 rounded-full bg-qv-surface-2 border border-qv-border flex items-center justify-center font-bold text-qv-accent text-xs" th:text="${#strings.toUpperCase(#strings.substring(user.username,0,1))}">U</div>
                                         <span class="font-semibold" th:text="${user.username}">user</span>
                                     </div>
                                 </td>
@@ -353,7 +213,7 @@
                                 <td class="py-4 px-6 text-qv-muted" th:text="${user.phoneNumber != null ? user.phoneNumber : '—'}">—</td>
                                 <td class="py-4 px-6">
                                     <form th:action="@{/admin/user/{id}/role(id=${user.id})}" method="POST" class="flex items-center space-x-2">
-                                        <select name="role" onchange="this.form.submit()" class="bg-qv-bg border border-qv-border rounded px-2 py-1 text-xs text-qv-text focus:outline-none">
+                                        <select name="role" onchange="this.form.submit()" class="bg-qv-surface-2 border border-qv-border rounded px-2 py-1 text-xs text-qv-text focus:outline-none">
                                             <option value="USER" th:selected="${user.role.name() == 'USER'}">USER</option>
                                             <option value="ADMIN" th:selected="${user.role.name() == 'ADMIN'}">ADMIN</option>
                                         </select>
@@ -370,7 +230,7 @@
                                     </button>
 
                                     <button type="button" data-reset-user th:attr="data-user-id=${user.id},data-username=${user.username}"
-                                            class="px-3 py-1 bg-qv-bg border border-qv-border text-qv-text font-semibold rounded hover:bg-slate-50 text-[10px]">
+                                            class="px-3 py-1 bg-qv-surface-2 border border-qv-border text-qv-text font-semibold rounded hover:border-qv-accent text-[10px]">
                                         Resetuj Hasło
                                     </button>
 
@@ -412,7 +272,7 @@
             <form id="resetForm" method="POST" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-qv-text mb-1">Nowe hasło</label>
-                    <input name="newPassword" type="password" required minlength="12" class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="Min. 12 znaków, A-Z, a-z, 0-9, znak specjalny" />
+                    <input name="newPassword" type="password" required minlength="12" class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="Min. 12 znaków, A-Z, a-z, 0-9, znak specjalny" />
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
@@ -433,7 +293,7 @@
             <form id="creditForm" method="POST" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-qv-text mb-1">Kwota (USDT)</label>
-                    <input name="amount" type="number" step="0.01" min="0.01" max="1000000" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="np. 1000.00" />
+                    <input name="amount" type="number" step="0.01" min="0.01" max="1000000" required class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-xs text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" placeholder="np. 1000.00" />
                     <p class="text-[10px] text-qv-muted mt-1">Doładowanie zostanie zapisane w portfelu użytkownika i wpisane do audit logu.</p>
                 </div>
 
@@ -532,7 +392,7 @@
             const dbq = Array.from({ length: 30 }, () => 60 + Math.random() * 50);
 
             const gradReq = ctx.createLinearGradient(0, 0, 0, 220);
-            gradReq.addColorStop(0, 'rgba(139,92,246,0.35)'); gradReq.addColorStop(1, 'rgba(139,92,246,0)');
+            gradReq.addColorStop(0, 'rgba(99,102,241,0.35)'); gradReq.addColorStop(1, 'rgba(99,102,241,0)');
             const gradWs = ctx.createLinearGradient(0, 0, 0, 220);
             gradWs.addColorStop(0, 'rgba(14,165,233,0.3)'); gradWs.addColorStop(1, 'rgba(14,165,233,0)');
             const gradDb = ctx.createLinearGradient(0, 0, 0, 220);
@@ -543,7 +403,7 @@
                 data: {
                     labels,
                     datasets: [
-                        { label: 'API req/s', data: reqs, borderColor: '#8b5cf6', backgroundColor: gradReq, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
+                        { label: 'API req/s', data: reqs, borderColor: '#6366f1', backgroundColor: gradReq, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
                         { label: 'WebSocket msg/s', data: ws, borderColor: '#0ea5e9', backgroundColor: gradWs, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
                         { label: 'DB queries/s', data: dbq, borderColor: '#10b981', backgroundColor: gradDb, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 }
                     ]
@@ -572,14 +432,14 @@
             }, 1500);
 
             const FEED_EVENTS = [
-                { c: 'violet', t: 'Auth', m: 'Pomyślne logowanie · admin@capitall.com' },
+                { c: 'indigo', t: 'Auth', m: 'Pomyślne logowanie · admin@capitall.com' },
                 { c: 'emerald', t: 'Order', m: 'Wykonano transakcję BTC/USDT na Binance' },
                 { c: 'sky', t: 'WS', m: 'Połączono klienta WebSocket (region eu-central-1)' },
                 { c: 'amber', t: 'API', m: 'Reset limitu zapytań dla klucza ak_••e2c1' },
                 { c: 'fuchsia', t: 'Alloc', m: 'Nowa alokacja dla użytkownika jankowalski' },
                 { c: 'rose', t: 'Audit', m: 'Sprawdzono integralność audit log (OK)' },
                 { c: 'teal', t: 'Sync', m: 'Synchronizacja sald z Kraken (4 konta)' },
-                { c: 'indigo', t: 'KMS', m: 'Rotacja klucza szyfrującego (AES-GCM-256)' }
+                { c: 'violet', t: 'KMS', m: 'Rotacja klucza szyfrującego (AES-GCM-256)' }
             ];
             const feed = document.getElementById('activityFeed');
             function pushEvent() {
@@ -604,6 +464,5 @@
         })();
     </script>
 
-    <script src="/js/alerts-toast.js"></script>
 </body>
 </html>

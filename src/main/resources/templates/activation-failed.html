@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Capitall - Aktywacja nieudana</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body{background:#0b1120;color:#f8fafc;font-family:'Inter',sans-serif;}</style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center">
+<head th:replace="~{fragments/head :: head('Capitall - Aktywacja nieudana')}"></head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex items-center justify-center p-6 transition-colors-all">
+    <div class="absolute top-6 right-6 z-50">
+        <div th:replace="~{fragments/theme :: toggle}"></div>
+    </div>
+
+    <div class="max-w-md w-full bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg p-8 text-center transition-colors-all">
         <div class="w-14 h-14 rounded-full bg-red-500/20 border border-red-500/30 mx-auto mb-5 flex items-center justify-center">
-            <svg class="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <svg class="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </div>
-        <h1 class="text-2xl font-bold mb-3">Aktywacja nieudana</h1>
-        <p class="text-sm text-slate-400 mb-6" th:text="${error}">Link jest nieprawidłowy lub wygasł.</p>
-        <a href="/login/2fa/help" class="block w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-lg mb-3">Skontaktuj się z supportem</a>
-        <a href="/login" class="block text-sm text-slate-400 hover:text-slate-200">Powrót do logowania</a>
+        <h1 class="text-2xl font-bold text-qv-text mb-3">Aktywacja nieudana</h1>
+        <p class="text-sm text-qv-muted mb-6" th:text="${error}">Link jest nieprawidłowy lub wygasł.</p>
+        <a href="/login/2fa/help" class="block w-full py-3 bg-qv-accent hover:bg-qv-accent-hover text-white font-bold rounded-lg mb-3 transition-colors">Skontaktuj się z supportem</a>
+        <a href="/login" class="block text-sm text-qv-muted hover:text-qv-text transition-colors">Powrót do logowania</a>
     </div>
 </body>
 </html>

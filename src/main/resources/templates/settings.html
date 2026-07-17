@@ -1,148 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capitall - Ustawienia użytkownika</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        qv: {
-                            bg: 'var(--qv-bg)',
-                            surface: 'var(--qv-surface)',
-                            border: 'var(--qv-border)',
-                            text: 'var(--qv-text)',
-                            muted: 'var(--qv-muted)',
-                            accent: 'var(--qv-accent)'
-                        }
-                    },
-                    boxShadow: { 'qv': '0 1px 3px 0 rgb(0 0 0 / 0.1)', 'qv-lg': '0 10px 15px -3px rgb(0 0 0 / 0.05)' }
-                }
-            }
-        }
-    </script>
-    <style>
-        :root {
-            --qv-bg: #e7ecf3;
-            --qv-surface: #ffffff;
-            --qv-border: #94a3b8;
-            --qv-text: #0a0f1e;
-            --qv-muted: #334155;
-            --qv-accent: #5b21b6;
-        }
-        .dark {
-            --qv-bg: #0b1120;
-            --qv-surface: #1e293b;
-            --qv-border: #334155;
-            --qv-text: #f8fafc;
-            --qv-muted: #94a3b8;
-            --qv-accent: #8b5cf6;
-        }
-        body {
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .transition-colors-all {
-            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 400ms;
-        }
-    </style>
-    <script>
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
-    </script>
-</head>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Ustawienia użytkownika')}"></head>
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
-    <aside class="w-64 bg-qv-surface border-r border-qv-border flex flex-col hidden md:flex transition-colors-all">
-        <div class="h-16 flex items-center px-6 border-b border-qv-border">
-            <img src="/images/logo.png" alt="Logo" class="w-6 h-6 mr-3 object-contain">
-            <span class="font-bold text-lg text-qv-text transition-colors-all">Capitall</span>
-        </div>
-        <nav class="flex-1 p-4 space-y-1">
-            <a href="/dashboard" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
-                Dashboard
-            </a>
-            <a href="/market" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-                Rynek <span class="ml-auto text-[10px] font-bold bg-qv-accent text-white px-1.5 py-0.5 rounded-full">LIVE</span>
-            </a>
-            <a sec:authorize="hasRole('ADMIN')" href="/allocations" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                Alokacje
-            </a>
-            <a href="/assets" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1" /></svg>
-                Aktywa
-            </a>
-            <a href="/securities"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Papiery wartościowe
-            </a>
-            <a href="/exchange"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                Wirtualny kantor
-            </a>
-            <a href="/alerts"
-                class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                Alerty cenowe
-            </a>
-            <a href="/tools" class="flex items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-                Narzędzia
-            </a>
-            <a href="/settings" class="flex items-center px-3 py-2 bg-qv-bg text-qv-text font-semibold rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3 text-qv-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                Ustawienia
-            </a>
-            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" href="/admin" class="flex items-center px-3 py-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-medium rounded-md transition-all">
-                <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                Administracja
-            </a>
-        </nav>
-        <div class="p-4 border-t border-qv-border">
-            <form th:action="@{/logout}" method="post">
-                <button type="submit" class="flex w-full items-center px-3 py-2 text-qv-muted hover:text-qv-text hover:bg-qv-bg font-medium rounded-md transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    Wyloguj się
-                </button>
-            </form>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/nav :: sidebar('settings')}"></aside>
 
     <main class="flex-1 flex flex-col overflow-y-auto">
         <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
             <h2 class="text-lg font-bold text-qv-text transition-colors-all">Ustawienia użytkownika</h2>
-            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Przełącz motyw">
-                <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            </button>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
         </header>
 
         <div class="p-6 lg:p-8 space-y-8 max-w-3xl w-full mx-auto">
@@ -161,11 +29,11 @@
                 <form th:action="@{/settings/password}" method="POST" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Stare hasło</label>
-                        <input name="oldPassword" type="password" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                        <input name="oldPassword" type="password" required class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Nowe hasło</label>
-                        <input name="newPassword" id="newPassword" type="password" required oninput="checkStrength()" class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                        <input name="newPassword" id="newPassword" type="password" required oninput="checkStrength()" class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
 
                         <div class="mt-2 flex items-center space-x-1.5">
                             <div class="h-1 w-1/3 rounded bg-slate-200 dark:bg-slate-700 transition-all" id="strengthBar1"></div>
@@ -176,14 +44,36 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-qv-text mb-1 transition-colors-all">Powtórz Nowe hasło</label>
-                        <input name="confirmPassword" type="password" required class="w-full bg-qv-bg border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                        <input name="confirmPassword" type="password" required class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
                     </div>
 
                     <div class="pt-4 flex justify-end">
-                        <button type="submit" class="px-5 py-2.5 bg-qv-accent text-white text-sm font-semibold rounded-md shadow hover:opacity-90 transition-opacity">
+                        <button type="submit" class="px-5 py-2.5 bg-qv-accent hover:bg-qv-accent-hover text-white text-sm font-semibold rounded-md shadow transition-colors">
                             Aktualizuj hasło
                         </button>
                     </div>
+                </form>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-xl p-6 lg:p-8 shadow-qv transition-colors-all">
+                <h3 class="text-md font-bold text-qv-text mb-2 transition-colors-all">Prywatność portfela</h3>
+                <p class="text-xs text-qv-muted mb-6 transition-colors-all">
+                    Udostępnij swój portfel innym zalogowanym użytkownikom — będą widzieć saldo USD, posiadane krypto oraz historię transakcji.
+                </p>
+                <form th:action="@{/settings/public-profile}" method="POST" class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm font-semibold text-qv-text block">Publiczny profil portfela</span>
+                        <span class="text-xs text-qv-muted">
+                            <span th:if="${publicProfile}">Twój portfel jest obecnie <strong class="text-green-600 dark:text-green-400">widoczny</strong> na liście <a href="/users" class="underline">/users</a>.</span>
+                            <span th:unless="${publicProfile}">Twój portfel jest obecnie <strong>prywatny</strong>.</span>
+                        </span>
+                    </div>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="publicProfile" value="true"
+                               th:checked="${publicProfile}"
+                               onchange="this.form.submit()"
+                               class="w-5 h-5 rounded text-qv-accent border-qv-border focus:ring-qv-accent cursor-pointer" />
+                    </label>
                 </form>
             </div>
 
@@ -214,6 +104,8 @@
 
         </div>
     </main>
+
+    <div th:replace="~{fragments/nav :: mobilebar('settings')}"></div>
 
     <script>
         function checkStrength() {
@@ -258,6 +150,5 @@
         }
     </script>
 
-    <script src="/js/alerts-toast.js"></script>
 </body>
 </html>

@@ -1,41 +1,39 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Capitall - Konfiguracja 2FA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body{background:#0b1120;color:#f8fafc;font-family:'Inter',sans-serif;}</style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-8">
-        <h1 class="text-2xl font-bold text-center mb-2">Skonfiguruj Microsoft Authenticator</h1>
-        <p class="text-sm text-slate-400 text-center mb-6">Zeskanuj kod QR aplikacją Microsoft Authenticator (lub Google Authenticator, Authy), a następnie wpisz 6-cyfrowy kod.</p>
+<head th:replace="~{fragments/head :: head('Capitall - Konfiguracja 2FA')}"></head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex items-center justify-center p-6 transition-colors-all">
+    <div class="absolute top-6 right-6 z-50">
+        <div th:replace="~{fragments/theme :: toggle}"></div>
+    </div>
 
-        <div th:if="${error}" class="mb-4 p-3 bg-red-900/30 border border-red-800 text-red-300 text-sm rounded-lg text-center" th:text="${error}"></div>
+    <div class="max-w-md w-full bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg p-8 transition-colors-all">
+        <h1 class="text-2xl font-bold text-center text-qv-text mb-2">Skonfiguruj Microsoft Authenticator</h1>
+        <p class="text-sm text-qv-muted text-center mb-6">Zeskanuj kod QR aplikacją Microsoft Authenticator (lub Google Authenticator, Authy), a następnie wpisz 6-cyfrowy kod.</p>
+
+        <div th:if="${error}" class="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 text-red-700 dark:text-red-400 text-sm rounded-lg text-center transition-colors-all" th:text="${error}"></div>
 
         <div class="bg-white rounded-lg p-3 mb-5 flex justify-center">
             <img th:src="${qrDataUri}" alt="QR" class="w-56 h-56" />
         </div>
 
-        <details class="mb-5 text-xs text-slate-400">
-            <summary class="cursor-pointer hover:text-slate-200">Nie możesz zeskanować? Wpisz ręcznie</summary>
-            <p class="mt-2 font-mono break-all bg-slate-900 p-3 rounded border border-slate-700" th:text="${secret}"></p>
+        <details class="mb-5 text-xs text-qv-muted">
+            <summary class="cursor-pointer hover:text-qv-text transition-colors">Nie możesz zeskanować? Wpisz ręcznie</summary>
+            <p class="mt-2 font-mono break-all bg-qv-surface-2 p-3 rounded border border-qv-border text-qv-text transition-colors-all" th:text="${secret}"></p>
         </details>
 
         <form method="POST" action="/setup-2fa" class="space-y-4">
             <input type="hidden" name="token" th:value="${token}" />
             <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
             <div>
-                <label class="block text-sm font-semibold mb-2">6-cyfrowy kod z aplikacji</label>
+                <label class="block text-sm font-semibold text-qv-text mb-2">6-cyfrowy kod z aplikacji</label>
                 <input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus
-                       class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-center text-2xl tracking-widest font-mono focus:ring-2 focus:ring-violet-500 focus:border-violet-500 focus:outline-none" placeholder="000000" />
+                       class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-4 py-3 text-center text-2xl tracking-widest font-mono text-qv-text focus:ring-2 focus:ring-qv-accent focus:border-qv-accent focus:outline-none transition-all" placeholder="000000" />
             </div>
-            <button type="submit" class="w-full py-3 bg-gradient-to-r from-violet-500 to-blue-500 hover:opacity-90 text-white font-bold rounded-lg">
+            <button type="submit" class="w-full py-3 bg-gradient-to-r from-qv-accent to-blue-500 hover:opacity-90 text-white font-bold rounded-lg shadow-qv transition-all">
                 Aktywuj 2FA i zaloguj
             </button>
         </form>
-        <p class="text-xs text-center text-slate-500 mt-4">Po aktywacji każde logowanie będzie wymagać kodu z aplikacji.</p>
+        <p class="text-xs text-center text-qv-muted mt-4">Po aktywacji każde logowanie będzie wymagać kodu z aplikacji.</p>
     </div>
 </body>
 </html>

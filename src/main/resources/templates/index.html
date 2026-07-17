@@ -1,224 +1,89 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pl">
-
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Profesjonalne Zarządzanie aktywami Krypto')}"></head>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capitall - Profesjonalne zarządzanie aktywami krypto</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        qv: {
-                            bg: 'var(--qv-bg)',
-                            surface: 'var(--qv-surface)',
-                            border: 'var(--qv-border)',
-                            text: 'var(--qv-text)',
-                            muted: 'var(--qv-muted)',
-                            accent: 'var(--qv-accent)'
-                        }
-                    },
-                    boxShadow: {
-                        'qv': '0 4px 14px 0 rgba(0, 0, 0, 0.05)',
-                        'qv-lg': '0 10px 25px -5px rgba(0, 0, 0, 0.05)'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        :root {
-            --qv-bg: #e7ecf3;
-            --qv-surface: #ffffff;
-            --qv-border: #94a3b8;
-            --qv-text: #0a0f1e;
-            --qv-muted: #334155;
-            --qv-accent: #5b21b6;
-        }
-
-        .dark {
-            --qv-bg: #0b1120;
-            --qv-surface: #1e293b;
-            --qv-border: #334155;
-            --qv-text: #f8fafc;
-            --qv-muted: #94a3b8;
-            --qv-accent: #8b5cf6;
-        }
-
-        body {
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .text-qv-bg {
-            color: #ffffff !important;
-        }
-
-        .dark .text-qv-bg {
-            color: rgb(15 23 42 / var(--tw-bg-opacity, 1)) !important;
-        }
-
-        .transition-colors-all {
-            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 400ms;
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
-    <script>
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-            updateCalculatorChart();
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex flex-col transition-colors-all">
 
-<body
-    class="bg-white dark:bg-slate-900 font-sans text-qv-text antialiased min-h-screen flex flex-col transition-colors-all">
-
-    <nav class="bg-qv-surface border-b border-qv-border py-4 transition-colors-all sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <img src="/images/logo.png" alt="Capitall" class="w-12 h-12 object-contain -my-2">
-                <span class="text-2xl font-bold text-qv-text transition-colors-all tracking-tight">Capitall</span>
-            </div>
-            <div class="flex items-center space-x-6">
-                <button onclick="toggleTheme()"
-                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    title="Przełącz motyw">
-                    <svg class="w-5 h-5 text-qv-muted hidden dark:block" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <svg class="w-5 h-5 text-qv-muted block dark:hidden" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </button>
-                <a href="/register"
-                    class="text-sm font-semibold text-qv-text hover:text-qv-accent transition-colors">Utwórz konto</a>
-                <a href="/login"
-                    class="px-5 py-2.5 bg-qv-accent text-white text-sm font-semibold rounded-md shadow-qv hover:opacity-90 transition-opacity">Zaloguj
-                    się</a>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="~{fragments/nav :: topnav('home')}"></nav>
 
     <div class="flex-grow">
 
-        <section class="relative w-full bg-white dark:bg-slate-900 overflow-hidden reveal">
+        <section class="relative w-full overflow-hidden reveal">
 
-            <div
-                class="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-blue-500/5 to-transparent pointer-events-none">
-            </div>
-            <div
-                class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-qv-accent/5 to-transparent pointer-events-none">
-            </div>
+            <div class="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-blue-500/5 to-transparent pointer-events-none"></div>
+            <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-qv-accent/5 to-transparent pointer-events-none"></div>
 
-            <div
-                class="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
 
-                <div class="lg:col-span-6 space-y-8">
-                    <span
-                        class="inline-flex items-center px-3 py-1 bg-qv-accent/10 text-qv-accent text-xs font-semibold rounded-full">
-                        Wersja v2.0 - System zarządzania portfelem
-                    </span>
-                    <h1
-                        class="text-4xl lg:text-5xl font-extrabold text-qv-text leading-tight tracking-tight transition-colors-all">
-                        Zabezpiecz i zoptymalizuj swój kapitał krypto.
-                    </h1>
-                    <p class="text-lg text-qv-muted transition-colors-all">
-                        Agregacja wielu kont giełdowych, szyfrowane zarządzanie kluczami API (AES-GCM-256) oraz
-                        zaawansowany silnik alokacji środków dla traderów i adminów w jednym miejscu.
-                    </p>
-                    <div class="flex flex-wrap gap-4">
-                        <a href="/register"
-                            class="px-6 py-3 bg-qv-accent text-white text-sm font-semibold rounded-md shadow-qv hover:opacity-90 transition-opacity">
-                            Załóż darmowe konto
-                        </a>
-                    </div>
+            <div class="lg:col-span-6 space-y-8">
+                <span class="inline-flex items-center px-3 py-1 bg-qv-accent/10 text-qv-accent text-xs font-semibold rounded-full">
+                    Wersja v2.0 - System zarządzania portfelem
+                </span>
+                <h1 class="text-4xl lg:text-5xl font-extrabold text-qv-text leading-tight tracking-tight transition-colors-all">
+                    Zabezpiecz i zoptymalizuj swój kapitał krypto.
+                </h1>
+                <p class="text-lg text-qv-muted transition-colors-all">
+                    Agregacja wielu kont giełdowych, szyfrowane zarządzanie kluczami API (AES-GCM-256) oraz zaawansowany silnik alokacji środków dla traderów i adminów w jednym miejscu.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="/register" class="px-6 py-3 bg-qv-accent hover:bg-qv-accent-hover text-white text-sm font-semibold rounded-md shadow-qv transition-colors">
+                        Załóż darmowe konto
+                    </a>
                 </div>
+            </div>
 
-                <div class="lg:col-span-6 flex justify-center relative">
-                    <div
-                        class="w-full max-w-lg bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg p-6 space-y-6 transition-colors-all">
-                        <div class="flex justify-between items-center pb-4 border-b border-qv-border">
-                            <div class="flex space-x-2">
-                                <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                                <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
-                                <span class="w-3 h-3 rounded-full bg-green-400"></span>
-                            </div>
-                            <span class="text-xs font-medium text-qv-muted">capitall-app.premium</span>
+            <div class="lg:col-span-6 flex justify-center relative">
+                <div class="w-full max-w-lg bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg p-6 space-y-6 transition-colors-all">
+                    <div class="flex justify-between items-center pb-4 border-b border-qv-border">
+                        <div class="flex space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
                         </div>
+                        <span class="text-xs font-medium text-qv-muted">capitall-app.premium</span>
+                    </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-qv-bg border border-qv-border p-4 rounded-lg transition-colors-all">
-                                <span class="text-xs text-qv-muted block">Łączny kapitał (AUM)</span>
-                                <span class="text-lg font-bold text-qv-text">$412,850.00</span>
-                            </div>
-                            <div class="bg-qv-bg border border-qv-border p-4 rounded-lg transition-colors-all">
-                                <span class="text-xs text-qv-muted block">Aktywne alokacje</span>
-                                <span class="text-lg font-bold text-qv-accent">8 aktywów</span>
-                            </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-qv-surface-2 border border-qv-border p-4 rounded-lg transition-colors-all">
+                            <span class="text-xs text-qv-muted block">Łączny kapitał (AUM)</span>
+                            <span class="text-lg font-bold text-qv-text">$412,850.00</span>
                         </div>
+                        <div class="bg-qv-surface-2 border border-qv-border p-4 rounded-lg transition-colors-all">
+                            <span class="text-xs text-qv-muted block">Aktywne alokacje</span>
+                            <span class="text-lg font-bold text-qv-accent">8 Aktywów</span>
+                        </div>
+                    </div>
 
-                        <div
-                            class="h-28 bg-qv-bg border border-qv-border rounded-lg flex items-end p-2 transition-colors-all relative overflow-hidden">
-                            <div class="w-full flex justify-between items-end h-full z-10">
-                                <div class="w-[12%] bg-qv-accent opacity-30 rounded h-[30%]"></div>
-                                <div class="w-[12%] bg-qv-accent opacity-40 rounded h-[50%]"></div>
-                                <div class="w-[12%] bg-qv-accent opacity-50 rounded h-[45%]"></div>
-                                <div class="w-[12%] bg-qv-accent opacity-70 rounded h-[70%]"></div>
-                                <div class="w-[12%] bg-qv-accent opacity-80 rounded h-[65%]"></div>
-                                <div class="w-[12%] bg-qv-accent rounded h-[90%]"></div>
-                            </div>
+                    <div class="h-28 bg-qv-surface-2 border border-qv-border rounded-lg flex items-end p-2 transition-colors-all relative overflow-hidden">
+                        <div class="w-full flex justify-between items-end h-full z-10">
+                            <div class="w-[12%] bg-qv-accent opacity-30 rounded h-[30%]"></div>
+                            <div class="w-[12%] bg-qv-accent opacity-40 rounded h-[50%]"></div>
+                            <div class="w-[12%] bg-qv-accent opacity-50 rounded h-[45%]"></div>
+                            <div class="w-[12%] bg-qv-accent opacity-70 rounded h-[70%]"></div>
+                            <div class="w-[12%] bg-qv-accent opacity-80 rounded h-[65%]"></div>
+                            <div class="w-[12%] bg-qv-accent rounded h-[90%]"></div>
                         </div>
                     </div>
                 </div>
+            </div>
+            </div>
         </section>
 
-        <section
-            class="relative w-full bg-gradient-to-r from-violet-950 to-violet-800 text-white py-20 transition-colors-all reveal overflow-hidden">
+        <section class="relative w-full bg-gradient-to-r from-indigo-950 via-violet-950 to-slate-950 text-white py-20 transition-colors-all reveal overflow-hidden">
 
             <div class="absolute top-0 left-0 w-full overflow-hidden leading-[0]">
-                <svg class="relative block w-full h-8 sm:h-12 text-qv-bg fill-current" viewBox="0 0 1200 120"
-                    preserveAspectRatio="none">
-                    <path
-                        d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-                        opacity=".4"></path>
-                    <path
-                        d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z">
-                    </path>
+                <svg class="relative block w-full h-8 sm:h-12 text-qv-bg fill-current" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".4"></path>
+                    <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"></path>
                 </svg>
             </div>
 
             <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center space-y-6">
-                <p class="text-xs font-bold uppercase tracking-wider text-violet-300">
+                <p class="text-xs font-bold uppercase tracking-wider text-indigo-300">
                     Wspieramy bezpieczną integrację z największymi giełdami na świecie
                 </p>
                 <div class="flex flex-wrap justify-center items-center gap-10 lg:gap-16">
@@ -230,362 +95,236 @@
             </div>
 
             <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] rotate-180">
-                <svg class="relative block w-full h-8 sm:h-12 text-white dark:text-slate-900 fill-current"
-                    viewBox="0 0 1200 120" preserveAspectRatio="none">
-                    <path
-                        d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-                        opacity=".4"></path>
-                    <path
-                        d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z">
-                    </path>
+                <svg class="relative block w-full h-8 sm:h-12 text-qv-bg fill-current" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".4"></path>
+                    <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"></path>
                 </svg>
             </div>
         </section>
 
-        <section class="w-full bg-white dark:bg-slate-900 py-16 lg:py-24 reveal">
+        <section class="w-full py-16 lg:py-24 reveal">
             <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-                    <h2 class="text-3xl font-bold text-qv-text transition-colors-all">Kalkulator oszczędności czasu i
-                        ryzyka</h2>
-                    <p class="text-qv-muted">Zobacz, o ile zmniejszysz ryzyko rynkowe i operacyjne dzięki zbilansowanemu
-                        podziałowi kapitału w Capitall.</p>
-                </div>
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <h2 class="text-3xl font-bold text-qv-text transition-colors-all">Kalkulator oszczędności czasu i ryzyka</h2>
+                <p class="text-qv-muted">Zobacz, o ile zmniejszysz ryzyko rynkowe i operacyjne dzięki zbilansowanemu podziałowi kapitału w Capitall.</p>
+            </div>
 
-                <div
-                    class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-qv-surface border border-qv-border rounded-2xl p-8 lg:p-12 shadow-qv transition-colors-all items-center">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-qv-surface border border-qv-border rounded-2xl p-8 lg:p-12 shadow-qv transition-colors-all items-center">
 
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-bold text-qv-text">Wybierz twój kapitał inwestycyjny</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between font-semibold">
-                                <span class="text-qv-muted">Kwota:</span>
-                                <span class="text-qv-accent" id="capitalValue">$50,000</span>
-                            </div>
-                            <input type="range" id="capitalSlider" min="5000" max="1000000" step="5000" value="50000"
-                                class="w-full h-2 bg-qv-border rounded-lg appearance-none cursor-pointer accent-qv-accent" />
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold text-qv-text">Wybierz Twój kapitał inwestycyjny</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between font-semibold">
+                            <span class="text-qv-muted">Kwota:</span>
+                            <span class="text-qv-accent" id="capitalValue">$50,000</span>
                         </div>
-                        <div class="p-5 bg-qv-bg border border-qv-border rounded-lg space-y-4 transition-colors-all">
-                            <div class="flex justify-between">
-                                <span class="text-sm text-qv-muted">Redukcja ryzyka operacyjnego:</span>
-                                <span class="text-sm font-bold text-green-600" id="riskReductionText">75%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-sm text-qv-muted">Czas zaoszczędzony w miesiącu:</span>
-                                <span class="text-sm font-bold text-qv-accent" id="timeSavedText">18 godzin</span>
-                            </div>
+                        <input type="range" id="capitalSlider" min="5000" max="1000000" step="5000" value="50000"
+                               class="w-full h-2 bg-qv-border rounded-lg appearance-none cursor-pointer accent-qv-accent" />
+                    </div>
+                    <div class="p-5 bg-qv-surface-2 border border-qv-border rounded-lg space-y-4 transition-colors-all">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-qv-muted">Redukcja ryzyka operacyjnego:</span>
+                            <span class="text-sm font-bold text-green-600 dark:text-green-400" id="riskReductionText">75%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-qv-muted">Czas zaoszczędzony w miesiącu:</span>
+                            <span class="text-sm font-bold text-qv-accent" id="timeSavedText">18 godzin</span>
                         </div>
                     </div>
-
-                    <div class="flex flex-col items-center justify-center space-y-6">
-                        <div class="w-64 h-64 relative">
-                            <canvas id="calculatorChart"></canvas>
-                        </div>
-                        <p class="text-xs text-qv-muted text-center">Sugerowany optymalny rebalancing: 50% Binance, 30%
-                            Kraken, 20% Zimny portfel.</p>
-                    </div>
                 </div>
+
+                <div class="flex flex-col items-center justify-center space-y-6">
+                    <div class="w-64 h-64 relative">
+                        <canvas id="calculatorChart"></canvas>
+                    </div>
+                    <p class="text-xs text-qv-muted text-center">Sugerowany optymalny rebalancing: 50% Binance, 30% Kraken, 20% Zimny Portfel.</p>
+                </div>
+            </div>
             </div>
         </section>
 
-        <section class="w-full bg-white dark:bg-slate-900 py-16 lg:py-24 reveal">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8 border-t border-slate-200 dark:border-slate-700 pt-16">
-                <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-                    <h2 class="text-3xl font-bold text-qv-text transition-colors-all">Proste plany, potężne możliwości
-                    </h2>
-                    <p class="text-qv-muted">Wybierz plan dopasowany do skali twojego kapitału. Bez ukrytych opłat.</p>
+        <section class="w-full py-16 lg:py-24 reveal">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 border-t border-qv-border pt-16">
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <h2 class="text-3xl font-bold text-qv-text transition-colors-all">Proste plany, potężne możliwości</h2>
+                <p class="text-qv-muted">Wybierz plan dopasowany do skali Twojego kapitału. Bez ukrytych opłat.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-8 shadow-qv transition-colors-all flex flex-col">
+                    <h3 class="text-lg font-bold text-qv-text mb-2">Starter</h3>
+                    <p class="text-qv-muted text-sm mb-6">Dla początkujących inwestorów.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold text-qv-text">$0</span>
+                        <span class="text-qv-muted text-sm">/ miesięcznie</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Zarządzanie do $50,000 AUM
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Max. 2 giełdy
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Podstawowy kalkulator rebalansingu
+                        </li>
+                    </ul>
+                    <a href="/register" class="block w-full py-2.5 px-4 bg-qv-surface-2 border border-qv-border text-center text-qv-text font-semibold rounded-md hover:border-qv-accent hover:text-qv-accent transition-colors">Wybierz Starter</a>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-                    <div
-                        class="bg-qv-surface border border-qv-border rounded-2xl p-8 shadow-qv transition-colors-all flex flex-col">
-                        <h3 class="text-lg font-bold text-qv-text mb-2">Starter</h3>
-                        <p class="text-qv-muted text-sm mb-6">Dla początkujących inwestorów.</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-extrabold text-qv-text">$0</span>
-                            <span class="text-qv-muted text-sm">/ miesięcznie</span>
-                        </div>
-                        <ul class="space-y-4 mb-8 flex-grow">
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Zarządzanie do $50,000 AUM
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Max. 2 giełdy
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Podstawowy kalkulator rebalansingu
-                            </li>
-                        </ul>
-                        <a href="/register"
-                            class="block w-full py-2.5 px-4 bg-qv-bg border border-qv-border text-center text-qv-text font-semibold rounded-md hover:bg-slate-50 transition-colors">Wybierz
-                            Starter</a>
+                <div class="bg-qv-surface border-2 border-qv-accent rounded-2xl p-8 shadow-qv-lg relative transition-colors-all flex flex-col transform md:-translate-y-4">
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-qv-accent text-white text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
+                        Najpopularniejszy
                     </div>
-
-                    <div
-                        class="bg-qv-surface border-2 border-qv-accent rounded-2xl p-8 shadow-qv-lg relative transition-colors-all flex flex-col transform md:-translate-y-4">
-                        <div
-                            class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-qv-accent text-white text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
-                            Najpopularniejszy
-                        </div>
-                        <h3 class="text-lg font-bold text-qv-text mb-2">Professional</h3>
-                        <p class="text-qv-muted text-sm mb-6">Dla aktywnych traderów.</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-extrabold text-qv-text">$49</span>
-                            <span class="text-qv-muted text-sm">/ miesięcznie</span>
-                        </div>
-                        <ul class="space-y-4 mb-8 flex-grow">
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Nielimitowany AUM
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Wszystkie zintegrowane giełdy
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Alerty PnL w czasie rzeczywistym
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Wsparcie premium (24/7)
-                            </li>
-                        </ul>
-                        <a href="/register"
-                            class="block w-full py-2.5 px-4 bg-qv-accent text-white text-center font-semibold rounded-md hover:opacity-90 transition-opacity">Rozpocznij
-                            darmowy test</a>
+                    <h3 class="text-lg font-bold text-qv-text mb-2">Professional</h3>
+                    <p class="text-qv-muted text-sm mb-6">Dla aktywnych traderów.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold text-qv-text">$49</span>
+                        <span class="text-qv-muted text-sm">/ miesięcznie</span>
                     </div>
-
-                    <div
-                        class="bg-qv-surface border border-qv-border rounded-2xl p-8 shadow-qv transition-colors-all flex flex-col">
-                        <h3 class="text-lg font-bold text-qv-text mb-2">Enterprise</h3>
-                        <p class="text-qv-muted text-sm mb-6">Dla funduszy i firm inwestycyjnych.</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-extrabold text-qv-text">Kontakt</span>
-                        </div>
-                        <ul class="space-y-4 mb-8 flex-grow">
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Własny serwer dedykowany (on-premise)
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Dedykowany opiekun klienta
-                            </li>
-                            <li class="flex items-center text-sm text-qv-text">
-                                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                Szyfrowanie HSM (Hardware Security Module)
-                            </li>
-                        </ul>
-                        <a href="mailto:contact@capitall.com"
-                            class="block w-full py-2.5 px-4 bg-qv-bg border border-qv-border text-center text-qv-text font-semibold rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Skontaktuj
-                            się z nami</a>
-                    </div>
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Nielimitowany AUM
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Wszystkie zintegrowane giełdy
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Alerty PnL w czasie rzeczywistym
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Wsparcie Premium (24/7)
+                        </li>
+                    </ul>
+                    <a href="/register" class="block w-full py-2.5 px-4 bg-qv-accent hover:bg-qv-accent-hover text-white text-center font-semibold rounded-md transition-colors">Rozpocznij darmowy test</a>
                 </div>
+
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-8 shadow-qv transition-colors-all flex flex-col">
+                    <h3 class="text-lg font-bold text-qv-text mb-2">Enterprise</h3>
+                    <p class="text-qv-muted text-sm mb-6">Dla funduszy i firm inwestycyjnych.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-extrabold text-qv-text">Kontakt</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Własny serwer dedykowany (On-Premise)
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Dedykowany opiekun klienta
+                        </li>
+                        <li class="flex items-center text-sm text-qv-text">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Szyfrowanie HSM (Hardware Security Module)
+                        </li>
+                    </ul>
+                    <a href="mailto:contact@capitall.com" class="block w-full py-2.5 px-4 bg-qv-surface-2 border border-qv-border text-center text-qv-text font-semibold rounded-md hover:border-qv-accent hover:text-qv-accent transition-colors">Skontaktuj się z nami</a>
+                </div>
+            </div>
             </div>
         </section>
 
-        <section class="w-full bg-slate-50 dark:bg-slate-800/50 py-16 lg:py-24 reveal">
-            <div class="max-w-6xl mx-auto px-6 lg:px-8 border-t border-slate-200 dark:border-slate-700 pt-16">
-                <h2 class="text-3xl font-bold text-center text-qv-text mb-12 transition-colors-all">Często zadawane
-                    pytania</h2>
+        <section class="w-full py-16 lg:py-24 reveal">
+            <div class="max-w-6xl mx-auto px-6 lg:px-8 border-t border-qv-border pt-16">
+            <h2 class="text-3xl font-bold text-center text-qv-text mb-12 transition-colors-all">Często zadawane pytania</h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <div class="space-y-6">
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Czy moje klucze API są bezpieczne?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                Tak. Klucze są szyfrowane w locie przy użyciu symetrycznego algorytmu AES-GCM-256 z
-                                unikalnymi wektorami inicjalizacyjnymi (IV). Nigdy nie przechowujemy kluczy w postaci
-                                jawnej.
-                            </div>
-                        </div>
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Jak działa szyfrowanie AES-GCM-256?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                To standard szyfrowania rekomendowany przez agencje bezpieczeństwa. Zapewnia poufność i
-                                integralność danych, zabezpieczając je przed nieautoryzowanym odczytem lub modyfikacją.
-                            </div>
-                        </div>
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Czy aplikacja pobiera prowizje od moich zysków?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                Nie. Działamy w przejrzystym modelu SaaS (opłata subskrypcyjna). Nie pobieramy żadnych
-                                prowizji od Twoich udanych transakcji czy wielkości AUM w planie Professional.
-                            </div>
+                <div class="space-y-6">
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Czy moje klucze API są bezpieczne?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            Tak. Klucze są szyfrowane w locie przy użyciu symetrycznego algorytmu AES-GCM-256 z unikalnymi wektorami inicjalizacyjnymi (IV). Nigdy nie przechowujemy kluczy w postaci jawnej.
                         </div>
                     </div>
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Jak działa szyfrowanie AES-GCM-256?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            To standard szyfrowania rekomendowany przez agencje bezpieczeństwa. Zapewnia poufność i integralność danych, zabezpieczając je przed nieautoryzowanym odczytem lub modyfikacją.
+                        </div>
+                    </div>
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Czy aplikacja pobiera prowizje od moich zysków?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            Nie. Działamy w przejrzystym modelu SaaS (opłata subskrypcyjna). Nie pobieramy żadnych prowizji od Twoich udanych transakcji czy wielkości AUM w planie Professional.
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="space-y-6">
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Czy Capitall ma dostęp do wypłaty moich środków?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                Bezwzględnie nie. System wymaga wyłącznie uprawnień typu Read/Write dla transakcji
-                                handlowych (Trade). Opcja wypłat (Withdrawal) pozostaje zablokowana po stronie giełdy.
-                            </div>
+                <div class="space-y-6">
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Czy Capitall ma dostęp do wypłaty moich środków?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            Bezwzględnie nie. System wymaga wyłącznie uprawnień typu Read/Write dla transakcji handlowych (Trade). Opcja wypłat (Withdrawal) pozostaje zablokowana po stronie giełdy.
                         </div>
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Jakie giełdy są obecnie wspierane?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                Aktualnie w pełni obsługujemy giełdy Binance, Kraken oraz Coinbase przez dedykowane
-                                integracje strategii API. Lista ta jest regularnie poszerzana.
-                            </div>
+                    </div>
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Jakie giełdy są obecnie wspierane?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            Aktualnie w pełni obsługujemy giełdy Binance, Kraken oraz Coinbase przez dedykowane integracje strategii API. Lista ta jest regularnie poszerzana.
                         </div>
-                        <div
-                            class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
-                            <button onclick="toggleFaq(this)"
-                                class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
-                                <span>Czy istnieje możliwość wdrożenia on-premise?</span>
-                                <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
-                                Tak. Dla klientów instytucjonalnych (plan Enterprise) oferujemy pełne wdrożenie na
-                                dedykowanej infrastrukturze z obsługą sprzętowych modułów bezpieczeństwa (HSM).
-                            </div>
+                    </div>
+                    <div class="bg-qv-surface border border-qv-border rounded-xl transition-colors-all hover:shadow-qv-lg">
+                        <button onclick="toggleFaq(this)" class="w-full px-6 py-5 flex justify-between items-center text-left font-semibold text-qv-text focus:outline-none">
+                            <span>Czy istnieje możliwość wdrożenia On-Premise?</span>
+                            <svg class="w-5 h-5 text-qv-muted transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="hidden px-6 pb-5 text-sm text-qv-muted leading-relaxed">
+                            Tak. Dla klientów instytucjonalnych (plan Enterprise) oferujemy pełne wdrożenie na dedykowanej infrastrukturze z obsługą sprzętowych modułów bezpieczeństwa (HSM).
                         </div>
                     </div>
                 </div>
             </div>
+            </div>
         </section>
 
-        <section class="w-full bg-white dark:bg-slate-900 py-16 lg:py-24 reveal">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8 border-t border-slate-200 dark:border-slate-700 pt-16">
-                <div
-                    class="bg-qv-surface border border-qv-border rounded-3xl p-10 lg:p-16 text-center text-qv-text relative overflow-hidden shadow-qv transition-colors-all">
-                    <div class="absolute inset-0 bg-qv-accent/5 pointer-events-none"></div>
-                    <div class="relative z-10 max-w-2xl mx-auto space-y-4">
-                        <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Dołącz do naszej społeczności</h2>
-                        <p class="text-lg text-qv-muted">Zapisz się do naszego newslettera. Otrzymasz 40% zniżki na 3
-                            miesiące korzystania z planu Professional.</p>
-                        <form class="flex flex-col sm:flex-row justify-center gap-4 mt-8"
-                            onsubmit="event.preventDefault(); alert('Dziękujemy za zapis! Zniżka zostanie wysłana na twojego maila.');">
-                            <input type="email" required placeholder="Twój adres e-mail"
-                                class="px-5 py-3 w-full sm:w-96 bg-qv-bg border border-qv-border rounded-lg text-qv-text focus:outline-none focus:ring-2 focus:ring-qv-accent transition-all shadow-sm" />
-                            <button type="submit"
-                                class="px-8 py-3 bg-qv-accent text-white font-semibold rounded-lg shadow-md hover:opacity-90 transition-colors">
-                                Zapisz się
-                            </button>
-                        </form>
-                        <p class="text-xs text-qv-muted mt-4">Zero spamu. Wypisz się w dowolnej chwili.</p>
-                    </div>
+        <section class="w-full py-16 lg:py-24 reveal">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 border-t border-qv-border pt-16">
+            <div class="bg-qv-surface border border-qv-border rounded-3xl p-10 lg:p-16 text-center text-qv-text relative overflow-hidden shadow-qv transition-colors-all">
+                <div class="absolute inset-0 bg-qv-accent/5 pointer-events-none"></div>
+                <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Dołącz do naszej społeczności</h2>
+                    <p class="text-lg text-qv-muted">Zapisz się do naszego newslettera. Otrzymasz 40% zniżki na 3 miesiące korzystania z planu Professional.</p>
+                    <form class="flex flex-col sm:flex-row justify-center gap-4 mt-8" onsubmit="event.preventDefault(); alert('Dziękujemy za zapis! Zniżka zostanie wysłana na Twojego maila.');">
+                        <input type="email" required placeholder="Twój adres e-mail"
+                               class="px-5 py-3 w-full sm:w-96 bg-qv-surface-2 border border-qv-border rounded-lg text-qv-text focus:outline-none focus:ring-2 focus:ring-qv-accent transition-all shadow-sm" />
+                        <button type="submit" class="px-8 py-3 bg-qv-accent hover:bg-qv-accent-hover text-white font-semibold rounded-lg shadow-md transition-colors">
+                            Zapisz się
+                        </button>
+                    </form>
+                    <p class="text-xs text-qv-muted mt-4">Zero spamu. Wypisz się w dowolnej chwili.</p>
                 </div>
+            </div>
             </div>
         </section>
 
     </div>
 
-    <footer
-        class="relative w-full bg-gradient-to-r from-violet-950 to-violet-800 py-10 mt-auto transition-colors-all overflow-hidden">
-
-        <div class="absolute top-0 left-0 w-full overflow-hidden leading-[0]">
-            <svg class="relative block w-full h-6 sm:h-8 text-white dark:text-slate-900 fill-current"
-                viewBox="0 0 1200 120" preserveAspectRatio="none">
-                <path
-                    d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-                    opacity=".3"></path>
-                <path
-                    d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z">
-                </path>
-            </svg>
-        </div>
-
-        <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center text-sm text-violet-300 pt-4">
-            &copy; 2026 Capitall. Wszelkie prawa zastrzeżone.
-        </div>
-    </footer>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
 
     <script>
         // FAQ Accordion
@@ -611,7 +350,6 @@
             const capital = parseInt(capitalSlider.value);
             capitalValue.innerText = "$" + capital.toLocaleString();
 
-            // Dynamic Risk and Time logic
             const timeSaved = Math.min(60, Math.round(10 + (capital / 25000)));
             const riskReduction = Math.min(95, Math.round(55 + (capital / 50000)));
 
@@ -624,7 +362,7 @@
 
             const isDark = document.documentElement.classList.contains('dark');
 
-            if (calculatorChart) {
+            if(calculatorChart) {
                 calculatorChart.destroy();
             }
 
@@ -634,9 +372,9 @@
                     labels: ['Binance', 'Kraken', 'Cold Storage'],
                     datasets: [{
                         data: [binanceVal, krakenVal, coldVal],
-                        backgroundColor: ['#7c3aed', '#3b82f6', '#10b981'],
+                        backgroundColor: isDark ? ['#818cf8', '#60a5fa', '#34d399'] : ['#6366f1', '#3b82f6', '#10b981'],
                         borderWidth: isDark ? 2 : 1,
-                        borderColor: isDark ? '#1e293b' : '#ffffff'
+                        borderColor: isDark ? '#14141c' : '#ffffff'
                     }]
                 },
                 options: {
@@ -646,7 +384,7 @@
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: isDark ? '#94a3b8' : '#64748b',
+                                color: isDark ? '#a1a1aa' : '#64748b',
                                 font: { family: 'Inter', size: 11 }
                             }
                         }
@@ -659,6 +397,9 @@
 
         // Initial call
         updateCalculatorChart();
+
+        // React to theme changes to re-render chart with correct palette
+        document.addEventListener('themechange', updateCalculatorChart);
 
         // Reveal on scroll logic
         const observerOptions = {
@@ -691,5 +432,4 @@
         }, 100);
     </script>
 </body>
-
 </html>

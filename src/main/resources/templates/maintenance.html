@@ -1,28 +1,13 @@
 <!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capitall - Przerwa techniczna</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        qv: { bg: '#f8fafc', surface: '#ffffff', border: '#e2e8f0', text: '#0f172a', muted: '#64748b', accent: '#7c3aed' }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex items-center justify-center p-6">
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Przerwa techniczna')}"></head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased min-h-screen flex items-center justify-center p-6 transition-colors-all">
+    <div class="absolute top-6 right-6 z-50">
+        <div th:replace="~{fragments/theme :: toggle}"></div>
+    </div>
 
-    <div class="max-w-md w-full bg-qv-surface border border-qv-border rounded-2xl shadow-lg p-10 text-center space-y-6">
-        <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto">
+    <div class="max-w-md w-full bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg p-10 text-center space-y-6 transition-colors-all">
+        <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400 rounded-full flex items-center justify-center mx-auto">
             <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         </div>
 
@@ -31,11 +16,11 @@
             <p class="text-sm text-qv-muted">Capitall przechodzi obecnie planowane prace serwisowe lub aktualizację bazy danych.</p>
         </div>
 
-        <div class="p-4 bg-qv-bg border border-qv-border rounded-lg text-xs text-qv-muted leading-relaxed">
+        <div class="p-4 bg-qv-surface-2 border border-qv-border rounded-lg text-xs text-qv-muted leading-relaxed transition-colors-all">
             Przepraszamy za niedogodności. System powróci do normalnego działania po zakończeniu operacji przez nasz zespół administratorski. Wszystkie zaplanowane alokacje działają bez zakłóceń w tle.
         </div>
 
-        <a href="/" class="inline-flex w-full justify-center px-4 py-2.5 bg-qv-accent text-white font-semibold text-sm rounded-md shadow-sm hover:opacity-90">
+        <a href="/" class="inline-flex w-full justify-center px-4 py-2.5 bg-qv-accent hover:bg-qv-accent-hover text-white font-semibold text-sm rounded-md shadow-sm transition-colors">
             Spróbuj ponownie
         </a>
     </div>
