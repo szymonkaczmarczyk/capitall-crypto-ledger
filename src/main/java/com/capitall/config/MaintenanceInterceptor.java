@@ -23,7 +23,7 @@ public class MaintenanceInterceptor implements HandlerInterceptor {
         if (maintenanceModeState.isMaintenanceMode()) {
             String uri = request.getRequestURI();
 
-            if (uri.startsWith("/admin") || uri.startsWith("/css") || uri.startsWith("/js") || 
+            if (uri.startsWith("/admin") || uri.startsWith("/css") || uri.startsWith("/js") ||
                 uri.startsWith("/images") || uri.equals("/logout") || uri.equals("/maintenance") || uri.equals("/") || uri.equals("/login")) {
                 return true;
             }

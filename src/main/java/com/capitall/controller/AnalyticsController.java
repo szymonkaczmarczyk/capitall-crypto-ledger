@@ -22,8 +22,10 @@ public class AnalyticsController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
-        DashboardStatsResponse stats = analyticsService.getDashboardStats();
+    public ResponseEntity<DashboardStatsResponse> getDashboardStats(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        UUID uid = (user != null) ? user.getId() : UUID.fromString("00000000-0000-0000-0000-000000000000");
+        DashboardStatsResponse stats = analyticsService.getDashboardStats(uid);
         return ResponseEntity.ok(stats);
     }
 

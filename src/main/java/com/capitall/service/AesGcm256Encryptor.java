@@ -25,13 +25,12 @@ public class AesGcm256Encryptor implements ApiSecretsEncryptor {
     private static final int TAG_LENGTH_BIT = 128;
     private static final int IV_LENGTH_BYTE = 12;
 
-    // v2: ciphertexts use PBKDF2WithHmacSHA256 (100k iters). Older payloads fall back to SHA-256 derivation for compatibility.
     private static final String V2_PREFIX = "v2:";
     private static final int PBKDF2_ITERATIONS = 100_000;
     private static final int PBKDF2_KEY_BITS = 256;
 
-    private final SecretKeySpec legacyKey;   // SHA-256 derived — decrypt-only for legacy payloads
-    private final SecretKeySpec primaryKey;  // PBKDF2 derived — used for all new encryption
+    private final SecretKeySpec legacyKey;
+    private final SecretKeySpec primaryKey;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AesGcm256Encryptor(

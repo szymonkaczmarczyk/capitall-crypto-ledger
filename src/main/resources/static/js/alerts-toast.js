@@ -1,5 +1,4 @@
 (function() {
-    // Create Toast Container on DOM load
     function initToastContainer() {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -10,19 +9,18 @@
         }
     }
 
-    // Show a beautiful Toast alert
     function showToast(alert) {
         initToastContainer();
         const container = document.getElementById('toast-container');
-        
+
         const toast = document.createElement('div');
         toast.className = 'bg-slate-900/95 dark:bg-slate-950/95 border border-slate-700/50 text-white rounded-xl shadow-2xl p-4 pointer-events-auto flex items-start gap-3 transition-all duration-300 transform translate-x-full opacity-0';
-        
+
         const isAbove = alert.conditionType === 'ABOVE';
         const badgeBg = isAbove ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
         const icon = isAbove ? '📈' : '📉';
         const conditionText = isAbove ? 'wzrósł powyżej' : 'spadł poniżej';
-        
+
         toast.innerHTML = `
             <div class="w-10 h-10 rounded-full ${badgeBg} flex items-center justify-center text-lg shrink-0">
                 ${icon}
@@ -38,20 +36,17 @@
             </div>
             <button class="text-slate-400 hover:text-white text-lg font-bold leading-none select-none focus:outline-none">&times;</button>
         `;
-        
-        // Close button listener
+
         toast.querySelector('button').addEventListener('click', () => {
             dismissToast(toast);
         });
-        
+
         container.appendChild(toast);
-        
-        // Trigger show animation
+
         requestAnimationFrame(() => {
             toast.classList.remove('translate-x-full', 'opacity-0');
         });
-        
-        // Auto-dismiss after 8 seconds
+
         setTimeout(() => {
             dismissToast(toast);
         }, 8000);
@@ -64,7 +59,6 @@
         }, 300);
     }
 
-    // Call check API
     async function checkAlerts() {
         const tokenMeta = document.querySelector('meta[name="_csrf"]');
         const headerMeta = document.querySelector('meta[name="_csrf_header"]');
@@ -97,12 +91,9 @@
         }
     }
 
-    // Run initial check and set interval every 6 seconds
     window.addEventListener('DOMContentLoaded', () => {
         initToastContainer();
-        // Wait a brief moment on load, then run initial check
         setTimeout(checkAlerts, 1500);
-        // Periodic check
         setInterval(checkAlerts, 6000);
     });
 })();

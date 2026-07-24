@@ -17,13 +17,13 @@ public class PriceAlert {
     private UUID userId;
 
     @Column(nullable = false)
-    private String assetType; // "CRYPTO" or "STOCK"
+    private String assetType;
 
     @Column(nullable = false)
     private String symbol;
 
     @Column(nullable = false)
-    private String conditionType; // "ABOVE" or "BELOW"
+    private String conditionType;
 
     @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal targetPrice;

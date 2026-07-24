@@ -3,27 +3,22 @@
 <head th:replace="~{fragments/head :: head('Capitall - Alerty cenowe')}"></head>
 <head>
     <style>
-        /* Modal */
         .modal-overlay { display:none; position:fixed; inset:0; z-index:50; background:rgba(15,23,42,0.65); backdrop-filter:blur(2px); align-items:center; justify-content:center; padding:1rem; }
         .modal-overlay.open { display:flex; }
         .modal-card { transform:scale(0.92); opacity:0; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s; }
         .modal-overlay.open .modal-card { transform:scale(1); opacity:1; }
 
-        /* Notification modal */
         .notif-overlay { display:none; position:fixed; inset:0; z-index:60; background:rgba(15,23,42,0.65); align-items:center; justify-content:center; padding:1rem; }
         .notif-overlay.open { display:flex; }
 
-        /* Toggle pill */
         .toggle-pill { display:inline-flex; background:var(--qv-surface-2); border:1px solid var(--qv-border); border-radius:9999px; padding:3px; gap:2px; }
         .toggle-pill label { cursor:pointer; padding:4px 14px; border-radius:9999px; font-size:12px; font-weight:600; color:var(--qv-muted); transition:all 0.2s; white-space:nowrap; }
         .toggle-pill input[type=radio]:checked + label { background:var(--qv-accent); color:#fff; }
         .toggle-pill input[type=radio] { display:none; }
 
-        /* Alert row */
         .alert-row { animation:slideIn 0.3s ease-out; }
         @keyframes slideIn { from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)} }
 
-        /* Badges */
         .badge-crypto{background:rgba(99,102,241,.15);color:var(--qv-accent)}
         .badge-stock{background:rgba(16,185,129,.15);color:#10b981}
         .badge-above{background:rgba(16,185,129,.15);color:#10b981}
@@ -31,22 +26,19 @@
         .badge-recurring{background:rgba(245,158,11,.15);color:#f59e0b}
         .badge-once{background:rgba(100,116,139,.15);color:#64748b}
 
-        /* Log action colours */
         .log-CREATED{background:rgba(16,185,129,.12);color:#10b981}
         .log-EDITED{background:rgba(59,130,246,.12);color:#3b82f6}
         .log-DELETED{background:rgba(239,68,68,.12);color:#ef4444}
         .log-TRIGGERED{background:rgba(245,158,11,.12);color:#f59e0b}
-    </style>
+</style>
 </head>
 
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
 <aside th:replace="~{fragments/nav :: sidebar('alerts')}"></aside>
 
-<!-- ═══ MAIN ══════════════════════════════════════════════════════════════════ -->
 <main class="flex-1 flex flex-col overflow-hidden">
 
-    <!-- Header -->
     <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all flex-shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-qv-accent/10 flex items-center justify-center">
@@ -66,7 +58,6 @@
 
     <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
 
-        <!-- ── Notification modal ──────────────────────────────────────────── -->
         <div id="notifModal" th:if="${successMessage != null || errorMessage != null}"
              class="notif-overlay">
             <div class="bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-sm w-full p-6 text-center space-y-4"
@@ -85,7 +76,6 @@
             </div>
         </div>
 
-        <!-- ── Stat cards ─────────────────────────────────────────────────── -->
         <div class="grid grid-cols-3 gap-4">
             <div class="bg-qv-surface border border-qv-border rounded-lg p-4 flex items-center gap-3 transition-colors-all">
                 <div class="w-10 h-10 rounded-lg bg-qv-accent/10 flex items-center justify-center flex-shrink-0">
@@ -116,10 +106,8 @@
             </div>
         </div>
 
-        <!-- ── Form + Alerts grid ─────────────────────────────────────────── -->
         <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
 
-            <!-- CREATE FORM -->
             <div class="xl:col-span-2 bg-qv-surface border border-qv-border rounded-xl shadow-qv p-6 transition-colors-all">
                 <div class="flex items-center gap-2 mb-5">
                     <div class="w-7 h-7 rounded-md bg-qv-accent/10 flex items-center justify-center">
@@ -129,7 +117,6 @@
                 </div>
                 <form th:action="@{/alerts/create}" method="post" class="space-y-4" id="alertForm">
 
-                    <!-- Asset type -->
                     <div>
                         <label class="block text-xs font-semibold text-qv-muted mb-2">Klasa aktywów</label>
                         <div class="toggle-pill w-full">
@@ -140,14 +127,12 @@
                         </div>
                     </div>
 
-                    <!-- Symbol -->
                     <div>
                         <label class="block text-xs font-semibold text-qv-muted mb-1">Symbol waloru</label>
                         <select id="symbolSelect" name="symbol" required
                                 class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent"></select>
                     </div>
 
-                    <!-- Condition -->
                     <div>
                         <label class="block text-xs font-semibold text-qv-muted mb-2">Warunek wyzwolenia</label>
                         <div class="toggle-pill w-full">
@@ -158,7 +143,6 @@
                         </div>
                     </div>
 
-                    <!-- Price -->
                     <div>
                         <label class="block text-xs font-semibold text-qv-muted mb-1">Cena docelowa (USD)</label>
                         <div class="relative">
@@ -168,7 +152,6 @@
                         </div>
                     </div>
 
-                    <!-- Recurring -->
                     <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
@@ -189,7 +172,6 @@
                 </form>
             </div>
 
-            <!-- ACTIVE ALERTS LIST -->
             <div class="xl:col-span-3 bg-qv-surface border border-qv-border rounded-xl shadow-qv transition-colors-all flex flex-col">
                 <div class="p-5 border-b border-qv-border flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -201,7 +183,6 @@
                     <span class="text-xs text-qv-muted">Sprawdzane co 6 sekund</span>
                 </div>
 
-                <!-- Empty state -->
                 <div th:if="${#lists.isEmpty(alerts)}" class="flex-1 flex flex-col items-center justify-center py-16 px-8 text-center">
                     <div class="w-20 h-20 rounded-full bg-qv-bg flex items-center justify-center mb-4">
                         <svg class="w-9 h-9 text-qv-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -210,16 +191,15 @@
                     <p class="text-sm text-qv-muted max-w-xs">Utwórz alert cenowy, aby otrzymywać powiadomienia o zmianach rynkowych w czasie rzeczywistym.</p>
                 </div>
 
-                <!-- Alert rows -->
                 <div th:if="${!#lists.isEmpty(alerts)}" class="flex-1 overflow-y-auto divide-y divide-qv-border/50">
                     <div th:each="alert : ${alerts}" class="alert-row p-4 hover:bg-qv-bg/40 transition-colors group">
                         <div class="flex items-start gap-3">
-                            <!-- Icon -->
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-black text-xs"
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 font-black text-xs overflow-hidden"
                                  th:classappend="${alert.assetType=='CRYPTO'?'bg-violet-500/10 text-violet-500':'bg-emerald-500/10 text-emerald-500'}"
-                                 th:text="${alert.symbol}">BTC</div>
+                                 th:attr="data-crypto-symbol=${alert.assetType=='CRYPTO'?alert.symbol:null}, data-stock-symbol=${alert.assetType=='STOCK'?alert.symbol:null}, data-fallback=${alert.symbol}">
+                                 <span th:text="${alert.symbol}">BTC</span>
+                            </div>
 
-                            <!-- Info -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 flex-wrap mb-1">
                                     <span class="text-xs font-bold px-2 py-0.5 rounded-full"
@@ -241,15 +221,12 @@
                                      th:text="${'Dodano: '+#temporals.format(alert.createdAt,'dd.MM.yyyy HH:mm')}"></div>
                             </div>
 
-                            <!-- Actions -->
                             <div class="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <!-- Edit -->
                                 <button type="button"
                                         th:onclick="'openEditModal('''+${alert.id}+''','''+${alert.conditionType}+''','+${alert.targetPrice}+','+${alert.recurring}+')'"
                                         class="w-8 h-8 rounded-lg flex items-center justify-center text-qv-muted hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                 </button>
-                                <!-- Delete -->
                                 <form th:action="@{'/alerts/delete/'+${alert.id}}" method="post">
                                     <button type="submit"
                                             class="w-8 h-8 rounded-lg flex items-center justify-center text-qv-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
@@ -261,7 +238,6 @@
                     </div>
                 </div>
 
-                <!-- Footer -->
                 <div th:if="${!#lists.isEmpty(alerts)}" class="p-4 border-t border-qv-border bg-qv-bg/30">
                     <div class="flex items-center gap-2 text-[11px] text-qv-muted">
                         <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -271,7 +247,6 @@
             </div>
         </div>
 
-        <!-- ── Activity Log ────────────────────────────────────────────────── -->
         <div class="bg-qv-surface border border-qv-border rounded-xl shadow-qv transition-colors-all">
             <div class="p-5 border-b border-qv-border flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -283,12 +258,10 @@
                 <span class="text-xs text-qv-muted" th:text="${alertLogs.size()+' wpisów'}">0 wpisów</span>
             </div>
 
-            <!-- Empty log -->
             <div th:if="${#lists.isEmpty(alertLogs)}" class="py-10 text-center text-sm text-qv-muted">
                 Brak zapisanych zdarzeń. Aktywność pojawi się tutaj po pierwszym alertcie.
             </div>
 
-            <!-- Log table -->
             <div th:if="${!#lists.isEmpty(alertLogs)}" class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -321,10 +294,9 @@
             </div>
         </div>
 
-    </div><!-- /scroll container -->
+    </div>
 </main>
 
-<!-- ═══ EDIT MODAL ════════════════════════════════════════════════════════════ -->
 <div id="editModal" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
     <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg w-full max-w-md p-6 space-y-5">
         <div class="flex items-center justify-between">
@@ -336,7 +308,6 @@
 
         <form id="editForm" method="post" class="space-y-4">
 
-            <!-- Condition -->
             <div>
                 <label class="block text-xs font-semibold text-qv-muted mb-2">Warunek wyzwolenia</label>
                 <div class="toggle-pill w-full">
@@ -347,7 +318,6 @@
                 </div>
             </div>
 
-            <!-- Price -->
             <div>
                 <label class="block text-xs font-semibold text-qv-muted mb-1">Cena docelowa (USD)</label>
                 <div class="relative">
@@ -357,7 +327,6 @@
                 </div>
             </div>
 
-            <!-- Recurring -->
             <div class="bg-qv-bg border border-qv-border rounded-lg p-3">
                 <div class="flex items-center justify-between gap-3">
                     <div class="min-w-0">
@@ -401,7 +370,6 @@
             : 'Jednorazowy — wyśle się raz i zniknie.';
     }
 
-    // ── Edit modal ──────────────────────────────────────────────────────────
     function openEditModal(id, conditionType, targetPrice, recurring) {
         document.getElementById('editForm').action = '/alerts/update/' + id;
         document.getElementById('editAbove').checked = conditionType === 'ABOVE';
@@ -422,7 +390,6 @@
             : 'Jednorazowy — wyśle się raz i zniknie.';
     }
 
-    // ── Notification modal ──────────────────────────────────────────────────
     const notifModal = document.getElementById('notifModal');
     if (notifModal) {
         notifModal.classList.add('open');
@@ -438,7 +405,6 @@
         setTimeout(() => m.remove(), 250);
     }
 
-    // Init
     populateSymbols();
 </script>
 

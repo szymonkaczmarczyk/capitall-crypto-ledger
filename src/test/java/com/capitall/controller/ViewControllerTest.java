@@ -101,7 +101,7 @@ class ViewControllerTest {
                 UUID userId = UUID.randomUUID();
                 UserDto user = new UserDto(userId, "bob", "bob@example.com", "+48 600 000 000", UserRole.USER, true);
 
-                when(analyticsService.getDashboardStats()).thenReturn(stats);
+                when(analyticsService.getDashboardStats(any(UUID.class))).thenReturn(stats);
                 when(userService.getAllUsers()).thenReturn(List.of(user));
                 when(analyticsService.simulatePnL(eq(userId), eq(30)))
                                 .thenReturn(List.of(new PnLPoint(LocalDateTime.now(), BigDecimal.valueOf(10000),

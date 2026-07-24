@@ -204,7 +204,6 @@ public class WalletService {
         BigDecimal sellRateFrom = from.equalsIgnoreCase("PLN") ? BigDecimal.ONE : rateFrom.subtract(rateFrom.multiply(spread));
         BigDecimal buyRateTo = to.equalsIgnoreCase("PLN") ? BigDecimal.ONE : rateTo.add(rateTo.multiply(spread));
 
-        // from -> PLN -> to
         BigDecimal amountInPln = amount.multiply(sellRateFrom);
         BigDecimal resultAmount = amountInPln.divide(buyRateTo, 2, RoundingMode.HALF_DOWN);
 

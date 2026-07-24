@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Symulator Gry Rynkowej')}"></head>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-pop { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+</style>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('simulator')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold text-qv-text transition-colors-all">Symulator Gry Rynkowej (Demo)</h2>
+                <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-xs font-semibold rounded-full border border-indigo-500/20">TRYB DEMO</span>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <div class="p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto pb-24">
+
+            <div th:if="${successMessage}" class="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm font-medium">
+                <span th:text="${successMessage}"></span>
+            </div>
+            <div th:if="${errorMessage}" class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium">
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Wycena portfela demo</span>
+                            <h3 id="statTotalValue" class="text-2xl font-extrabold text-qv-text mt-1 transition-colors-all" th:text="'$' + ${#numbers.formatDecimal(totalValue, 1, 'WHITESPACE', 2, 'POINT')}"></h3>
+                        </div>
+                        <span class="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m6-6a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+                    </div>
+                </div>
+
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Dostępne USD (Demo)</span>
+                            <h3 id="statCash" class="text-2xl font-extrabold text-qv-text mt-1 transition-colors-all" th:text="'$' + ${#numbers.formatDecimal(wallet.balance, 1, 'WHITESPACE', 2, 'POINT')}"></h3>
+                        </div>
+                        <span class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></span>
+                    </div>
+                </div>
+
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Wynik finansowy (PnL)</span>
+                            <h3 id="statPnL" class="text-2xl font-extrabold mt-1 transition-colors-all"
+                                th:classappend="${totalPnL.doubleValue() >= 0 ? 'text-green-500' : 'text-red-500'}"
+                                th:text="${totalPnL.doubleValue() >= 0 ? '+$' : '-$'} + ${#numbers.formatDecimal(totalPnL.abs(), 1, 'WHITESPACE', 2, 'POINT')}"></h3>
+                        </div>
+                        <span id="statPnLBadge" class="p-2 rounded-lg"
+                              th:classappend="${totalPnL.doubleValue() >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path id="statPnLIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      th:d="${totalPnL.doubleValue() >= 0 ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6'}"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent pointer-events-none"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Stopa zwrotu (ROI)</span>
+                            <h3 id="statRoi" class="text-2xl font-extrabold mt-1 transition-colors-all"
+                                th:classappend="${totalRoi.doubleValue() >= 0 ? 'text-green-500' : 'text-red-500'}"
+                                th:text="${totalRoi.doubleValue() >= 0 ? '+' : ''} + ${totalRoi} + '%'"></h3>
+                        </div>
+                        <span id="statRoiBadge" class="p-2 rounded-lg"
+                              th:classappend="${totalRoi.doubleValue() >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9-1h2a2 2 0 002-2v-3a2 2 0 00-2-2h-2a2 2 0 00-2 2v3a2 2 0 002 2zm0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative group/carousel">
+                <h3 class="text-xs font-bold text-qv-muted uppercase tracking-wider mb-4">Wybierz walor z listy (Przewijaj Lewo / Prawo)</h3>
+
+                <button onclick="scrollCarousel(-1)" class="absolute left-2 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-qv-surface/85 border border-qv-border shadow-md flex items-center justify-center text-qv-text hover:bg-qv-accent hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+
+                <div id="carouselWrapper" class="overflow-x-auto scrollbar-none flex gap-4 scroll-smooth pb-2">
+                    <div onclick="quickSelect('BTC-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="BTC">BTC</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Bitcoin</span>
+                        <span id="price-BTC-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('ETH-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="ETH">ETH</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Ethereum</span>
+                        <span id="price-ETH-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('SOL-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="SOL">SOL</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Solana</span>
+                        <span id="price-SOL-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('ADA-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="ADA">ADA</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Cardano</span>
+                        <span id="price-ADA-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('DOT-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="DOT">DOT</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Polkadot</span>
+                        <span id="price-DOT-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('XRP-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="XRP">XRP</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Ripple</span>
+                        <span id="price-XRP-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('DOGE-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="DOGE">DOGE</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Dogecoin</span>
+                        <span id="price-DOGE-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('LTC-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="LTC">LTC</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Litecoin</span>
+                        <span id="price-LTC-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('LINK-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="LINK">LINK</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Chainlink</span>
+                        <span id="price-LINK-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('BNB-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="BNB">BNB</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Binance Coin</span>
+                        <span id="price-BNB-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('AVAX-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="AVAX">AVAX</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Avalanche</span>
+                        <span id="price-AVAX-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('POL-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="POL">POL</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Polygon</span>
+                        <span id="price-POL-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('SHIB-USD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-crypto-symbol="SHIB">SHIB</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Shiba Inu</span>
+                        <span id="price-SHIB-USD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('AAPL')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="AAPL">AAPL</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Apple</span>
+                        <span id="price-AAPL" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('TSLA')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="TSLA">TSLA</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Tesla</span>
+                        <span id="price-TSLA" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('MSFT')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="MSFT">MSFT</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Microsoft</span>
+                        <span id="price-MSFT" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('NVDA')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="NVDA">NVDA</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">NVIDIA</span>
+                        <span id="price-NVDA" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('GOOGL')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="GOOGL">GOOGL</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Google</span>
+                        <span id="price-GOOGL" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('AMZN')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="AMZN">AMZN</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Amazon</span>
+                        <span id="price-AMZN" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('META')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="META">META</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Meta</span>
+                        <span id="price-META" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('NFLX')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="NFLX">NFLX</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Netflix</span>
+                        <span id="price-NFLX" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('AMD')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="AMD">AMD</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">AMD</span>
+                        <span id="price-AMD" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('INTC')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="INTC">INTC</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Intel</span>
+                        <span id="price-INTC" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('BABA')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="BABA">BABA</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Alibaba</span>
+                        <span id="price-BABA" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('NIO')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="NIO">NIO</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Nio Inc.</span>
+                        <span id="price-NIO" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('CDR')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="CDR">CDR</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">CD Projekt</span>
+                        <span id="price-CDR" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('PKO')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="PKO">PKO</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">PKO BP</span>
+                        <span id="price-PKO" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('PKN')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="PKN">PKN</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Orlen</span>
+                        <span id="price-PKN" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('KGH')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="KGH">KGH</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">KGHM</span>
+                        <span id="price-KGH" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('LPP')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="LPP">LPP</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">LPP</span>
+                        <span id="price-LPP" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('SPY')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="SPY">SPY</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">S&P 500 ETF</span>
+                        <span id="price-SPY" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                    <div onclick="quickSelect('QQQ')" class="carousel-item flex-shrink-0 w-32 bg-qv-surface-2 border border-qv-border rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-qv-accent hover:shadow-qv transition-all group">
+                        <div class="w-10 h-10 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs mb-2 group-hover:scale-110 transition-transform overflow-hidden" data-stock-symbol="QQQ">QQQ</div>
+                        <span class="text-xs font-bold text-qv-text text-ellipsis overflow-hidden whitespace-nowrap w-full">Nasdaq ETF</span>
+                        <span id="price-QQQ" class="text-[11px] font-semibold text-indigo-400 mt-1">--</span>
+                    </div>
+                </div>
+
+                <button onclick="scrollCarousel(1)" class="absolute right-2 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-qv-surface/85 border border-qv-border shadow-md flex items-center justify-center text-qv-text hover:bg-qv-accent hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all">
+                        <h3 class="text-md font-bold text-qv-text mb-4 transition-colors-all">Dokonaj transakcji demo</h3>
+
+                        <form th:action="@{/simulator/trade}" method="post" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-text mb-2">Typ transakcji</label>
+                                <div class="grid grid-cols-2 gap-2 bg-qv-surface-2 p-1 rounded-lg border border-qv-border">
+                                    <label class="cursor-pointer text-center py-2 text-xs font-bold rounded-md transition-all select-none" id="buyLabel">
+                                        <input type="radio" name="side" value="BUY" checked class="hidden" onchange="toggleSide('BUY')">
+                                        KUP
+                                    </label>
+                                    <label class="cursor-pointer text-center py-2 text-xs font-bold rounded-md transition-all select-none" id="sellLabel">
+                                        <input type="radio" name="side" value="SELL" class="hidden" onchange="toggleSide('SELL')">
+                                        SPRZEDAJ
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-text mb-1">Symbol aktywa</label>
+                                <select id="symbolSelect" name="symbol" required onchange="fetchPrice()"
+                                        class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all">
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-text mb-1">Ilość jednostek</label>
+                                <input type="number" step="0.000001" name="shares" required placeholder="0.00"
+                                       class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all"
+                                       oninput="calculateTotal()" id="sharesInput" />
+                            </div>
+
+                            <div class="p-4 bg-qv-surface-2 border border-qv-border rounded-lg space-y-2 text-xs text-qv-text transition-colors-all">
+                                <div class="flex justify-between">
+                                    <span>Aktualny kurs:</span>
+                                    <span class="font-bold" id="livePriceDisplay">Brak symbolu</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Szacowana wartość:</span>
+                                    <span class="font-bold text-indigo-400" id="totalEstimateDisplay">$0.00</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-2.5 bg-qv-accent hover:bg-qv-accent-hover text-white font-semibold text-sm rounded-lg shadow-md transition-colors">
+                                Wykonaj transakcję demo
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all relative overflow-hidden" id="topUpBento">
+                        <div id="topUpFormState" class="space-y-4">
+                            <h3 class="text-md font-bold text-qv-text mb-2 transition-colors-all">Wirtualne doładowanie</h3>
+                            <p class="text-xs text-qv-muted mb-4">Zasilon konto demo dodatkowymi funduszami treningowymi.</p>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-text mb-1">Kwota doładowania (USD)</label>
+                                <div class="grid grid-cols-3 gap-2 mb-2">
+                                    <button type="button" onclick="setTopUpAmount(1000)" class="py-1 text-center text-xs font-bold rounded bg-qv-surface-2 border border-qv-border text-qv-text hover:border-qv-accent hover:text-qv-accent transition-all">+$1,000</button>
+                                    <button type="button" onclick="setTopUpAmount(5000)" class="py-1 text-center text-xs font-bold rounded bg-qv-surface-2 border border-qv-border text-qv-text hover:border-qv-accent hover:text-qv-accent transition-all">+$5,000</button>
+                                    <button type="button" onclick="setTopUpAmount(25000)" class="py-1 text-center text-xs font-bold rounded bg-qv-surface-2 border border-qv-border text-qv-text hover:border-qv-accent hover:text-qv-accent transition-all">+$25K</button>
+                                </div>
+                                <input type="number" step="0.01" id="topUpInput" required placeholder="Wpisz własną kwotę"
+                                       class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
+                            </div>
+                            <button type="button" onclick="submitTopUp()" id="topUpBtn" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm rounded-lg shadow-md transition-colors">
+                                Doładuj wirtualne USD
+                            </button>
+                            <p id="topUpError" class="text-xs font-semibold text-red-500 text-center hidden"></p>
+                        </div>
+
+                        <div id="topUpSuccessState" class="hidden flex flex-col items-center justify-center text-center py-6 space-y-3">
+                            <div class="success-pop w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h3 class="font-bold text-qv-text">Konto zostało zasilone</h3>
+                            <p class="text-xs text-qv-muted" id="topUpSuccessMsg">Dodano środki do portfela</p>
+                            <button type="button" onclick="resetTopUpForm()" class="px-4 py-1.5 bg-qv-surface-2 border border-qv-border text-qv-text text-xs font-semibold rounded-lg hover:border-qv-accent transition-all">Zamknij</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 bg-qv-surface border border-qv-border rounded-2xl shadow-qv transition-colors-all overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="px-6 py-4 border-b border-qv-border flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-md font-bold text-qv-text transition-colors-all">Posiadane wirtualne aktywa</h3>
+                                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" title="Live Auto-Update"></span>
+                            </div>
+                            <form th:action="@{/simulator/reset}" method="post" onsubmit="return confirm('Czy na pewno chcesz wyczyścić stan portfela demo i zacząć od nowa z kwotą $10,000?');">
+                                <button type="submit" class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-semibold transition-all">
+                                    Resetuj portfel demo
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="overflow-x-auto overflow-y-auto max-h-[620px] mb-4">
+                            <table class="w-full text-left text-sm" id="holdingsTable">
+                                <thead class="sticky top-0 bg-qv-surface z-10 shadow-sm">
+                                    <tr class="border-b border-qv-border text-xs font-semibold text-qv-muted bg-qv-surface-2/30">
+                                        <th class="py-3.5 px-6">Nazwa / Symbol</th>
+                                        <th class="py-3.5 px-4 text-right">Jednostki</th>
+                                        <th class="py-3.5 px-4 text-right">Śr. koszt zakupu</th>
+                                        <th class="py-3.5 px-4 text-right">Aktualny kurs</th>
+                                        <th class="py-3.5 px-4 text-right">Wartość</th>
+                                        <th class="py-3.5 px-6 text-right whitespace-nowrap">Zysk / Strata</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(holdings)}" class="border-b border-qv-border/30 no-holdings-row">
+                                        <td colspan="6" class="py-8 text-center text-qv-muted">Twój wirtualny portfel jest obecnie pusty. Dokonaj pierwszego zakupu!</td>
+                                    </tr>
+                                    <tr th:each="item : ${holdings}" th:id="'row-' + ${item.holding.symbol}" class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors holding-row" th:data-symbol="${item.holding.symbol}" th:data-shares="${item.holding.shares}" th:data-avgcost="${item.holding.avgCost}">
+                                        <td class="py-3.5 px-6 flex items-center gap-3">
+                                            <div class="holding-icon w-8 h-8 rounded-full bg-qv-surface-3 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden"></div>
+                                            <div>
+                                                <div class="font-bold text-qv-text" th:text="${item.holding.name}"></div>
+                                                <div class="text-xs text-qv-muted" th:text="${item.holding.symbol}"></div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-right font-medium text-qv-text" th:text="${item.holding.shares}"></td>
+                                        <td class="py-3.5 px-4 text-right font-medium text-qv-text" th:text="'$' + ${#numbers.formatDecimal(item.holding.avgCost, 1, 2)}"></td>
+                                        <td class="py-3.5 px-4 text-right font-medium text-qv-text current-price-cell" th:text="'$' + ${#numbers.formatDecimal(item.currentPrice, 1, 2)}"></td>
+                                        <td class="py-3.5 px-4 text-right font-bold text-qv-text value-cell" th:text="'$' + ${#numbers.formatDecimal(item.currentValue, 1, 2)}"></td>
+                                        <td class="py-3.5 px-6 text-right font-bold pnl-cell whitespace-nowrap">
+                                            <span th:class="${item.pnl.doubleValue() >= 0 ? 'text-green-500' : 'text-red-500'}"
+                                                  th:text="${item.pnl.doubleValue() >= 0 ? '+$' : '-$'} + ${#numbers.formatDecimal(item.pnl.abs(), 1, 2)} + ' (' + ${item.roi} + '%)'"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all flex flex-col justify-between h-96">
+                    <div>
+                        <h3 class="text-md font-bold text-qv-text mb-1 transition-colors-all">Dywersyfikacja aktywów</h3>
+                        <p class="text-xs text-qv-muted mb-4">Podział wartości Twojego wirtualnego portfela.</p>
+                    </div>
+                    <div class="relative flex-1 w-full flex items-center justify-center">
+                        <canvas id="simAllocationChart"></canvas>
+                        <div id="simAllocationEmpty" class="hidden absolute inset-0 flex items-center justify-center text-xs text-qv-muted">Brak posiadanych aktywów do wyświetlenia</div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv transition-colors-all flex flex-col justify-between h-96">
+                    <div>
+                        <h3 class="text-md font-bold text-qv-text mb-1 transition-colors-all">Wartość poszczególnych aktywów</h3>
+                        <p class="text-xs text-qv-muted mb-4">Wartość posiadanych wirtualnych walorów w USD.</p>
+                    </div>
+                    <div class="relative flex-1 w-full">
+                        <canvas id="simPerformanceChart"></canvas>
+                        <div id="simPerformanceEmpty" class="hidden absolute inset-0 flex items-center justify-center text-xs text-qv-muted">Brak posiadanych aktywów do wyświetlenia</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-qv-surface border border-qv-border rounded-2xl shadow-qv transition-colors-all overflow-hidden">
+                <div class="px-6 py-4 border-b border-qv-border">
+                    <h3 class="text-md font-bold text-qv-text transition-colors-all">Historia ostatnich transakcji demo</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-qv-border text-xs font-semibold text-qv-muted bg-qv-surface-2/30">
+                                <th class="py-3 px-6">Data</th>
+                                <th class="py-3 px-4">Typ</th>
+                                <th class="py-3 px-4">Symbol</th>
+                                <th class="py-3 px-4">Nazwa</th>
+                                <th class="py-3 px-4 text-right">Jednostki</th>
+                                <th class="py-3 px-4 text-right">Cena</th>
+                                <th class="py-3 px-6 text-right">Wartość całkowita</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(trades)}" class="border-b border-qv-border/30">
+                                <td colspan="7" class="py-6 text-center text-qv-muted">Brak zarejestrowanych transakcji demo.</td>
+                            </tr>
+                            <tr th:each="t : ${trades}" class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors">
+                                <td class="py-3 px-6 text-qv-muted text-xs" th:text="${#temporals.format(t.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                                <td class="py-3 px-4">
+                                    <span th:class="${#strings.toString(t.side) == 'BUY' ? 'text-green-500 bg-green-500/10 border border-green-500/20' : 'text-red-500 bg-red-500/10 border border-red-500/20'}"
+                                          class="px-2 py-0.5 rounded-full text-[10px] font-bold" th:text="${#strings.toString(t.side) == 'BUY' ? 'KUPNO' : 'SPRZEDAŻ'}"></span>
+                                </td>
+                                <td class="py-3 px-4 font-bold text-qv-text" th:text="${t.symbol}"></td>
+                                <td class="py-3 px-4 text-qv-muted" th:text="${t.name}"></td>
+                                <td class="py-3 px-4 text-right font-medium text-qv-text" th:text="${t.shares}"></td>
+                                <td class="py-3 px-4 text-right font-medium text-qv-text" th:text="'$' + ${#numbers.formatDecimal(t.price, 1, 2)}"></td>
+                                <td class="py-3 px-6 text-right font-bold text-qv-text" th:text="'$' + ${#numbers.formatDecimal(t.shares.multiply(t.price), 1, 2)}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        let currentPrice = 0;
+        const initialBalance = 10000.00;
+
+        let walletBalance = /*[[${wallet.balance}]]*/ 10000.00;
+
+        const popularTickers = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'ADA-USD', 'DOT-USD', 'XRP-USD', 'DOGE-USD', 'LTC-USD', 'LINK-USD', 'BNB-USD', 'AVAX-USD', 'POL-USD', 'SHIB-USD', 'AAPL', 'TSLA', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC', 'BABA', 'NIO', 'CDR', 'PKO', 'PKN', 'KGH', 'LPP', 'SPY', 'QQQ'];
+
+        const tickerNames = {
+            'BTC-USD': 'Bitcoin (BTC)',
+            'ETH-USD': 'Ethereum (ETH)',
+            'SOL-USD': 'Solana (SOL)',
+            'ADA-USD': 'Cardano (ADA)',
+            'DOT-USD': 'Polkadot (DOT)',
+            'XRP-USD': 'Ripple (XRP)',
+            'DOGE-USD': 'Dogecoin (DOGE)',
+            'LTC-USD': 'Litecoin (LTC)',
+            'LINK-USD': 'Chainlink (LINK)',
+            'BNB-USD': 'Binance Coin (BNB)',
+            'AVAX-USD': 'Avalanche (AVAX)',
+            'POL-USD': 'Polygon (POL)',
+            'SHIB-USD': 'Shiba Inu (SHIB)',
+            'AAPL': 'Apple (AAPL)',
+            'TSLA': 'Tesla (TSLA)',
+            'MSFT': 'Microsoft (MSFT)',
+            'NVDA': 'NVIDIA (NVDA)',
+            'GOOGL': 'Google (GOOGL)',
+            'AMZN': 'Amazon (AMZN)',
+            'META': 'Meta (META)',
+            'NFLX': 'Netflix (NFLX)',
+            'AMD': 'AMD (AMD)',
+            'INTC': 'Intel (INTC)',
+            'BABA': 'Alibaba (BABA)',
+            'NIO': 'Nio Inc. (NIO)',
+            'CDR': 'CD Projekt (CDR)',
+            'PKO': 'PKO BP (PKO)',
+            'PKN': 'Orlen (PKN)',
+            'KGH': 'KGHM (KGH)',
+            'LPP': 'LPP (LPP)',
+            'SPY': 'S&P 500 ETF (SPY)',
+            'QQQ': 'Nasdaq ETF (QQQ)'
+        };
+
+        let currentSide = 'BUY';
+
+        function toggleSide(side) {
+            currentSide = side;
+            const buyLabel = document.getElementById('buyLabel');
+            const sellLabel = document.getElementById('sellLabel');
+            if (side === 'BUY') {
+                buyLabel.className = 'cursor-pointer text-center py-2 text-xs font-bold rounded-md bg-green-500 text-white shadow-sm transition-all select-none';
+                sellLabel.className = 'cursor-pointer text-center py-2 text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all select-none';
+            } else {
+                buyLabel.className = 'cursor-pointer text-center py-2 text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all select-none';
+                sellLabel.className = 'cursor-pointer text-center py-2 text-xs font-bold rounded-md bg-red-500 text-white shadow-sm transition-all select-none';
+            }
+
+            updateSymbolSelect(side);
+        }
+
+        function updateSymbolSelect(side) {
+            const selectEl = document.getElementById('symbolSelect');
+            if (!selectEl) return;
+
+            const prevVal = selectEl.value;
+            selectEl.innerHTML = '';
+
+            if (side === 'BUY') {
+                popularTickers.forEach(ticker => {
+                    const option = document.createElement('option');
+                    option.value = ticker;
+                    option.textContent = tickerNames[ticker] || ticker;
+                    selectEl.appendChild(option);
+                });
+                if (!prevVal && popularTickers.length > 0) {
+                    selectEl.value = popularTickers[0];
+                }
+            } else {
+                const holdingRows = document.querySelectorAll('.holding-row');
+                let count = 0;
+                holdingRows.forEach(row => {
+                    if (row.classList.contains('no-holdings-row')) return;
+                    const sym = row.getAttribute('data-symbol');
+                    const shares = parseFloat(row.getAttribute('data-shares')) || 0;
+                    if (shares > 0 && sym) {
+                        const option = document.createElement('option');
+                        option.value = sym;
+                        const baseName = tickerNames[sym] || sym;
+                        option.textContent = `${baseName} — Posiadasz: ${shares.toLocaleString(undefined, {maximumFractionDigits: 4})} szt.`;
+                        selectEl.appendChild(option);
+                        count++;
+                    }
+                });
+
+                if (count === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '-- Brak posiadanych aktywów do sprzedaży --';
+                    selectEl.appendChild(option);
+                }
+            }
+
+            if (prevVal) {
+                const hasOption = Array.from(selectEl.options).some(opt => opt.value === prevVal);
+                if (hasOption) {
+                    selectEl.value = prevVal;
+                }
+            }
+
+            fetchPrice();
+        }
+
+        function quickSelect(symbol) {
+            const selectEl = document.getElementById('symbolSelect');
+            if (!selectEl) return;
+
+            let hasOption = Array.from(selectEl.options).some(opt => opt.value === symbol);
+
+            if (!hasOption) {
+                toggleSide('BUY');
+            }
+
+            selectEl.value = symbol;
+            fetchPrice();
+        }
+
+        function setTopUpAmount(val) {
+            document.getElementById('topUpInput').value = val;
+        }
+
+        function submitTopUp() {
+            const amountInput = document.getElementById('topUpInput');
+            const errorEl = document.getElementById('topUpError');
+            const amt = parseFloat(amountInput.value) || 0;
+
+            errorEl.classList.add('hidden');
+            if (amt <= 0) {
+                errorEl.textContent = 'Kwota doładowania musi być większa od zera.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('topUpBtn');
+            btn.disabled = true;
+            btn.textContent = 'Doładowywanie...';
+
+            const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+            const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (token) headers[header] = token;
+
+            fetch('/simulator/topup-async', {
+                method: 'POST',
+                headers: headers,
+                body: new URLSearchParams({ amount: amt })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Doładuj wirtualne USD';
+
+                if (data.success) {
+                    walletBalance = parseFloat(data.newBalance);
+
+                    const userBalanceLabel = document.getElementById('userBalanceLabel');
+                    if (userBalanceLabel) {
+                        userBalanceLabel.textContent = `$${walletBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    }
+
+                    document.getElementById('topUpFormState').classList.add('hidden');
+                    document.getElementById('topUpSuccessMsg').textContent = `Pomyślnie dodano $${amt.toLocaleString(undefined, {minimumFractionDigits: 2})} do portfela.`;
+                    document.getElementById('topUpSuccessState').classList.remove('hidden');
+
+                    updateHoldingPrices();
+
+                    setTimeout(() => {
+                        const successState = document.getElementById('topUpSuccessState');
+                        if (successState && !successState.classList.contains('hidden')) {
+                            resetTopUpForm();
+                        }
+                    }, 5000);
+                } else {
+                    errorEl.textContent = data.error || 'Wystąpił błąd.';
+                    errorEl.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = 'Doładuj wirtualne USD';
+                errorEl.textContent = 'Błąd połączenia.';
+                errorEl.classList.remove('hidden');
+            });
+        }
+
+        function resetTopUpForm() {
+            document.getElementById('topUpSuccessState').classList.add('hidden');
+            document.getElementById('topUpInput').value = '';
+            document.getElementById('topUpError').classList.add('hidden');
+            document.getElementById('topUpFormState').classList.remove('hidden');
+        }
+
+        function scrollCarousel(dir) {
+            const el = document.getElementById('carouselWrapper');
+            const items = Array.from(el.getElementsByClassName('carousel-item'));
+            if (items.length === 0) return;
+            const itemWidth = items[0].offsetWidth + 16;
+            el.scrollBy({
+                left: dir * itemWidth * 2,
+                behavior: 'smooth'
+            });
+        }
+
+        let fetchAbortController = null;
+        function fetchPrice() {
+            const selectEl = document.getElementById('symbolSelect');
+            const symbol = selectEl ? selectEl.value : '';
+            const livePriceDisplay = document.getElementById('livePriceDisplay');
+
+            if (!symbol) {
+                if (livePriceDisplay) livePriceDisplay.innerText = '--';
+                currentPrice = 0;
+                calculateTotal();
+                return;
+            }
+
+            if (fetchAbortController) fetchAbortController.abort();
+            fetchAbortController = new AbortController();
+            const signal = fetchAbortController.signal;
+
+            if (livePriceDisplay) livePriceDisplay.innerText = '⏳ Ładowanie...';
+
+            const timeoutId = setTimeout(() => fetchAbortController.abort(), 7000);
+
+            fetch(`/simulator/price?symbol=${encodeURIComponent(symbol)}`, { signal })
+                .then(res => res.json())
+                .then(data => {
+                    clearTimeout(timeoutId);
+                    if (data.success && data.price != null) {
+                        currentPrice = parseFloat(data.price);
+                        if (livePriceDisplay) {
+                            livePriceDisplay.innerText = `$${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        }
+                    } else {
+                        if (livePriceDisplay) livePriceDisplay.innerText = '❌ Błąd pobierania';
+                        currentPrice = 0;
+                    }
+                    calculateTotal();
+                })
+                .catch(err => {
+                    clearTimeout(timeoutId);
+                    if (err.name === 'AbortError') return;
+                    if (livePriceDisplay) livePriceDisplay.innerText = '❌ Brak połączenia';
+                    currentPrice = 0;
+                    calculateTotal();
+                });
+        }
+
+        function calculateTotal() {
+            const shares = parseFloat(document.getElementById('sharesInput').value) || 0;
+            const total = shares * currentPrice;
+            document.getElementById('totalEstimateDisplay').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function initRowIcons() {
+            document.querySelectorAll('.holding-row').forEach(row => {
+                const sym = row.getAttribute('data-symbol');
+                let iconContainer = row.querySelector('.holding-icon');
+                if (iconContainer && !iconContainer.innerHTML) {
+                    if (sym.endsWith('-USD')) {
+                        const cryptoSym = sym.substring(0, sym.length - 4);
+                        iconContainer.setAttribute('data-crypto-symbol', cryptoSym);
+                        if (window.initCryptoIcon) window.initCryptoIcon(iconContainer);
+                    } else if (['BTC','ETH','SOL','ADA','DOT','XRP','DOGE','LTC','LINK','BNB','AVAX','POL','SHIB'].includes(sym)) {
+                        iconContainer.setAttribute('data-crypto-symbol', sym);
+                        if (window.initCryptoIcon) window.initCryptoIcon(iconContainer);
+                    } else {
+                        iconContainer.setAttribute('data-stock-symbol', sym);
+                        if (window.initStockIcon) window.initStockIcon(iconContainer);
+                    }
+                }
+            });
+        }
+
+        let simAllocationChart = null;
+        let simPerformanceChart = null;
+
+        function updateSimulatorCharts() {
+            const holdingsList = [];
+            document.querySelectorAll('.holding-row').forEach(row => {
+                const sym = row.getAttribute('data-symbol');
+                const valText = row.querySelector('.value-cell')?.innerText || "$0.00";
+                let cleanText = valText.replace(/\s/g, '').replace(',', '.');
+                const value = parseFloat(cleanText.replace(/[^0-9.-]/g, "")) || 0;
+                if (value > 0) {
+                    holdingsList.push({
+                        symbol: sym,
+                        value: value
+                    });
+                }
+            });
+
+            const cashValue = walletBalance;
+            const totalValue = cashValue + holdingsList.reduce((sum, h) => sum + h.value, 0);
+
+            if (totalValue === 0) {
+                document.getElementById('simAllocationEmpty').classList.remove('hidden');
+                document.getElementById('simPerformanceEmpty').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('simAllocationEmpty').classList.add('hidden');
+                document.getElementById('simPerformanceEmpty').classList.add('hidden');
+            }
+
+            const allocationLabels = ['Gotówka (USD)'];
+            const allocationValues = [cashValue];
+            const allocationColors = ['#10b981'];
+
+            const assetColors = {
+                'BTC': '#f59e0b', 'BTC-USD': '#f59e0b',
+                'ETH': '#6366f1', 'ETH-USD': '#6366f1',
+                'SOL': '#d946ef', 'SOL-USD': '#d946ef',
+                'ADA': '#3b82f6', 'ADA-USD': '#3b82f6',
+                'DOT': '#ec4899', 'DOT-USD': '#ec4899',
+                'XRP': '#06b6d4', 'XRP-USD': '#06b6d4',
+                'DOGE': '#eab308', 'DOGE-USD': '#eab308',
+                'LTC': '#be123c', 'LTC-USD': '#be123c',
+                'LINK': '#2563eb', 'LINK-USD': '#2563eb',
+                'BNB': '#f3ba2f', 'BNB-USD': '#f3ba2f',
+                'AVAX': '#e84142', 'AVAX-USD': '#e84142',
+                'POL': '#8247e5', 'POL-USD': '#8247e5',
+                'SHIB': '#ff9900', 'SHIB-USD': '#ff9900',
+                'AAPL': '#a3a3a3', 'TSLA': '#cc0000', 'MSFT': '#00a4ef', 'NVDA': '#76b900',
+                'GOOGL': '#4285f4', 'AMZN': '#ff9900', 'META': '#0668e1', 'NFLX': '#e50914',
+                'AMD': '#ed1c24', 'INTC': '#0071c5', 'BABA': '#ff6a00', 'NIO': '#00b2a9',
+                'CDR': '#fcd34d', 'PKO': '#1d4ed8', 'PKN': '#ef4444', 'KGH': '#047857', 'LPP': '#111827',
+                'SPY': '#0284c7', 'QQQ': '#4f46e5'
+            };
+
+            holdingsList.forEach((h, index) => {
+                allocationLabels.push(h.symbol);
+                allocationValues.push(h.value);
+                const symBase = h.symbol.endsWith('-USD') ? h.symbol.substring(0, h.symbol.length - 4) : h.symbol;
+                allocationColors.push(assetColors[symBase] || `hsl(${(index * 55) % 360}, 65%, 50%)`);
+            });
+
+            if (!simAllocationChart) {
+                const ctx = document.getElementById('simAllocationChart').getContext('2d');
+                simAllocationChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: allocationLabels,
+                        datasets: [{
+                            data: allocationValues,
+                            backgroundColor: allocationColors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 8,
+                                    color: '#64748b',
+                                    font: { size: 10, weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw;
+                                        const pct = ((val / totalValue) * 100).toFixed(1);
+                                        return ` ${context.label}: $${val.toLocaleString(undefined, {minimumFractionDigits: 2})} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            } else {
+                simAllocationChart.data.labels = allocationLabels;
+                simAllocationChart.data.datasets[0].data = allocationValues;
+                simAllocationChart.data.datasets[0].backgroundColor = allocationColors;
+                simAllocationChart.update();
+            }
+
+            if (holdingsList.length === 0) {
+                document.getElementById('simPerformanceEmpty').classList.remove('hidden');
+                if (simPerformanceChart) {
+                    simPerformanceChart.destroy();
+                    simPerformanceChart = null;
+                }
+            } else {
+                document.getElementById('simPerformanceEmpty').classList.add('hidden');
+
+                fetch('/simulator/historical-data')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.success || !data.datasets) return;
+
+                        const labels = data.labels;
+                        const datasets = data.datasets.map((ds, index) => {
+                            const symBase = ds.label.endsWith('-USD') ? ds.label.substring(0, ds.label.length - 4) : ds.label;
+                            const color = assetColors[symBase] || `hsl(${(index * 75) % 360}, 70%, 50%)`;
+                            return {
+                                label: ds.label,
+                                data: ds.data,
+                                borderColor: color,
+                                backgroundColor: 'transparent',
+                                borderWidth: 3,
+                                pointBackgroundColor: color,
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1.5,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                tension: 0.35,
+                                fill: false
+                            };
+                        });
+
+                        if (!simPerformanceChart) {
+                            const ctx = document.getElementById('simPerformanceChart').getContext('2d');
+                            simPerformanceChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: labels,
+                                    datasets: datasets
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'bottom',
+                                            labels: {
+                                                boxWidth: 8,
+                                                color: '#64748b',
+                                                font: { size: 9, weight: 'bold' }
+                                            }
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    const val = context.raw;
+                                                    const sign = val >= 0 ? '+' : '';
+                                                    return ` ${context.dataset.label}: ${sign}${val.toFixed(2)}%`;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+                                            ticks: {
+                                                color: '#64748b',
+                                                font: { size: 9 },
+                                                callback: function(value) {
+                                                    return value + '%';
+                                                }
+                                            }
+                                        },
+                                        x: {
+                                            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+                                            ticks: { color: '#64748b', font: { size: 9, weight: 'bold' } }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            simPerformanceChart.data.labels = labels;
+                            if (simPerformanceChart.data.datasets.length === datasets.length) {
+                                datasets.forEach((ds, idx) => {
+                                    simPerformanceChart.data.datasets[idx].data = ds.data;
+                                    simPerformanceChart.data.datasets[idx].label = ds.label;
+                                });
+                            } else {
+                                simPerformanceChart.data.datasets = datasets;
+                            }
+                            simPerformanceChart.update();
+                        }
+                    })
+                    .catch(err => console.error("Error fetching historical chart data:", err));
+            }
+        }
+
+        function updateHoldingPrices() {
+            const holdingRows = document.querySelectorAll('.holding-row');
+            const heldSymbols = [];
+            holdingRows.forEach(row => {
+                const sym = row.getAttribute('data-symbol');
+                if (sym) heldSymbols.push(sym.toUpperCase().trim());
+            });
+
+            if (heldSymbols.length === 0) {
+                updateSimulatorCharts();
+                return;
+            }
+
+            fetch(`/simulator/prices?symbols=${heldSymbols.join(',')}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || !data.success || !data.prices) return;
+                    let totalAssetsValue = 0;
+                    let totalPnL = 0;
+                    let totalCost = 0;
+
+                    holdingRows.forEach(row => {
+                        const sym = row.getAttribute('data-symbol');
+                        const shares = parseFloat(row.getAttribute('data-shares')) || 0;
+                        const avgCost = parseFloat(row.getAttribute('data-avgcost')) || 0;
+                        const currentVal = data.prices[sym];
+                        if (!currentVal) return;
+
+                        const value = shares * currentVal;
+                        totalAssetsValue += value;
+
+                        const priceCell = row.querySelector('.current-price-cell');
+                        if (priceCell) priceCell.innerText = `$${currentVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                        const valueCell = row.querySelector('.value-cell');
+                        if (valueCell) valueCell.innerText = `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                        const cost = shares * avgCost;
+                        totalCost += cost;
+                        const pnl = value - cost;
+                        totalPnL += pnl;
+                        const roi = cost > 0 ? (pnl * 100 / cost) : 0;
+                        const pnlCell = row.querySelector('.pnl-cell');
+                        if (pnlCell) {
+                            const sign = pnl >= 0 ? '+' : '';
+                            const colorClass = pnl >= 0 ? 'text-green-500' : 'text-red-500';
+                            pnlCell.innerHTML = `<span class="${colorClass}">${sign}$${pnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${roi.toFixed(2)}%)</span>`;
+                        }
+                    });
+
+                    const totalValuation = walletBalance + totalAssetsValue;
+                    const totalRoi = totalCost > 0 ? (totalPnL * 100 / totalCost) : 0;
+
+                    const statTotalValue = document.getElementById('statTotalValue');
+                    if (statTotalValue) statTotalValue.innerText = `$${totalValuation.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                    const statPnL = document.getElementById('statPnL');
+                    if (statPnL) {
+                        const sign = totalPnL >= 0 ? '+' : '-';
+                        statPnL.innerText = `${sign}$${Math.abs(totalPnL).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        statPnL.className = `text-2xl font-extrabold mt-1 transition-colors-all ${totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
+                    }
+
+                    const statPnLBadge = document.getElementById('statPnLBadge');
+                    const statPnLIcon = document.getElementById('statPnLIcon');
+                    if (statPnLBadge && statPnLIcon) {
+                        statPnLBadge.className = `p-2 rounded-lg ${totalPnL >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
+                        statPnLIcon.setAttribute('d', totalPnL >= 0 ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6');
+                    }
+
+                    const statRoi = document.getElementById('statRoi');
+                    if (statRoi) {
+                        const sign = totalRoi >= 0 ? '+' : '';
+                        statRoi.innerText = `${sign}${totalRoi.toFixed(2)}%`;
+                        statRoi.className = `text-2xl font-extrabold mt-1 transition-colors-all ${totalRoi >= 0 ? 'text-green-500' : 'text-red-500'}`;
+                    }
+
+                    const statRoiBadge = document.getElementById('statRoiBadge');
+                    if (statRoiBadge) {
+                        statRoiBadge.className = `p-2 rounded-lg ${totalRoi >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
+                    }
+
+                    updateSimulatorCharts();
+                })
+                .catch(err => console.error("Error updating holding prices:", err));
+        }
+
+        function updateCarouselPrices() {
+            fetch(`/simulator/prices?symbols=${popularTickers.join(',')}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success || !data.prices) return;
+                    popularTickers.forEach(ticker => {
+                        const val = data.prices[ticker];
+                        const tileEl = document.getElementById(`price-${ticker}`);
+                        if (val && tileEl) {
+                            tileEl.innerText = `$${val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        }
+                    });
+                })
+                .catch(err => console.error("Error updating carousel prices:", err));
+        }
+
+        function updateLivePrices() { updateHoldingPrices(); }
+
+        setInterval(updateHoldingPrices, 6000);
+        setInterval(updateCarouselPrices, 60000);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleSide('BUY');
+
+            initRowIcons();
+            updateHoldingPrices();
+            updateCarouselPrices();
+
+            document.querySelectorAll('[data-crypto-symbol]').forEach(el => {
+                if (window.initCryptoIcon) window.initCryptoIcon(el);
+            });
+            document.querySelectorAll('[data-stock-symbol]').forEach(el => {
+                if (window.initStockIcon) window.initStockIcon(el);
+            });
+
+            setTimeout(updateSimulatorCharts, 500);
+
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert-box, [th\\:if*="Message"], [class*="bg-green-500/10"], [class*="bg-red-500/10"], [role="alert"]');
+                alerts.forEach(alert => {
+                    alert.style.transition = 'opacity 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease';
+                    alert.style.opacity = '0';
+                    alert.style.maxHeight = '0px';
+                    alert.style.marginTop = '0px';
+                    alert.style.marginBottom = '0px';
+                    alert.style.paddingTop = '0px';
+                    alert.style.paddingBottom = '0px';
+                    alert.style.overflow = 'hidden';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 5000);
+        });
+</script>
+</body>
+</html>

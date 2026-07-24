@@ -68,7 +68,7 @@ class AssetControllerTest {
                 .andExpect(jsonPath("$.exchangeName").value("BINANCE"))
                 .andExpect(jsonPath("$.accountName").value("My Account"))
                 .andExpect(jsonPath("$.allocatedCapital").value(1500))
-                .andExpect(jsonPath("$.apiKey").doesNotExist()) 
+                .andExpect(jsonPath("$.apiKey").doesNotExist())
                 .andExpect(jsonPath("$.apiSecret").doesNotExist());
     }
 
@@ -107,6 +107,6 @@ class AssetControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
                 .andExpect(jsonPath("$[0].exchangeName").value("BINANCE"))
-                .andExpect(jsonPath("$[0].apiKey").doesNotExist()); 
+                .andExpect(jsonPath("$[0].apiKey").doesNotExist());
     }
 }

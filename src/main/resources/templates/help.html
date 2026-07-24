@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Centrum Pomocy')}"></head>
+<style>
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(32px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-24px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse-ring {
+        0%   { transform: scale(0.85); opacity: 0.7; }
+        70%  { transform: scale(1.15); opacity: 0; }
+        100% { transform: scale(0.85); opacity: 0; }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-8px); }
+    }
+    @keyframes gradient-shift {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes spin-slow {
+        to { transform: rotate(360deg); }
+    }
+    @keyframes counter-up {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    @keyframes draw-line {
+        from { stroke-dashoffset: 200; }
+        to   { stroke-dashoffset: 0; }
+    }
+    @keyframes glow-pulse {
+        0%, 100% { box-shadow: 0 0 8px 0px currentColor; }
+        50%       { box-shadow: 0 0 24px 4px currentColor; }
+    }
+
+    .animate-float { animation: float 3.5s ease-in-out infinite; }
+    .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    .feature-card {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.35s ease,
+                    border-color 0.35s ease;
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        pointer-events: none;
+    }
+    .feature-card:hover {
+        transform: translateY(-6px) scale(1.015);
+        box-shadow: 0 24px 48px -12px rgba(0,0,0,0.35);
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card:hover .card-icon-bg { transform: scale(1.12) rotate(-4deg); }
+    .feature-card:hover .card-arrow { transform: translateX(6px); opacity: 1; }
+    .feature-card:hover .card-glow { opacity: 0.15; }
+
+    .card-icon-bg {
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card-arrow {
+        opacity: 0;
+        transform: translateX(0);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .card-glow {
+        position: absolute;
+        inset: -40%;
+        border-radius: 50%;
+        filter: blur(48px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #06b6d4 100%);
+        background-size: 200% 200%;
+        animation: gradient-shift 4s ease infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-badge {
+        animation: counter-up 0.7s ease both;
+    }
+
+    .search-highlight {
+        outline: 2px solid rgba(99, 102, 241, 0.6);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    }
+
+    #particles-canvas {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .filter-pill {
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .filter-pill.active {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .card-svg path, .card-svg circle, .card-svg polyline, .card-svg line, .card-svg rect {
+        transition: stroke 0.3s ease;
+    }
+    .feature-card:hover .card-svg path,
+    .feature-card:hover .card-svg circle,
+    .feature-card:hover .card-svg polyline,
+    .feature-card:hover .card-svg line,
+    .feature-card:hover .card-svg rect {
+        stroke: white;
+    }
+
+    .anim-chart {
+        stroke-dasharray: 200;
+        stroke-dashoffset: 200;
+        transition: stroke-dashoffset 1.2s ease;
+    }
+    .feature-card:hover .anim-chart,
+    .feature-card.revealed .anim-chart {
+        stroke-dashoffset: 0;
+    }
+
+    .tooltip-badge {
+        position: absolute;
+        top: -2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15,15,25,0.95);
+        border: 1px solid rgba(99,102,241,0.4);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .feature-card:hover .tooltip-badge { opacity: 1; }
+
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent);
+        margin: 3rem 0;
+    }
+
+    .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    }
+    .accordion-content.open {
+        max-height: 500px;
+    }
+    .accordion-icon {
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .accordion-icon.open {
+        transform: rotate(180deg);
+    }
+
+    .tag-pill {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 20px;
+        border: 1px solid;
+    }
+</style>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('help')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto" id="mainScroll">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all shrink-0 sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+                <h2 class="text-lg font-bold text-qv-text transition-colors-all">Centrum Pomocy</h2>
+                <span class="tag-pill bg-indigo-500/10 text-indigo-400 border-indigo-400/30">Baza wiedzy</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative hidden sm:block">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-qv-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input id="searchInput" type="text" placeholder="Szukaj sekcji..." oninput="filterCards(this.value)"
+                           class="pl-9 pr-4 py-1.5 text-xs bg-qv-surface-2 border border-qv-border rounded-lg text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent w-48 transition-all focus:w-64"/>
+                </div>
+                <div th:replace="~{fragments/theme :: toggle}"></div>
+            </div>
+        </header>
+
+        <div class="overflow-y-auto flex-1">
+            <section class="relative overflow-hidden py-16 px-6 lg:px-12" id="hero">
+                <canvas id="particles-canvas"></canvas>
+
+                <div class="absolute top-8 right-16 w-64 h-64 rounded-full opacity-10 pointer-events-none"
+                     style="background: radial-gradient(circle, #6366f1 0%, transparent 70%); animation: float 4s ease-in-out infinite;"></div>
+                <div class="absolute bottom-4 right-32 w-40 h-40 rounded-full opacity-8 pointer-events-none"
+                     style="background: radial-gradient(circle, #06b6d4 0%, transparent 70%); animation: float 5.5s ease-in-out infinite 1s;"></div>
+
+                <div class="max-w-7xl mx-auto relative z-10">
+                    <div class="reveal">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 border border-indigo-500/25 rounded-full text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-5">
+                            <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span>
+                            Dokumentacja v2.0
+                        </span>
+                        <h1 class="text-4xl lg:text-5xl font-black leading-tight mb-4">
+                            Kompendium wiedzy<br>
+                            <span class="gradient-text">Capitall Platform</span>
+                        </h1>
+                        <p class="text-base text-qv-muted max-w-xl mb-8 leading-relaxed">
+                            Interaktywny przewodnik po wszystkich funkcjach platformy inwestycyjnej. Każda sekcja opisana od A do Z — od dashboardu po zaawansowane strategie handlowe.
+                        </p>
+                    </div>
+
+                    <div class="reveal reveal-delay-2 flex flex-wrap gap-6 mt-2">
+                        <div class="stat-badge flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black text-qv-text" id="count-sections">10</div>
+                                <div class="text-[10px] text-qv-muted">Sekcji</div>
+                            </div>
+                        </div>
+                        <div class="stat-badge flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black text-qv-text">24/7</div>
+                                <div class="text-[10px] text-qv-muted">Live Data</div>
+                            </div>
+                        </div>
+                        <div class="stat-badge flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black text-qv-text">AES-256</div>
+                                <div class="text-[10px] text-qv-muted">Szyfrowanie</div>
+                            </div>
+                        </div>
+                        <div class="stat-badge flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black text-qv-text">6s</div>
+                                <div class="text-[10px] text-qv-muted">Odświeżanie</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="px-6 lg:px-12 pb-4 reveal">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setFilter('all', this)" class="filter-pill active px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-text" data-filter="all">
+                            Wszystkie
+                        </button>
+                        <button onclick="setFilter('przeglad', this)" class="filter-pill px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-muted" data-filter="przeglad">
+                            📊 Przegląd
+                        </button>
+                        <button onclick="setFilter('portfel', this)" class="filter-pill px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-muted" data-filter="portfel">
+                            💼 Portfel
+                        </button>
+                        <button onclick="setFilter('handel', this)" class="filter-pill px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-muted" data-filter="handel">
+                            📈 Handel
+                        </button>
+                        <button onclick="setFilter('monitoring', this)" class="filter-pill px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-muted" data-filter="monitoring">
+                            🔔 Monitoring
+                        </button>
+                        <button onclick="setFilter('system', this)" class="filter-pill px-3 py-1.5 text-xs font-semibold rounded-full bg-qv-surface-2 border border-qv-border text-qv-muted" data-filter="system">
+                            ⚙️ System
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="px-6 lg:px-12 pb-8" id="cards-grid">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="cards-container">
+
+                    <div class="feature-card reveal reveal-delay-1 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="przeglad" data-name="dashboard przegląd portfolio" onclick="window.location='/dashboard'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #6366f1, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05)); border: 1px solid rgba(99,102,241,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #818cf8;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-indigo-500/10 text-indigo-400 border-indigo-400/30">Przegląd</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Dashboard</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Centralny punkt dowodzenia. Widok ogólny kapitału, PnL, aktywów oraz historii wyników portfolio na osi czasu.</p>
+
+                            <div class="relative h-12 overflow-hidden rounded-lg bg-qv-surface-2/50">
+                                <svg viewBox="0 0 200 48" class="w-full h-full" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="grad-dash" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M0 40 L30 32 L60 35 L90 22 L120 18 L150 10 L180 14 L200 8 L200 48 L0 48 Z" fill="url(#grad-dash)" opacity="0.5"/>
+                                    <path class="anim-chart" d="M0 40 L30 32 L60 35 L90 22 L120 18 L150 10 L180 14 L200 8" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></div> Saldo portfela w USD w czasie rzeczywistym
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></div> Wykres kapitału (equity snapshot) z 24h historią
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></div> Dywersyfikacja portfela – wykres kołowy Doughnut
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></div> Wskaźniki PnL i ROI dla całego portfela
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-2 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="przeglad" data-name="rynek market kursy krypto live" onclick="window.location='/market'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #10b981, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #34d399;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 6-6"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-emerald-500/10 text-emerald-400 border-emerald-400/30">LIVE</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Rynek</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Tabela notowań na żywo: kryptowaluty, akcje i ETFy. Kursy aktualizowane co 6 sekund bezpośrednio z Yahoo Finance.</p>
+
+                            <div class="flex items-center gap-2 p-2.5 bg-qv-surface-2/50 rounded-lg overflow-hidden">
+                                <div class="flex flex-col gap-0.5 w-full">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] font-bold text-qv-text">BTC-USD</span>
+                                        <span class="text-[10px] font-bold text-emerald-400">+2.4%</span>
+                                    </div>
+                                    <div class="h-1 bg-qv-border rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-400 rounded-full" style="width: 72%; animation: shimmer 2s infinite linear; background: linear-gradient(90deg, #10b981 25%, #34d399 50%, #10b981 75%); background-size: 200% 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div> 32+ instrumenty (krypto, akcje US, GPW, ETF)
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div> Historia transakcji z filtrami KUPNO/SPRZEDAŻ
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div> Formularz zleceń rynkowych i zlecenia stop-loss
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-emerald-400 shrink-0"></div> Zmiana 24h (%) z kolorową sygnalizacją trendu
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-3 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="portfel" data-name="aktywa portfolio saldo portfel" onclick="window.location='/assets'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #f59e0b, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #fbbf24;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m6-6a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-amber-500/10 text-amber-400 border-amber-400/30">Portfel</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Aktywa</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Pełna lista posiadanych instrumentów z wartością, średnim kosztem zakupu, bieżącym PnL i ROI dla każdej pozycji.</p>
+
+                            <div class="p-2.5 bg-qv-surface-2/50 rounded-lg space-y-1.5">
+                                <div class="flex justify-between text-[10px]"><span class="font-bold text-qv-text">Bitcoin</span><span class="text-emerald-400 font-semibold">+$1,240.50</span></div>
+                                <div class="flex justify-between text-[10px]"><span class="font-bold text-qv-text">Ethereum</span><span class="text-red-400 font-semibold">-$34.20</span></div>
+                                <div class="flex justify-between text-[10px]"><span class="font-bold text-qv-text">Solana</span><span class="text-emerald-400 font-semibold">+$8.75</span></div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> Wartość aktywów obliczana w czasie rzeczywistym
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> Średni koszt zakupu (avg cost) per instrument
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> ROI ważony wkładem inwestycyjnym
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-1 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="handel" data-name="giełda exchange konta api binance" onclick="window.location='/exchange'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #06b6d4, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05)); border: 1px solid rgba(6,182,212,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #22d3ee;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-cyan-500/10 text-cyan-400 border-cyan-400/30">Handel</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Giełda</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Podłącz prawdziwe konta giełdowe (Binance, Kraken i inne) przez zaszyfrowane klucze API. Saldo importowane automatycznie.</p>
+
+                            <div class="p-2.5 bg-qv-surface-2/50 rounded-lg font-mono text-[10px] text-qv-muted flex items-center gap-2">
+                                <svg class="w-3 h-3 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span class="text-cyan-400 font-bold">API_KEY:</span> ████████•••••••••••••
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-cyan-400 shrink-0"></div> Integracja API (read-only) z wiodącymi giełdami
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-cyan-400 shrink-0"></div> Szyfrowanie kluczy: AES-GCM-256
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-cyan-400 shrink-0"></div> Łączne saldo z wielu giełd w jednym widoku
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-cyan-400 shrink-0"></div> Importowanie historii transakcji per giełda
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-2 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="handel" data-name="papiery wartościowe akcje securities" onclick="window.location='/securities'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #3b82f6, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05)); border: 1px solid rgba(59,130,246,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #60a5fa;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-blue-500/10 text-blue-400 border-blue-400/30">Handel</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Papiery wartościowe</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Zarządzaj posiadanymi akcjami i ETF-ami. Obserwuj historię zakupów, aktualną wycenę i dywidendy portfela akcyjnego.</p>
+
+                            <div class="flex items-end gap-1 h-10 px-2 bg-qv-surface-2/50 rounded-lg">
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.4); height: 60%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.4); height: 80%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.6); height: 55%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.5); height: 90%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.3); height: 70%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.7); height: 100%;"></div>
+                                <div class="flex-1 rounded-sm" style="background: rgba(59,130,246,0.4); height: 75%;"></div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-blue-400 shrink-0"></div> Śledzenie pozycji w akcjach i ETF-ach
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-blue-400 shrink-0"></div> Powiadomienia o realizacji transakcji
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-blue-400 shrink-0"></div> Automatyczne znikanie alertów po 5 sekundach
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-3 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="monitoring" data-name="alerty powiadomienia cenowe price alert" onclick="window.location='/alerts'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #f43f5e, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(244,63,94,0.05)); border: 1px solid rgba(244,63,94,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #fb7185;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-rose-500/10 text-rose-400 border-rose-400/30">Monitoring</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Alerty cenowe</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Ustaw progi cenowe dla dowolnego instrumentu. Powiadomienia e-mail i push w momencie osiągnięcia ceny docelowej.</p>
+
+                            <div class="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shrink-0"></div>
+                                <span class="text-[10px] font-semibold text-rose-400">BTC-USD przekroczył $68,000 ↑</span>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-rose-400 shrink-0"></div> Alerty na wzrost i spadek ceny
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-rose-400 shrink-0"></div> Powiadomienia e-mail natychmiastowe
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-rose-400 shrink-0"></div> Historia wyzwolonych alertów z datą
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-rose-400 shrink-0"></div> Wielokrotne alerty per instrument
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-1 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="monitoring" data-name="narzędzia tools kalkulator analiza" onclick="window.location='/tools'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #14b8a6, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(20,184,166,0.2), rgba(20,184,166,0.05)); border: 1px solid rgba(20,184,166,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #2dd4bf;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-teal-500/10 text-teal-400 border-teal-400/30">Monitoring</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Narzędzia analityczne</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Zaawansowane kalkulatory, analizy dywersyfikacji i wskaźniki ryzyka. Ocena składu portfela względem klas aktywów.</p>
+
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <div class="p-2 bg-teal-500/10 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-teal-400">Sharpe</div>
+                                </div>
+                                <div class="p-2 bg-teal-500/10 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-teal-400">Volatility</div>
+                                </div>
+                                <div class="p-2 bg-teal-500/10 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-teal-400">Drawdown</div>
+                                </div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-teal-400 shrink-0"></div> Kalkulator wartości przy zleceniach
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-teal-400 shrink-0"></div> Analiza korelacji między aktywami
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-teal-400 shrink-0"></div> Wskaźniki ryzyka i ocena ekspozycji
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-2 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="monitoring" data-name="symulator demo wirtualny portfel trading" onclick="window.location='/simulator'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #8b5cf6, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05)); border: 1px solid rgba(139,92,246,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #a78bfa;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-violet-500/10 text-violet-400 border-violet-400/30">Demo</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Symulator Demo</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Ćwicz strategie inwestycyjne bez ryzyka. Startuj z $10,000 USD demo i sprawdź swoje podejście do rynku w bezpiecznym środowisku.</p>
+
+                            <div class="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+                                <div class="text-[10px] text-violet-400 font-semibold mb-0.5">Wirtualne saldo</div>
+                                <div class="text-base font-black text-qv-text">$10,000.00</div>
+                                <div class="text-[10px] text-qv-muted">Demo USD — nieograniczone doładowania</div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-violet-400 shrink-0"></div> Wirtualne zakupy z cenami rynkowymi na żywo
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-violet-400 shrink-0"></div> Dywersyfikacja i PnL portfela demo
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-violet-400 shrink-0"></div> Wykres porównawczy wydajności krypto (7d)
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-violet-400 shrink-0"></div> Reset i doładowanie wirtualnego salda
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-3 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="system" data-name="ustawienia settings hasło bezpieczeństwo 2fa" onclick="window.location='/settings'">
+                        <div class="card-glow" style="background: radial-gradient(circle, #64748b, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(100,116,139,0.2), rgba(100,116,139,0.05)); border: 1px solid rgba(100,116,139,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #94a3b8;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-slate-500/10 text-slate-400 border-slate-400/30">System</span>
+                                    <svg class="w-4 h-4 text-qv-muted card-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Ustawienia konta</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Konfiguracja profilu, zmiana hasła, zarządzanie 2FA (TOTP), prywatność portfela i ustawienia powiadomień e-mail.</p>
+
+                            <div class="flex items-center gap-2 p-2.5 bg-qv-surface-2/50 rounded-lg">
+                                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                <span class="text-[10px] font-semibold text-emerald-400">2FA aktywne — konto jest bezpieczne</span>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-slate-400 shrink-0"></div> Zmiana hasła z wskaźnikiem siły
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-slate-400 shrink-0"></div> 2FA: TOTP (Google Authenticator)
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-slate-400 shrink-0"></div> Publiczny/prywatny profil portfela
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-slate-400 shrink-0"></div> Zarządzanie alertami e-mail
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-card reveal reveal-delay-1 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv"
+                         data-category="system" data-name="bezpieczeństwo szyfrowanie dane prywatność" onclick="">
+                        <div class="card-glow" style="background: radial-gradient(circle, #f59e0b, transparent);"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between mb-5">
+                                <div class="card-icon-bg w-14 h-14 rounded-2xl flex items-center justify-center"
+                                     style="background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3);">
+                                    <svg class="w-7 h-7 card-svg" style="color: #fbbf24;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag-pill bg-amber-500/10 text-amber-400 border-amber-400/30">System</span>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-qv-text mb-2">Bezpieczeństwo i dane</h3>
+                            <p class="text-xs text-qv-muted leading-relaxed mb-4">Wszystkie klucze API są szyfrowane AES-GCM-256 po stronie serwera. Platforma działa w trybie read-only — żadne środki nie mogą być wypłacone przez API.</p>
+
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <div class="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-amber-400">AES-GCM-256</div>
+                                    <div class="text-[9px] text-qv-muted">Szyfrowanie API</div>
+                                </div>
+                                <div class="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-amber-400">TOTP 2FA</div>
+                                    <div class="text-[9px] text-qv-muted">Uwierzytelnianie</div>
+                                </div>
+                                <div class="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-amber-400">Read-Only</div>
+                                    <div class="text-[9px] text-qv-muted">Tryb API</div>
+                                </div>
+                                <div class="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                                    <div class="text-[10px] font-bold text-amber-400">H2 + JPA</div>
+                                    <div class="text-[9px] text-qv-muted">Baza danych</div>
+                                </div>
+                            </div>
+
+                            <ul class="mt-4 space-y-1.5">
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> Tryb konserwacji przez panel administratora
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> Rotacja kluczy szyfrujących on-demand
+                                </li>
+                                <li class="flex items-center gap-2 text-[11px] text-qv-muted">
+                                    <div class="w-1 h-1 rounded-full bg-amber-400 shrink-0"></div> Pełny log audytowy wszystkich operacji
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="no-results" class="hidden text-center py-16">
+                    <svg class="w-12 h-12 text-qv-muted mx-auto mb-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm text-qv-muted font-semibold">Nie znaleziono sekcji</p>
+                    <p class="text-xs text-qv-muted mt-1">Spróbuj innego słowa kluczowego</p>
+                </div>
+            </section>
+
+            <div class="section-divider mx-6 lg:mx-12 reveal"></div>
+
+            <section class="px-6 lg:px-12 pb-12">
+                <div class="max-w-3xl mx-auto">
+                    <div class="reveal mb-8">
+                        <h2 class="text-2xl font-bold text-qv-text mb-2">Najczęściej zadawane pytania</h2>
+                        <p class="text-sm text-qv-muted">Szybkie odpowiedzi na typowe pytania dotyczące platformy.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="reveal reveal-delay-1 bg-qv-surface border border-qv-border rounded-xl overflow-hidden">
+                            <button onclick="toggleFaq('faq1')" class="w-full px-5 py-4 flex justify-between items-center hover:bg-qv-surface-2/50 transition-colors text-left gap-4">
+                                <span class="text-sm font-semibold text-qv-text">Jak wyliczane są wskaźniki PnL oraz ROI?</span>
+                                <svg id="faq1-icon" class="w-4 h-4 text-qv-muted shrink-0 accordion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div id="faq1" class="accordion-content">
+                                <div class="px-5 pb-5 pt-2 border-t border-qv-border/40">
+                                    <p class="text-xs text-qv-muted leading-relaxed"><strong class="text-qv-text">PnL</strong> = bieżąca wartość rynkowa − koszt zakupu. <strong class="text-qv-text">ROI</strong> = PnL / koszt zakupu × 100%. Gotówka nieaktywna nie wpływa na ROI — liczymy tylko z wkładu inwestycyjnego (kapitał zaangażowany w zakupione aktywa).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal reveal-delay-2 bg-qv-surface border border-qv-border rounded-xl overflow-hidden">
+                            <button onclick="toggleFaq('faq2')" class="w-full px-5 py-4 flex justify-between items-center hover:bg-qv-surface-2/50 transition-colors text-left gap-4">
+                                <span class="text-sm font-semibold text-qv-text">Skąd pobierane są kursy kryptowalut i akcji?</span>
+                                <svg id="faq2-icon" class="w-4 h-4 text-qv-muted shrink-0 accordion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div id="faq2" class="accordion-content">
+                                <div class="px-5 pb-5 pt-2 border-t border-qv-border/40">
+                                    <p class="text-xs text-qv-muted leading-relaxed">Wszystkie notowania są pobierane z <strong class="text-qv-text">Yahoo Finance API</strong> i cachowane przez 6 sekund. Oznacza to, że kursy odświeżają się niemal natychmiast i są zawsze aktualne w granicach opóźnienia typowego dla serwisu Yahoo.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal reveal-delay-3 bg-qv-surface border border-qv-border rounded-xl overflow-hidden">
+                            <button onclick="toggleFaq('faq3')" class="w-full px-5 py-4 flex justify-between items-center hover:bg-qv-surface-2/50 transition-colors text-left gap-4">
+                                <span class="text-sm font-semibold text-qv-text">Czy platforma może zlecać transakcje na mojej giełdzie?</span>
+                                <svg id="faq3-icon" class="w-4 h-4 text-qv-muted shrink-0 accordion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div id="faq3" class="accordion-content">
+                                <div class="px-5 pb-5 pt-2 border-t border-qv-border/40">
+                                    <p class="text-xs text-qv-muted leading-relaxed"><strong class="text-qv-text">Nie.</strong> Capitall działa wyłącznie w trybie <strong class="text-qv-text">read-only</strong>. Klucze API szyfrowane są algorytmem AES-GCM-256. Platforma pobiera jedynie informacje o saldzie i historii — nie wysyła żadnych zleceń ani nie ma dostępu do wypłat.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal reveal-delay-4 bg-qv-surface border border-qv-border rounded-xl overflow-hidden">
+                            <button onclick="toggleFaq('faq4')" class="w-full px-5 py-4 flex justify-between items-center hover:bg-qv-surface-2/50 transition-colors text-left gap-4">
+                                <span class="text-sm font-semibold text-qv-text">Jak skonfigurować 2FA (uwierzytelnianie dwuskładnikowe)?</span>
+                                <svg id="faq4-icon" class="w-4 h-4 text-qv-muted shrink-0 accordion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div id="faq4" class="accordion-content">
+                                <div class="px-5 pb-5 pt-2 border-t border-qv-border/40">
+                                    <p class="text-xs text-qv-muted leading-relaxed">2FA jest <strong class="text-qv-text">wymagane</strong> przy rejestracji i konfigurowane automatycznie poprzez skan kodu QR w aplikacji Google Authenticator lub Authy. Można je zresetować przez panel administratora w razie utraty dostępu do urządzenia.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal reveal-delay-5 bg-qv-surface border border-qv-border rounded-xl overflow-hidden">
+                            <button onclick="toggleFaq('faq5')" class="w-full px-5 py-4 flex justify-between items-center hover:bg-qv-surface-2/50 transition-colors text-left gap-4">
+                                <span class="text-sm font-semibold text-qv-text">Co to jest „publiczny profil portfela"?</span>
+                                <svg id="faq5-icon" class="w-4 h-4 text-qv-muted shrink-0 accordion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div id="faq5" class="accordion-content">
+                                <div class="px-5 pb-5 pt-2 border-t border-qv-border/40">
+                                    <p class="text-xs text-qv-muted leading-relaxed">Gdy włączysz tę opcję w Ustawieniach, inni zalogowani użytkownicy na <strong class="text-qv-text">/users</strong> będą mogli zobaczyć Twoje saldo USD, posiadane krypto i historię transakcji. Domyślnie profil jest prywatny.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+<script th:inline="javascript">
+const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            if (e.target.classList.contains('feature-card')) {
+                e.target.classList.add('revealed');
+            }
+        }
+    });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left').forEach(el => revealObserver.observe(el));
+
+(function initParticles() {
+    const canvas = document.getElementById('particles-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+
+    function resize() {
+        W = canvas.width = canvas.offsetWidth;
+        H = canvas.height = canvas.offsetHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < 55; i++) {
+        particles.push({
+            x: Math.random() * 9999,
+            y: Math.random() * 9999,
+            r: Math.random() * 1.4 + 0.4,
+            dx: (Math.random() - 0.5) * 0.25,
+            dy: (Math.random() - 0.5) * 0.25,
+            alpha: Math.random() * 0.5 + 0.1
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach(p => {
+            p.x += p.dx; p.y += p.dy;
+            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+            if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+            ctx.beginPath();
+            ctx.arc(p.x % W, p.y % H, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(99,102,241,${p.alpha})`;
+            ctx.fill();
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+let currentFilter = 'all';
+let currentSearch = '';
+
+function setFilter(cat, btn) {
+    currentFilter = cat;
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+}
+
+function filterCards(query) {
+    currentSearch = query.toLowerCase().trim();
+    applyFilters();
+}
+
+function applyFilters() {
+    const cards = document.querySelectorAll('#cards-container .feature-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const cat = card.dataset.category || '';
+        const name = card.dataset.name || '';
+        const matchCat = currentFilter === 'all' || cat === currentFilter;
+        const matchSearch = currentSearch === '' || name.includes(currentSearch);
+        if (matchCat && matchSearch) {
+            card.style.display = '';
+            card.style.animation = 'fadeUp 0.4s ease both';
+            visible++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function toggleFaq(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    const isOpen = el.classList.contains('open');
+
+    document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('open'));
+    document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('open'));
+
+    if (!isOpen) {
+        el.classList.add('open');
+        icon.classList.add('open');
+    }
+}
+
+function animateCounter(el, end, duration = 1200) {
+    let start = 0;
+    const step = end / (duration / 16);
+    const timer = setInterval(() => {
+        start += step;
+        if (start >= end) { el.textContent = end; clearInterval(timer); }
+        else { el.textContent = Math.floor(start); }
+    }, 16);
+}
+
+const heroObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+        const c = document.getElementById('count-sections');
+        if (c) animateCounter(c, 10);
+        heroObs.disconnect();
+    }
+}, { threshold: 0.5 });
+const hero = document.getElementById('hero');
+if (hero) heroObs.observe(hero);
+</script>
+</body>
+</html>

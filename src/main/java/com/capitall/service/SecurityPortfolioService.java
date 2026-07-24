@@ -63,8 +63,8 @@ public class SecurityPortfolioService {
 
         if (side == SecurityTrade.Side.BUY) {
             if (currentBalance.compareTo(gross) < 0) {
-                throw new IllegalArgumentException("Niewystarczające środki w portfelu (" + cleanCurrency + "). Dostępne: " 
-                        + currentBalance.setScale(2, RoundingMode.HALF_UP) + " " + cleanCurrency 
+                throw new IllegalArgumentException("Niewystarczające środki w portfelu (" + cleanCurrency + "). Dostępne: "
+                        + currentBalance.setScale(2, RoundingMode.HALF_UP) + " " + cleanCurrency
                         + ", wymagane: " + gross.setScale(2, RoundingMode.HALF_UP) + " " + cleanCurrency);
             }
             wallet.setBalance(cleanCurrency, currentBalance.subtract(gross).setScale(2, RoundingMode.HALF_UP));
@@ -95,7 +95,7 @@ public class SecurityPortfolioService {
             holdingRepository.save(holding);
         } else {
             if (holding.getShares().compareTo(shares) < 0) {
-                throw new IllegalArgumentException("Niewystarczająca liczba akcji do sprzedaży. Posiadasz: " 
+                throw new IllegalArgumentException("Niewystarczająca liczba akcji do sprzedaży. Posiadasz: "
                         + holding.getShares() + ", próbujesz sprzedać: " + shares);
             }
             BigDecimal newShares = holding.getShares().subtract(shares);
@@ -107,7 +107,6 @@ public class SecurityPortfolioService {
             }
         }
 
-        // Zapis transakcji do bazy
         SecurityTrade trade = new SecurityTrade();
         trade.setUserId(userId);
         trade.setSymbol(cleanSymbol);
@@ -124,13 +123,15 @@ public class SecurityPortfolioService {
 
     public List<SecurityPortfolioItem> getPortfolioItems(UUID userId) {
         List<SecurityHolding> holdings = holdingRepository.findByUserId(userId);
-        List<SecurityPortfolioItem> items = new ArrayList<>();
-
-        for (SecurityHolding h : holdings) {
-            BigDecimal currentPrice = priceService.getCurrentPrice(h.getSymbol());
-            items.add(new SecurityPortfolioItem(h, currentPrice, exchangeRateService));
-        }
-        return items;
+        return holdings.parallelStream()
+                .map(h -> {
+                    BigDecimal currentPrice = priceService.getCurrentPrice(h.getSymbol());
+                    if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                        currentPrice = h.getAvgCost();
+                    }
+                    return new SecurityPortfolioItem(h, currentPrice, exchangeRateService);
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     public SecurityPortfolioSummary getPortfolioSummary(UUID userId) {
@@ -168,14 +169,14 @@ public class SecurityPortfolioService {
         public SecurityPortfolioItem(SecurityHolding holding, BigDecimal currentPrice, ExchangeRateService exchangeRateService) {
             this.holding = holding;
             this.currentPrice = currentPrice;
-            
+
             BigDecimal rawCurrentValue = holding.getShares().multiply(currentPrice);
             BigDecimal rawTotalCost = holding.getShares().multiply(holding.getAvgCost());
-            
+
             this.currentValue = exchangeRateService.convert(rawCurrentValue, holding.getCurrency(), "USD").setScale(2, RoundingMode.HALF_UP);
             this.totalCost = exchangeRateService.convert(rawTotalCost, holding.getCurrency(), "USD").setScale(2, RoundingMode.HALF_UP);
             this.unrealizedPnL = this.currentValue.subtract(this.totalCost);
-            
+
             BigDecimal pnlPct = BigDecimal.ZERO;
             if (this.totalCost.compareTo(BigDecimal.ZERO) > 0) {
                 pnlPct = this.unrealizedPnL.multiply(new BigDecimal("100"))

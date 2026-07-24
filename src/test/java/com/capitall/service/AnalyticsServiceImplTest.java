@@ -45,15 +45,26 @@ class AnalyticsServiceImplTest {
 
     @Test
     void getDashboardStats_ShouldReturnAumAndDiversificationMap() {
-        when(exchangeAccountRepository.calculateTotalAum()).thenReturn(BigDecimal.valueOf(150000));
+        UUID userId = UUID.randomUUID();
+        com.capitall.model.ExchangeAccount binance = new com.capitall.model.ExchangeAccount();
+        binance.setExchangeName("BINANCE");
+        binance.setAllocatedCapital(BigDecimal.valueOf(100000));
 
-        List<Object[]> mockGrouped = List.of(
-                new Object[]{"BINANCE", BigDecimal.valueOf(100000)},
-                new Object[]{"KRAKEN", BigDecimal.valueOf(50000)}
-        );
-        when(exchangeAccountRepository.getExchangeCapitalGrouped()).thenReturn(mockGrouped);
+        com.capitall.model.ExchangeAccount kraken = new com.capitall.model.ExchangeAccount();
+        kraken.setExchangeName("KRAKEN");
+        kraken.setAllocatedCapital(BigDecimal.valueOf(50000));
 
-        DashboardStatsResponse result = analyticsService.getDashboardStats();
+        com.capitall.model.Allocation alloc1 = new com.capitall.model.Allocation();
+        alloc1.setExchangeAccount(binance);
+        alloc1.setStatus(com.capitall.model.AllocationStatus.ACTIVE);
+
+        com.capitall.model.Allocation alloc2 = new com.capitall.model.Allocation();
+        alloc2.setExchangeAccount(kraken);
+        alloc2.setStatus(com.capitall.model.AllocationStatus.ACTIVE);
+
+        when(allocationRepository.findByUserId(userId)).thenReturn(List.of(alloc1, alloc2));
+
+        DashboardStatsResponse result = analyticsService.getDashboardStats(userId);
 
         assertThat(result).isNotNull();
         assertThat(result.totalAum()).isEqualByComparingTo(BigDecimal.valueOf(150000));
@@ -83,7 +94,7 @@ class AnalyticsServiceImplTest {
         List<PnLPoint> run1 = analyticsService.simulatePnL(userId, 10);
         List<PnLPoint> run2 = analyticsService.simulatePnL(userId, 10);
 
-        assertThat(run1).hasSize(11); 
+        assertThat(run1).hasSize(11);
         assertThat(run2).hasSize(11);
 
         PnLPoint start = run1.get(0);

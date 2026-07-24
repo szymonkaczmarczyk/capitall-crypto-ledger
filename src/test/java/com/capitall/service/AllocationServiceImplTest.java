@@ -95,7 +95,7 @@ class AllocationServiceImplTest {
                 .id(accountId)
                 .accountName("Bob's Binance")
                 .allocatedCapital(BigDecimal.valueOf(1000))
-                .isActive(false) 
+                .isActive(false)
                 .build();
 
         CreateAllocationRequest request = new CreateAllocationRequest(userId, accountId, null);
@@ -119,7 +119,7 @@ class AllocationServiceImplTest {
         ExchangeAccount account = ExchangeAccount.builder()
                 .id(accountId)
                 .accountName("Bob's Binance")
-                .allocatedCapital(BigDecimal.ZERO) 
+                .allocatedCapital(BigDecimal.ZERO)
                 .isActive(true)
                 .build();
 
@@ -152,7 +152,7 @@ class AllocationServiceImplTest {
 
         Allocation existingActiveAllocation = Allocation.builder()
                 .id(UUID.randomUUID())
-                .status(AllocationStatus.ACTIVE) 
+                .status(AllocationStatus.ACTIVE)
                 .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));

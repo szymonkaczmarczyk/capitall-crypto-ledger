@@ -11,11 +11,19 @@ import java.util.UUID;
 
 public interface ExchangeAccountService {
     ExchangeAccountDto createExchangeAccount(CreateExchangeAccountRequest request);
+
     ExchangeAccountDto getExchangeAccountById(UUID id);
+
     List<ExchangeAccountDto> getAllExchangeAccounts();
+
     List<ExchangeAccountDto> getExchangeAccountsByExchangeName(String exchangeName);
+
     ExchangeAccountDto toggleAccountActiveStatus(UUID id, boolean isActive);
+
     void deleteExchangeAccount(UUID id);
-    List<ExchangeAccountResponse> searchExchangeAccounts(String exchange, BigDecimal minCapital, Boolean active, Sort sort);
+
+    List<ExchangeAccountResponse> searchExchangeAccounts(String exchange, BigDecimal minCapital, Boolean active,
+            Sort sort);
+
     ExchangeAccountDto updateExchangeAccount(UUID id, CreateExchangeAccountRequest request);
 }

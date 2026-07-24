@@ -38,8 +38,6 @@ public class PriceAlertService {
                 .build();
     }
 
-    // ── Read ──────────────────────────────────────────────────────────────────
-
     @Transactional(readOnly = true)
     public List<PriceAlert> getActiveAlerts(UUID userId) {
         return alertRepository.findByUserIdAndTriggeredFalseOrderByCreatedAtDesc(userId);
@@ -49,8 +47,6 @@ public class PriceAlertService {
     public List<PriceAlertLog> getLogsForUser(UUID userId) {
         return logRepository.findByUserIdOrderByOccurredAtDesc(userId);
     }
-
-    // ── Create ────────────────────────────────────────────────────────────────
 
     @Transactional
     public PriceAlert createAlert(UUID userId, String assetType, String symbol,
@@ -70,8 +66,6 @@ public class PriceAlertService {
                 symbol, assetType, details));
         return alert;
     }
-
-    // ── Update ────────────────────────────────────────────────────────────────
 
     @Transactional
     public void updateAlert(UUID id, UUID userId, String conditionType,
@@ -95,15 +89,12 @@ public class PriceAlertService {
         alert.setConditionType(conditionType.toUpperCase());
         alert.setTargetPrice(targetPrice);
         alert.setRecurring(recurring);
-        // Reset lastTriggeredAt so the updated alert can fire again today if needed
         alert.setLastTriggeredAt(null);
         alertRepository.save(alert);
 
         logRepository.save(new PriceAlertLog(userId, PriceAlertLog.Action.EDITED,
                 alert.getSymbol(), alert.getAssetType(), details));
     }
-
-    // ── Delete ────────────────────────────────────────────────────────────────
 
     @Transactional
     public void deleteAlert(UUID id, UUID userId) {
@@ -119,15 +110,12 @@ public class PriceAlertService {
         alertRepository.delete(alert);
     }
 
-    // ── Check & Trigger ───────────────────────────────────────────────────────
-
     @Transactional
     public List<PriceAlert> checkAndTriggerAlertsForUser(UUID userId) {
         List<PriceAlert> activeAlerts = alertRepository.findByUserIdAndTriggeredFalseOrderByCreatedAtDesc(userId);
         List<PriceAlert> fired = new ArrayList<>();
         if (activeAlerts.isEmpty()) return fired;
 
-        // Batch-fetch crypto prices from Binance
         Set<String> cryptoSymbols = new HashSet<>();
         for (PriceAlert a : activeAlerts) {
             if ("CRYPTO".equalsIgnoreCase(a.getAssetType())) {
@@ -150,7 +138,6 @@ public class PriceAlertService {
 
             if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-            // Evaluate condition
             boolean conditionMet = false;
             if ("ABOVE".equalsIgnoreCase(alert.getConditionType())) {
                 conditionMet = currentPrice.compareTo(alert.getTargetPrice()) >= 0;
@@ -161,18 +148,14 @@ public class PriceAlertService {
             if (!conditionMet) continue;
 
             if (alert.isRecurring()) {
-                // Recurring: allow firing at most once per calendar day
                 LocalDate lastFiredDay = alert.getLastTriggeredAt() != null
                         ? alert.getLastTriggeredAt().toLocalDate() : null;
                 if (lastFiredDay != null && lastFiredDay.equals(today)) {
-                    // Already fired today — skip
                     continue;
                 }
-                // Fire and record the day, but keep alert active (triggered stays false)
                 alert.setLastTriggeredAt(LocalDateTime.now());
                 alertRepository.save(alert);
             } else {
-                // One-time: permanently deactivate
                 alert.setTriggered(true);
                 alert.setLastTriggeredAt(LocalDateTime.now());
                 alertRepository.save(alert);
@@ -188,8 +171,6 @@ public class PriceAlertService {
 
         return fired;
     }
-
-    // ── Binance API ───────────────────────────────────────────────────────────
 
     private Map<String, BigDecimal> fetchBinancePrices(Set<String> symbols) {
         if (symbols.isEmpty()) return Map.of();

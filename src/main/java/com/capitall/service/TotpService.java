@@ -19,7 +19,7 @@ public class TotpService {
     private static final String ISSUER = "Capitall";
     private static final int PERIOD = 30;
     private static final int DIGITS = 6;
-    private static final int DISCREPANCY = 1; // accept previous/next 30s window
+    private static final int DISCREPANCY = 1;
 
     private final SecretGenerator secretGenerator = new DefaultSecretGenerator();
     private final CodeVerifier codeVerifier = buildVerifier();

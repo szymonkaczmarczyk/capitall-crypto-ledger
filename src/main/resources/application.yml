@@ -41,10 +41,8 @@ logging:
 
 capitall:
   encryption:
-    # NEVER commit a real key. Override with env var CAPITALL_ENCRYPTION_KEY in production.
     secret-key: ${CAPITALL_ENCRYPTION_KEY:qV_sUpEr_sEcReT_kEy_fOr_aEs_256!}
   security:
-    # Default admin auto-provisioned only when no users exist; password MUST be overridden via env in production.
     default-admin-password: ${CAPITALL_DEFAULT_ADMIN_PASSWORD:}
   mail:
     from: ${MAIL_FROM:noreply@capitall.example}

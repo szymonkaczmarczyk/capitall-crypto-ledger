@@ -57,7 +57,6 @@ public class SecurityConfig {
             .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // Stateless JSON REST clients can be exempted; browsers use Thymeleaf forms with token.
                 .ignoringRequestMatchers(new AntPathRequestMatcher("/api/**"))
             )
             .headers(headers -> headers

@@ -5,7 +5,6 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ─── Live ticker anims ─── */
         @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
         .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
         @keyframes flashGreen { 0%{color:#10b981;transform:translateY(-2px)} 100%{color:inherit;transform:translateY(0)} }
@@ -15,7 +14,6 @@
         .price-value { transition: color .4s ease; font-variant-numeric: tabular-nums; }
         .spark { width: 100%; height: 42px; }
 
-        /* ─── Gradient mesh background (glassmorphism support) ─── */
         .mesh-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
         .mesh-blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .55; }
         .dark .mesh-blob { opacity: .35; }
@@ -26,38 +24,30 @@
         @keyframes floatB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-60px,-40px) scale(1.12)} }
         @keyframes floatC { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-50px) scale(1.05)} }
 
-        /* ─── Glass cards ─── */
         .glass { background: color-mix(in srgb, var(--qv-surface) 78%, transparent); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); border: 1px solid color-mix(in srgb, var(--qv-border) 60%, transparent); }
         .dark .glass { background: color-mix(in srgb, var(--qv-surface) 62%, transparent); border-color: color-mix(in srgb, #ffffff 8%, transparent); }
         .glass-strong { background: color-mix(in srgb, var(--qv-surface) 92%, transparent); backdrop-filter: blur(18px) saturate(150%); }
-        .card-hover { transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, border-color .3s; }
-        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 24px 48px -20px rgba(99,102,241,.35); border-color: color-mix(in srgb, var(--qv-accent) 55%, transparent); }
 
-        /* ─── Gradient text ─── */
         .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #d946ef 50%, #f59e0b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 200% 200%; animation: gradientShift 8s ease-in-out infinite; }
         @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 
-        /* ─── Entrance animations ─── */
         .fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp .7s cubic-bezier(.2,.9,.3,1.2) forwards; }
         @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
         .delay-1 { animation-delay: .05s; } .delay-2 { animation-delay: .12s; } .delay-3 { animation-delay: .19s; }
         .delay-4 { animation-delay: .26s; } .delay-5 { animation-delay: .33s; } .delay-6 { animation-delay: .4s; }
         .delay-7 { animation-delay: .48s; } .delay-8 { animation-delay: .56s; }
 
-        /* ─── Skeleton loader ─── */
         .skel { position: relative; overflow: hidden; background: color-mix(in srgb, var(--qv-muted) 12%, transparent); border-radius: 6px; }
         .skel::after { content:''; position:absolute; inset:0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--qv-muted) 20%, transparent), transparent); transform: translateX(-100%); animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 100% { transform: translateX(100%); } }
         .skel.loaded::after { display: none; }
         .skel.loaded { background: transparent; }
 
-        /* ─── Ring accent for hero AUM ─── */
         .hero-ring { position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: linear-gradient(135deg, #6366f1, #d946ef, #f59e0b); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: .6; pointer-events: none; }
-    </style>
+</style>
 </head>
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
-    <!-- Animated gradient mesh background -->
     <div class="mesh-bg" aria-hidden="true">
         <div class="mesh-blob blob-a"></div>
         <div class="mesh-blob blob-b"></div>
@@ -85,10 +75,8 @@
 
         <div class="flex-1 overflow-y-auto p-6 lg:p-8">
 
-            <!-- ═══ BENTO GRID ═══ -->
             <div class="grid grid-cols-12 gap-4 lg:gap-5">
 
-                <!-- Hero AUM card — big, gradient, animated ring -->
                 <div class="col-span-12 lg:col-span-5 fade-up delay-1">
                     <div class="glass rounded-2xl p-7 card-hover relative overflow-hidden h-full">
                         <div class="hero-ring rounded-2xl"></div>
@@ -112,12 +100,11 @@
                     </div>
                 </div>
 
-                <!-- Tickers 2x2 -->
                 <div class="col-span-12 lg:col-span-7 grid grid-cols-2 gap-3" id="tickerGrid">
                     <div class="fade-up delay-2 glass rounded-2xl p-4 card-hover" data-coin="bitcoin" data-symbol="BTC">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-amber-500/30">₿</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-amber-500/30" data-crypto-symbol="BTC" data-fallback="₿">₿</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Bitcoin</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">BTC/USD</p>
@@ -134,7 +121,7 @@
                     <div class="fade-up delay-3 glass rounded-2xl p-4 card-hover" data-coin="ethereum" data-symbol="ETH">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-500/30">Ξ</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-500/30" data-crypto-symbol="ETH" data-fallback="Ξ">Ξ</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Ethereum</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">ETH/USD</p>
@@ -151,7 +138,7 @@
                     <div class="fade-up delay-4 glass rounded-2xl p-4 card-hover" data-coin="solana" data-symbol="SOL">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-fuchsia-500/30">◎</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-fuchsia-500/30" data-crypto-symbol="SOL" data-fallback="◎">◎</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Solana</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">SOL/USD</p>
@@ -168,7 +155,7 @@
                     <div class="fade-up delay-5 glass rounded-2xl p-4 card-hover" data-coin="binancecoin" data-symbol="BNB">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-yellow-500/30">B</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-yellow-500/30" data-crypto-symbol="BNB" data-fallback="B">B</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">BNB</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">BNB/USD</p>
@@ -184,7 +171,6 @@
                     </div>
                 </div>
 
-                <!-- PnL big chart -->
                 <div class="col-span-12 lg:col-span-8 fade-up delay-6">
                     <div class="glass rounded-2xl p-6 card-hover h-full">
                         <div class="mb-4 flex items-start justify-between flex-wrap gap-3">
@@ -208,7 +194,6 @@
                     </div>
                 </div>
 
-                <!-- Diversification -->
                 <div class="col-span-12 lg:col-span-4 fade-up delay-7">
                     <div class="glass rounded-2xl p-6 card-hover h-full">
                         <div class="mb-4">
@@ -219,13 +204,13 @@
                             <canvas id="diversificationChart"></canvas>
                         </div>
                         <div class="space-y-3">
-                            <div th:each="entry : ${stats.diversification}" class="flex flex-col">
+                            <div th:each="entry, iter : ${stats.diversification}" class="flex flex-col">
                                 <div class="flex justify-between text-xs font-bold text-qv-text mb-1.5">
                                     <span th:text="${entry.key}">Giełda</span>
                                     <span class="text-qv-muted" th:text="${entry.value + '%'}">0.0%</span>
                                 </div>
                                 <div class="w-full bg-qv-surface-2 rounded-full h-1.5 overflow-hidden">
-                                    <div class="bg-gradient-to-r from-qv-accent to-fuchsia-500 h-1.5 rounded-full transition-all duration-1000" th:style="'width: ' + ${entry.value} + '%'"></div>
+                                    <div class="h-1.5 rounded-full transition-all duration-1000" th:style="'width: ' + ${entry.value} + '%; background-color: ' + ${iter.index == 0 ? '#6366f1' : (iter.index == 1 ? '#d946ef' : (iter.index == 2 ? '#f59e0b' : (iter.index == 3 ? '#10b981' : '#818cf8')))}"></div>
                                 </div>
                             </div>
                             <div th:if="${stats.diversification.isEmpty()}" class="text-center py-4 text-sm text-qv-muted">
@@ -235,7 +220,6 @@
                     </div>
                 </div>
 
-                <!-- Equity chart, full width -->
                 <div class="col-span-12 fade-up delay-8">
                     <div class="glass rounded-2xl p-6 card-hover">
                         <div class="mb-4 flex items-start justify-between flex-wrap gap-3">
@@ -266,11 +250,9 @@
     <div th:replace="~{fragments/nav :: mobilebar('dashboard')}"></div>
 
     <script th:inline="javascript">
-        /*<![CDATA[*/
         const fallbackPnl = /*[[${pnlPoints}]]*/ [];
         const divMap = /*[[${stats.diversification}]]*/ {};
         const baseAum = parseFloat(/*[[${stats.totalAum}]]*/ 0) || 0;
-        /*]]>*/
 
         const COINS = ['bitcoin', 'ethereum', 'solana', 'binancecoin'];
         const COIN_TO_PAIR = { bitcoin: 'BTCUSDT', ethereum: 'ETHUSDT', solana: 'SOLUSDT', binancecoin: 'BNBUSDT' };
@@ -304,7 +286,6 @@
             requestAnimationFrame(step);
         }
 
-        // Initial count-up for AUM from 0 → baseAum
         (function initialAumCountUp() {
             const el = document.getElementById('aumValue');
             if (!el || baseAum <= 0) { if (el) el.textContent = fmtUsd(baseAum); return; }
@@ -387,7 +368,7 @@
                     const pts = klines.map(k => parseFloat(k[4]));
                     const card = document.querySelector(`#tickerGrid [data-coin="${coin}"]`);
                     if (card) drawSpark(card.querySelector('[data-spark]'), pts, COIN_COLORS[coin]);
-                } catch (e) { /* ignore */ }
+                } catch (e) {  }
             }));
         }
 
@@ -586,10 +567,10 @@
                     }
                 });
                 skel?.classList.add('loaded');
-            } catch (e) { /* ignore */ }
+            } catch (e) {  }
         }
         loadEquitySeries();
-        setInterval(loadEquitySeries, 30000);
+        setInterval(loadEquitySeries, 6000);
 
         if (keys.length > 0) {
             new Chart(document.getElementById('diversificationChart').getContext('2d'), {
@@ -600,7 +581,7 @@
                         data: Object.values(divMap),
                         backgroundColor: ['#6366f1', '#d946ef', '#f59e0b', '#10b981', '#818cf8'],
                         borderWidth: 0,
-                        hoverOffset: 10
+                        hoverOffset: 0
                     }]
                 },
                 options: {
@@ -615,6 +596,6 @@
                 }
             });
         }
-    </script>
+</script>
 </body>
 </html>

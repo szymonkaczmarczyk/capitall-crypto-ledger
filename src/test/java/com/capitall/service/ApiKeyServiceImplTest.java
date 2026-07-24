@@ -82,7 +82,7 @@ class ApiKeyServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(100L);
-        assertThat(result.secretKey()).isEqualTo("secret_abc"); 
+        assertThat(result.secretKey()).isEqualTo("secret_abc");
         verify(apiSecretsEncryptor).encrypt("secret_abc");
         verify(apiKeyRepository).save(any(ApiKey.class));
     }

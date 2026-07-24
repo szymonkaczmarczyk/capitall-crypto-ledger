@@ -53,7 +53,7 @@ public class ExchangeController {
 
         try {
             walletService.exchangeCurrency(user.getId(), from, to, amount);
-            redirectAttributes.addFlashAttribute("successMessage", 
+            redirectAttributes.addFlashAttribute("successMessage",
                     String.format("Pomyślnie wymieniono %s %s na drugą walutę.", amount, from.toUpperCase()));
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Błąd wymiany: " + e.getMessage());
@@ -73,7 +73,7 @@ public class ExchangeController {
 
         try {
             walletService.deposit(user.getId(), currency, amount);
-            redirectAttributes.addFlashAttribute("successMessage", 
+            redirectAttributes.addFlashAttribute("successMessage",
                     String.format("Pomyślnie zasilono portfel kwotą %s %s.", amount, currency.toUpperCase()));
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Błąd zasilenia: " + e.getMessage());
@@ -93,7 +93,7 @@ public class ExchangeController {
 
         try {
             walletService.withdraw(user.getId(), currency, amount);
-            redirectAttributes.addFlashAttribute("successMessage", 
+            redirectAttributes.addFlashAttribute("successMessage",
                     String.format("Pomyślnie wypłacono kwotę %s %s z portfela.", amount, currency.toUpperCase()));
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Błąd wypłaty: " + e.getMessage());

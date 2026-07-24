@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AnalyticsService {
-    DashboardStatsResponse getDashboardStats();
+    DashboardStatsResponse getDashboardStats(UUID userId);
     List<PnLPoint> simulatePnL(UUID userId, int days);
 }

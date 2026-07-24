@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
-    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}"/>
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}" />
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}" />
     <title th:text="${title}">Capitall</title>
 
     <script>
@@ -16,9 +17,9 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {  }
         })();
-    </script>
+</script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -53,7 +54,7 @@
                 }
             }
         }
-    </script>
+</script>
 
     <style>
         :root {
@@ -66,6 +67,7 @@
             --qv-accent: #6366f1;
             --qv-accent-hover: #4f46e5;
         }
+
         .dark {
             --qv-bg: #0a0a0f;
             --qv-surface: #14141c;
@@ -76,145 +78,211 @@
             --qv-accent: #818cf8;
             --qv-accent-hover: #a5b4fc;
         }
-        html { color-scheme: light; }
-        html.dark { color-scheme: dark; }
+
+        html {
+            color-scheme: light;
+        }
+
+        html.dark {
+            color-scheme: dark;
+        }
+
         body {
             background-color: var(--qv-bg);
             color: var(--qv-text);
             transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .transition-colors-all {
             transition-property: background-color, border-color, color, fill, stroke, box-shadow;
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 300ms;
         }
-        .dark .shadow-qv { box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 1px 3px 0 rgba(0,0,0,0.4); }
-        .dark .shadow-qv-lg { box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 10px 30px -12px rgba(0,0,0,0.6); }
-        .text-qv-bg { color: #ffffff !important; }
-        .dark .text-qv-bg { color: rgb(15 23 42 / var(--tw-bg-opacity, 1)) !important; }
-        .reveal { opacity: 0; transform: translateY(24px); transition: all 0.7s cubic-bezier(0.5, 0, 0, 1); }
-        .reveal.active { opacity: 1; transform: translateY(0); }
-        ::selection { background-color: var(--qv-accent); color: #ffffff; }
-        *:focus-visible { outline: 2px solid var(--qv-accent); outline-offset: 2px; border-radius: 4px; }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--qv-border); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--qv-muted); }
 
-        /* ============================================================
-           Phase 2 — Sidebar sliding pill indicator (item 3)
-           ============================================================ */
-        .nav-item { position: relative; overflow: hidden; }
+        .dark .shadow-qv {
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .dark .shadow-qv-lg {
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .text-qv-bg {
+            color: var(--qv-bg) !important;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: all 0.7s cubic-bezier(0.5, 0, 0, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        ::selection {
+            background-color: var(--qv-accent);
+            color: #ffffff;
+        }
+
+        *:focus-visible {
+            outline: 2px solid var(--qv-accent);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--qv-border);
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--qv-muted);
+        }
+
+        .nav-item {
+            position: relative;
+            overflow: hidden;
+        }
+
         .nav-item::before {
             content: '';
             position: absolute;
-            left: 0; top: 50%;
-            width: 3px; height: 0;
+            left: 0;
+            top: 50%;
+            width: 3px;
+            height: 0;
             background: linear-gradient(180deg, #6366f1 0%, #d946ef 100%);
             border-radius: 0 4px 4px 0;
             transform: translateY(-50%);
             transition: height 0.35s cubic-bezier(0.5, 0, 0, 1), opacity 0.35s ease;
             opacity: 0;
         }
-        .nav-item.is-active::before { height: 60%; opacity: 1; }
+
+        .nav-item.is-active::before {
+            height: 60%;
+            opacity: 1;
+        }
+
         .nav-item::after {
             content: '';
             position: absolute;
             inset: 0;
             border-radius: inherit;
             background: linear-gradient(135deg,
-                color-mix(in srgb, var(--qv-accent) 12%, transparent) 0%,
-                color-mix(in srgb, #d946ef 8%, transparent) 100%);
+                    color-mix(in srgb, var(--qv-accent) 12%, transparent) 0%,
+                    color-mix(in srgb, #d946ef 8%, transparent) 100%);
             opacity: 0;
             transition: opacity 0.35s ease;
             pointer-events: none;
             z-index: -1;
         }
-        .nav-item.is-active::after { opacity: 1; }
-        .nav-item.is-active { transform: translateX(4px); }
-        .nav-item { transition: transform 0.35s cubic-bezier(0.5, 0, 0, 1), background-color 0.25s ease, color 0.25s ease; }
-        .nav-item:hover:not(.is-active) { transform: translateX(2px); }
 
-        /* ============================================================
-           Phase 2 — Neon glow in dark mode (item 5)
-           ============================================================ */
+        .nav-item.is-active::after {
+            opacity: 1;
+        }
+
+        .nav-item.is-active {
+            transform: translateX(4px);
+        }
+
+        .nav-item {
+            transition: transform 0.35s cubic-bezier(0.5, 0, 0, 1), background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .nav-item:hover:not(.is-active) {
+            transform: translateX(2px);
+        }
+
         .dark .nav-item.is-active {
             box-shadow: 0 0 0 1px color-mix(in srgb, var(--qv-accent) 30%, transparent),
-                        0 0 24px -6px color-mix(in srgb, var(--qv-accent) 55%, transparent),
-                        inset 0 0 0 1px color-mix(in srgb, #d946ef 10%, transparent);
+                0 0 24px -6px color-mix(in srgb, var(--qv-accent) 55%, transparent),
+                inset 0 0 0 1px color-mix(in srgb, #d946ef 10%, transparent);
         }
+
         .dark .nav-item.is-active::before {
             box-shadow: 0 0 12px 1px color-mix(in srgb, var(--qv-accent) 70%, transparent),
-                        0 0 24px 2px color-mix(in srgb, #d946ef 40%, transparent);
+                0 0 24px 2px color-mix(in srgb, #d946ef 40%, transparent);
         }
+
         .dark .neon-accent {
             text-shadow: 0 0 18px color-mix(in srgb, var(--qv-accent) 55%, transparent);
         }
+
         .dark .neon-card {
             box-shadow: 0 0 0 1px color-mix(in srgb, var(--qv-accent) 12%, transparent),
-                        0 10px 40px -12px color-mix(in srgb, var(--qv-accent) 35%, transparent);
+                0 10px 40px -12px color-mix(in srgb, var(--qv-accent) 35%, transparent);
         }
-        .dark .neon-hover { transition: box-shadow 0.35s ease, transform 0.35s ease; }
+
+        .dark .neon-hover {
+            transition: box-shadow 0.35s ease, transform 0.35s ease;
+        }
+
         .dark .neon-hover:hover {
             box-shadow: 0 0 0 1px color-mix(in srgb, var(--qv-accent) 40%, transparent),
-                        0 12px 40px -8px color-mix(in srgb, var(--qv-accent) 45%, transparent);
+                0 12px 40px -8px color-mix(in srgb, var(--qv-accent) 45%, transparent);
         }
+
         .dark .neon-btn {
             box-shadow: 0 0 20px -4px color-mix(in srgb, var(--qv-accent) 55%, transparent);
         }
+
         .dark .neon-btn:hover {
             box-shadow: 0 0 30px -2px color-mix(in srgb, var(--qv-accent) 70%, transparent);
         }
+
         .dark .neon-badge-live {
             box-shadow: 0 0 0 1px color-mix(in srgb, var(--qv-accent) 40%, transparent),
-                        0 0 14px -2px color-mix(in srgb, var(--qv-accent) 60%, transparent);
+                0 0 14px -2px color-mix(in srgb, var(--qv-accent) 60%, transparent);
         }
 
-        /* Sidebar gradient border in dark mode */
         .dark .sidebar-glow {
             box-shadow: inset -1px 0 0 0 color-mix(in srgb, var(--qv-accent) 12%, transparent),
-                        4px 0 40px -8px color-mix(in srgb, var(--qv-accent) 25%, transparent);
+                4px 0 40px -8px color-mix(in srgb, var(--qv-accent) 25%, transparent);
         }
 
-        /* ============================================================
-           Sidebar — colored icon tiles + section labels
-           ============================================================ */
         .nav-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 9px;
+            width: 24px;
+            height: 24px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-right: 12px;
-            background: color-mix(in srgb, rgb(var(--tile)) 10%, transparent);
+            background: transparent;
             color: rgb(var(--tile));
-            border: 1px solid color-mix(in srgb, rgb(var(--tile)) 18%, transparent);
             flex-shrink: 0;
-            transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, color 0.25s ease, border-color 0.3s ease;
+            transition: transform 0.3s ease, color 0.25s ease;
         }
-        .nav-icon svg { width: 16px; height: 16px; }
+
+        .nav-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
         .nav-item:hover .nav-icon {
-            transform: scale(1.08) rotate(-2deg);
-            background: color-mix(in srgb, rgb(var(--tile)) 22%, transparent);
-            border-color: color-mix(in srgb, rgb(var(--tile)) 35%, transparent);
+            transform: scale(1.1) rotate(-2deg);
         }
+
         .nav-item.is-active .nav-icon {
-            background: linear-gradient(135deg,
-                color-mix(in srgb, rgb(var(--tile)) 95%, transparent),
-                color-mix(in srgb, rgb(var(--tile)) 60%, transparent));
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 6px 14px -3px color-mix(in srgb, rgb(var(--tile)) 55%, transparent),
-                        inset 0 1px 0 0 rgba(255,255,255,0.18);
+            color: rgb(var(--tile));
             transform: scale(1.05);
         }
+
         .dark .nav-item.is-active .nav-icon {
-            box-shadow: 0 0 22px -2px color-mix(in srgb, rgb(var(--tile)) 65%, transparent),
-                        0 0 0 1px color-mix(in srgb, rgb(var(--tile)) 45%, transparent),
-                        inset 0 1px 0 0 rgba(255,255,255,0.22);
+            filter: drop-shadow(0 0 6px color-mix(in srgb, rgb(var(--tile)) 60%, transparent));
         }
+
         .nav-section-label {
             font-size: 10px;
             font-weight: 700;
@@ -227,27 +295,97 @@
             align-items: center;
             gap: 8px;
         }
+
         .nav-section-label::after {
             content: '';
             flex: 1;
             height: 1px;
             background: linear-gradient(90deg,
-                color-mix(in srgb, var(--qv-border) 80%, transparent) 0%,
-                transparent 100%);
+                    color-mix(in srgb, var(--qv-border) 80%, transparent) 0%,
+                    transparent 100%);
         }
 
-        /* ============================================================
-           Shared modern surfaces — mesh, glass, gradient text, entrances
-           ============================================================ */
-        .mesh-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-        .mesh-blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .55; }
-        .dark .mesh-blob { opacity: .35; }
-        .blob-a { width: 520px; height: 520px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); top: -160px; left: -120px; animation: floatA 22s ease-in-out infinite; }
-        .blob-b { width: 460px; height: 460px; background: radial-gradient(circle, #d946ef 0%, transparent 70%); top: 30%; right: -140px; animation: floatB 26s ease-in-out infinite; }
-        .blob-c { width: 380px; height: 380px; background: radial-gradient(circle, #10b981 0%, transparent 70%); bottom: -140px; left: 30%; animation: floatC 30s ease-in-out infinite; }
-        @keyframes floatA { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,60px) scale(1.08)} }
-        @keyframes floatB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-60px,-40px) scale(1.12)} }
-        @keyframes floatC { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-50px) scale(1.05)} }
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .mesh-blob {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(90px);
+            opacity: .55;
+        }
+
+        .dark .mesh-blob {
+            opacity: .35;
+        }
+
+        .blob-a {
+            width: 520px;
+            height: 520px;
+            background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+            top: -160px;
+            left: -120px;
+            animation: floatA 22s ease-in-out infinite;
+        }
+
+        .blob-b {
+            width: 460px;
+            height: 460px;
+            background: radial-gradient(circle, #d946ef 0%, transparent 70%);
+            top: 30%;
+            right: -140px;
+            animation: floatB 26s ease-in-out infinite;
+        }
+
+        .blob-c {
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, #10b981 0%, transparent 70%);
+            bottom: -140px;
+            left: 30%;
+            animation: floatC 30s ease-in-out infinite;
+        }
+
+        @keyframes floatA {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(40px, 60px) scale(1.08)
+            }
+        }
+
+        @keyframes floatB {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(-60px, -40px) scale(1.12)
+            }
+        }
+
+        @keyframes floatC {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -50px) scale(1.05)
+            }
+        }
 
         .glass {
             background: color-mix(in srgb, var(--qv-surface) 78%, transparent);
@@ -255,19 +393,24 @@
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border: 1px solid color-mix(in srgb, var(--qv-border) 60%, transparent);
         }
+
         .dark .glass {
             background: color-mix(in srgb, var(--qv-surface) 62%, transparent);
             border-color: color-mix(in srgb, #ffffff 8%, transparent);
         }
+
         .glass-strong {
             background: color-mix(in srgb, var(--qv-surface) 92%, transparent);
             backdrop-filter: blur(18px) saturate(150%);
             -webkit-backdrop-filter: blur(18px) saturate(150%);
         }
-        .card-hover { transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, border-color .3s; }
+
+        .card-hover {
+            transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), box-shadow .35s, border-color .3s;
+        }
+
         .card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 24px 48px -20px rgba(99,102,241,.35);
+            box-shadow: 0 24px 48px -20px rgba(99, 102, 241, .35);
             border-color: color-mix(in srgb, var(--qv-accent) 55%, transparent);
         }
 
@@ -279,39 +422,254 @@
             background-size: 200% 200%;
             animation: gradientShift 8s ease-in-out infinite;
         }
-        @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 
-        .fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp .7s cubic-bezier(.2,.9,.3,1.2) forwards; }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-        .delay-1 { animation-delay: .05s; } .delay-2 { animation-delay: .12s; } .delay-3 { animation-delay: .19s; }
-        .delay-4 { animation-delay: .26s; } .delay-5 { animation-delay: .33s; } .delay-6 { animation-delay: .4s; }
-        .delay-7 { animation-delay: .48s; } .delay-8 { animation-delay: .56s; }
+        @keyframes gradientShift {
 
-        .skel { position: relative; overflow: hidden; background: color-mix(in srgb, var(--qv-muted) 12%, transparent); border-radius: 6px; }
-        .skel::after { content:''; position:absolute; inset:0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--qv-muted) 20%, transparent), transparent); transform: translateX(-100%); animation: shimmer 1.4s infinite; }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
-        .skel.loaded::after { display: none; }
-        .skel.loaded { background: transparent; }
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
 
-        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
-        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
-        @keyframes flashGreen { 0%{color:#10b981;transform:translateY(-2px)} 100%{color:inherit;transform:translateY(0)} }
-        @keyframes flashRed { 0%{color:#ef4444;transform:translateY(2px)} 100%{color:inherit;transform:translateY(0)} }
-        .flash-up { animation: flashGreen .8s ease-out; }
-        .flash-down { animation: flashRed .8s ease-out; }
-        .price-value { transition: color .4s ease; font-variant-numeric: tabular-nums; }
-        .spark { width: 100%; height: 42px; }
-    </style>
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp .7s cubic-bezier(.2, .9, .3, 1.2) forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 {
+            animation-delay: .05s;
+        }
+
+        .delay-2 {
+            animation-delay: .12s;
+        }
+
+        .delay-3 {
+            animation-delay: .19s;
+        }
+
+        .delay-4 {
+            animation-delay: .26s;
+        }
+
+        .delay-5 {
+            animation-delay: .33s;
+        }
+
+        .delay-6 {
+            animation-delay: .4s;
+        }
+
+        .delay-7 {
+            animation-delay: .48s;
+        }
+
+        .delay-8 {
+            animation-delay: .56s;
+        }
+
+        .skel {
+            position: relative;
+            overflow: hidden;
+            background: color-mix(in srgb, var(--qv-muted) 12%, transparent);
+            border-radius: 6px;
+        }
+
+        .skel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--qv-muted) 20%, transparent), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 1.4s infinite;
+        }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .skel.loaded::after {
+            display: none;
+        }
+
+        .skel.loaded {
+            background: transparent;
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(1.4)
+            }
+        }
+
+        .live-dot {
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+
+        @keyframes flashGreen {
+            0% {
+                color: #10b981;
+                transform: translateY(-2px)
+            }
+
+            100% {
+                color: inherit;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes flashRed {
+            0% {
+                color: #ef4444;
+                transform: translateY(2px)
+            }
+
+            100% {
+                color: inherit;
+                transform: translateY(0)
+            }
+        }
+
+        .flash-up {
+            animation: flashGreen .8s ease-out;
+        }
+
+        .flash-down {
+            animation: flashRed .8s ease-out;
+        }
+
+        .price-value {
+            transition: color .4s ease;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .spark {
+            width: 100%;
+            height: 42px;
+        }
+</style>
 
     <script>
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
             var isDark = document.documentElement.classList.contains('dark');
-            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
-            if (typeof updateCalculatorChart === 'function') { try { updateCalculatorChart(); } catch (e) {} }
+            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) { }
+            if (typeof updateCalculatorChart === 'function') { try { updateCalculatorChart(); } catch (e) { } }
             document.dispatchEvent(new CustomEvent('themechange', { detail: { dark: isDark } }));
         }
-    </script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            function initCrypto(el) {
+                const sym = el.dataset.cryptoSymbol;
+                if (!sym) return;
+                const fallback = el.dataset.fallback || sym.substring(0, 1);
+                el.style.position = 'relative';
+                el.style.overflow = 'hidden';
+
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`;
+                img.alt = sym;
+                img.className = 'w-full h-full object-contain p-0.5';
+                img.style.display = 'none';
+
+                const span = document.createElement('span');
+                span.textContent = fallback;
+                span.className = 'flex items-center justify-center w-full h-full';
+
+                img.onload = () => {
+                    img.style.display = 'block';
+                    span.style.display = 'none';
+                };
+                img.onerror = () => {
+                    img.remove();
+                    span.style.display = 'flex';
+                };
+
+                el.innerHTML = '';
+                el.appendChild(img);
+                el.appendChild(span);
+            }
+
+            function initStock(el) {
+                const sym = el.dataset.stockSymbol;
+                if (!sym) return;
+                const fallback = el.dataset.fallback || sym.substring(0, 1);
+                el.style.position = 'relative';
+                el.style.overflow = 'hidden';
+
+                const domains = {
+                    'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'GOOG': 'google.com',
+                    'AMZN': 'amazon.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'META': 'meta.com',
+                    'NFLX': 'netflix.com', 'AMD': 'amd.com', 'INTC': 'intel.com', 'JPM': 'jpmorganchase.com',
+                    'BAC': 'bankofamerica.com', 'WMT': 'walmart.com', 'KO': 'cocacola.com', 'PEP': 'pepsico.com',
+                    'DIS': 'disney.com', 'BA': 'boeing.com', 'GE': 'ge.com', 'F': 'ford.com', 'GM': 'gm.com',
+                    'CDR': 'cdprojekt.com', 'PKN': 'orlen.pl', 'KGH': 'kghm.com', 'PZU': 'pzu.pl',
+                    'LPP': 'lpp.com', 'DNP': 'grupadino.pl', 'ALR': 'aliorbank.pl', 'JSW': 'jsw.pl',
+                    'MBK': 'mbank.pl', 'OPL': 'orange.pl',
+                    'PKO': 'pkobp.pl', 'SPY': 'ssga.com', 'QQQ': 'invesco.com', 'BABA': 'alibaba.com', 'NIO': 'nio.com'
+                };
+                const domain = domains[sym.toUpperCase()];
+
+                const span = document.createElement('span');
+                span.textContent = fallback;
+                span.className = 'flex items-center justify-center w-full h-full';
+
+                if (domain) {
+                    const img = document.createElement('img');
+                    img.src = `https://logos.hunter.io/${domain}`;
+                    img.alt = sym;
+                    img.className = 'w-full h-full object-contain p-0.5 bg-white';
+                    img.style.display = 'none';
+
+                    img.onload = () => {
+                        img.style.display = 'block';
+                        span.style.display = 'none';
+                    };
+                    img.onerror = () => {
+                        img.remove();
+                        span.style.display = 'flex';
+                    };
+
+                    el.innerHTML = '';
+                    el.appendChild(img);
+                    el.appendChild(span);
+                } else {
+                    el.innerHTML = '';
+                    el.appendChild(span);
+                }
+            }
+
+            document.querySelectorAll('[data-crypto-symbol]').forEach(initCrypto);
+            document.querySelectorAll('[data-stock-symbol]').forEach(initStock);
+
+            window.initCryptoIcon = initCrypto;
+            window.initStockIcon = initStock;
+        });
+</script>
 </head>
+
 <body></body>
+
 </html>

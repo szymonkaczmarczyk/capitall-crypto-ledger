@@ -252,7 +252,7 @@ public class ViewController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
-        DashboardStatsResponse stats = analyticsService.getDashboardStats();
+        DashboardStatsResponse stats = analyticsService.getDashboardStats(user.getId());
         model.addAttribute("stats", stats);
 
         UUID userId = user.getId();
@@ -833,5 +833,11 @@ public class ViewController {
         auditLogService.log(admin.getId(), admin.getUsername(), "Rozpoczęto rotację kluczy szyfrujących API", com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Rotacja kluczy szyfrujących przebiegła pomyślnie (AES-GCM-256).");
         return "redirect:/admin";
+    }
+
+    @GetMapping("/help")
+    public String showHelpPage(Model model) {
+        model.addAttribute("active", "help");
+        return "help";
     }
 }

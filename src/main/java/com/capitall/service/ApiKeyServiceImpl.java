@@ -67,7 +67,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 savedKey.getId(),
                 savedKey.getTitle(),
                 savedKey.getPublicKey(),
-                request.secretKey(), 
+                request.secretKey(),
                 savedKey.getExchange(),
                 savedKey.getPermissions(),
                 savedKey.getStatus(),

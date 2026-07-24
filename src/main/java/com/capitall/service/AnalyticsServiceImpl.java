@@ -34,27 +34,34 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     }
 
     @Override
-    public DashboardStatsResponse getDashboardStats() {
-        BigDecimal totalAum = exchangeAccountRepository.calculateTotalAum();
-        List<Object[]> grouped = exchangeAccountRepository.getExchangeCapitalGrouped();
+    public DashboardStatsResponse getDashboardStats(UUID userId) {
+        List<Allocation> allocations = allocationRepository.findByUserId(userId);
+        BigDecimal totalAum = allocations.stream()
+                .filter(alloc -> alloc.getStatus() == AllocationStatus.ACTIVE)
+                .map(alloc -> alloc.getExchangeAccount().getAllocatedCapital())
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        Map<String, BigDecimal> groupedCapital = new HashMap<>();
         BigDecimal totalCapital = BigDecimal.ZERO;
-        for (Object[] row : grouped) {
-            BigDecimal cap = (BigDecimal) row[1];
-            if (cap != null) {
-                totalCapital = totalCapital.add(cap);
+        for (Allocation alloc : allocations) {
+            if (alloc.getStatus() == AllocationStatus.ACTIVE) {
+                BigDecimal cap = alloc.getExchangeAccount().getAllocatedCapital();
+                if (cap != null) {
+                    String name = alloc.getExchangeAccount().getExchangeName();
+                    groupedCapital.put(name, groupedCapital.getOrDefault(name, BigDecimal.ZERO).add(cap));
+                    totalCapital = totalCapital.add(cap);
+                }
             }
         }
 
         Map<String, Double> diversification = new HashMap<>();
         if (totalCapital.compareTo(BigDecimal.ZERO) > 0) {
             double totalDouble = totalCapital.doubleValue();
-            for (Object[] row : grouped) {
-                String exchange = (String) row[0];
-                BigDecimal cap = (BigDecimal) row[1];
-                double pct = (cap != null) ? (cap.doubleValue() / totalDouble) * 100.0 : 0.0;
+            for (Map.Entry<String, BigDecimal> entry : groupedCapital.entrySet()) {
+                double pct = (entry.getValue().doubleValue() / totalDouble) * 100.0;
                 pct = Math.round(pct * 100.0) / 100.0;
-                diversification.put(exchange, pct);
+                diversification.put(entry.getKey(), pct);
             }
         }
 

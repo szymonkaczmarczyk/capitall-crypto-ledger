@@ -65,7 +65,7 @@ public class SecuritiesController {
 
         try {
             portfolioService.executeTrade(user.getId(), side, symbol, name, shares, price, fee, currency);
-            redirectAttributes.addFlashAttribute("successMessage", 
+            redirectAttributes.addFlashAttribute("successMessage",
                     "Pomyślnie zarejestrowano transakcję " + (side == SecurityTrade.Side.BUY ? "kupna" : "sprzedaży") + " " + symbol.toUpperCase());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Błąd transakcji: " + e.getMessage());

@@ -25,8 +25,6 @@ public class PriceAlertController {
         this.alertService = alertService;
     }
 
-    // ── GET /alerts ───────────────────────────────────────────────────────────
-
     @GetMapping("/alerts")
     public String viewAlerts(Model model, @AuthenticationPrincipal User user) {
         if (user == null) return "redirect:/login";
@@ -43,8 +41,6 @@ public class PriceAlertController {
         model.addAttribute("traderName", user.getUsername());
         return "alerts";
     }
-
-    // ── POST /alerts/create ───────────────────────────────────────────────────
 
     @PostMapping("/alerts/create")
     public String createAlert(@AuthenticationPrincipal User user,
@@ -66,8 +62,6 @@ public class PriceAlertController {
         return "redirect:/alerts";
     }
 
-    // ── POST /alerts/update/{id} ──────────────────────────────────────────────
-
     @PostMapping("/alerts/update/{id}")
     public String updateAlert(@PathVariable UUID id,
                               @AuthenticationPrincipal User user,
@@ -86,8 +80,6 @@ public class PriceAlertController {
         return "redirect:/alerts";
     }
 
-    // ── POST /alerts/delete/{id} ──────────────────────────────────────────────
-
     @PostMapping("/alerts/delete/{id}")
     public String deleteAlert(@PathVariable UUID id,
                               @AuthenticationPrincipal User user,
@@ -102,8 +94,6 @@ public class PriceAlertController {
         }
         return "redirect:/alerts";
     }
-
-    // ── POST /api/alerts/check (AJAX heartbeat) ───────────────────────────────
 
     @PostMapping("/api/alerts/check")
     @ResponseBody

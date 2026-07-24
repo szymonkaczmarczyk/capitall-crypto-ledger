@@ -30,7 +30,6 @@ class PriceAlertServiceTest {
         userId = UUID.randomUUID();
     }
 
-
     @Test
     void testCreateAlert() {
         PriceAlert mockAlert = new PriceAlert(userId, "CRYPTO", "BTC", "BELOW", new BigDecimal("60000"), false);
@@ -54,7 +53,6 @@ class PriceAlertServiceTest {
 
     @Test
     void testTriggerAboveAlertForStock() {
-        // Stock price triggering using the mocked priceService
         PriceAlert stockAlert = new PriceAlert(userId, "STOCK", "TSLA", "ABOVE", new BigDecimal("250"), false);
         when(alertRepository.findByUserIdAndTriggeredFalseOrderByCreatedAtDesc(userId))
                 .thenReturn(Collections.singletonList(stockAlert));
@@ -83,8 +81,6 @@ class PriceAlertServiceTest {
 
     @Test
     void testRecurringAlertStaysActive() {
-        // A recurring alert fires but stays active — triggered remains false,
-        // but lastTriggeredAt is persisted (so it won't fire again today).
         PriceAlert recurringAlert = new PriceAlert(userId, "STOCK", "NVDA", "ABOVE", new BigDecimal("500"), true);
         when(alertRepository.findByUserIdAndTriggeredFalseOrderByCreatedAtDesc(userId))
                 .thenReturn(Collections.singletonList(recurringAlert));
@@ -94,9 +90,7 @@ class PriceAlertServiceTest {
         List<PriceAlert> triggered = alertService.checkAndTriggerAlertsForUser(userId);
 
         assertEquals(1, triggered.size());
-        // Recurring alert keeps triggered=false (stays in active list tomorrow)
         assertFalse(recurringAlert.isTriggered());
-        // lastTriggeredAt must be set and persisted
         assertNotNull(recurringAlert.getLastTriggeredAt());
         verify(alertRepository, times(1)).save(recurringAlert);
     }

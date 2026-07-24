@@ -86,8 +86,6 @@ public class DataInitializer implements CommandLineRunner {
         if (configuredAdminPassword != null && !configuredAdminPassword.isBlank()) {
             return configuredAdminPassword;
         }
-        // No env-provided password: generate a one-time random one printed to logs.
-        // The previous default ("admin") was a hardcoded backdoor and is removed.
         byte[] buf = new byte[18];
         new SecureRandom().nextBytes(buf);
         String generated = Base64.getUrlEncoder().withoutPadding().encodeToString(buf);

@@ -10,11 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ExchangeRateService {
 
-    // Base rates representing rate in PLN (e.g., 1 USD = 4.0 PLN)
     private final Map<String, BigDecimal> ratesToPln = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate = new RestTemplate();
     private long lastFetchedTime = 0;
-    private static final long CACHE_DURATION_MS = 3600000; // 1 hour caching
+    private static final long CACHE_DURATION_MS = 3600000;
 
     public ExchangeRateService() {
         initializeFallbackRates();
@@ -53,7 +52,6 @@ public class ExchangeRateService {
                 }
             }
         } catch (Exception e) {
-            // Log warning and keep using existing rates / fallback
             System.err.println("NBP API fetch failed. Using fallback rates. Error: " + e.getMessage());
         }
     }
@@ -67,9 +65,6 @@ public class ExchangeRateService {
         return rate;
     }
 
-    /**
-     * Converts an amount from one currency to another using mid market NBP rates
-     */
     public BigDecimal convert(BigDecimal amount, String from, String to) {
         if (amount == null) return BigDecimal.ZERO;
         if (from.equalsIgnoreCase(to)) return amount;
@@ -77,15 +72,10 @@ public class ExchangeRateService {
         BigDecimal fromRate = getRateToPln(from);
         BigDecimal toRate = getRateToPln(to);
 
-        // Convert from -> PLN -> to
         BigDecimal amountInPln = amount.multiply(fromRate);
         return amountInPln.divide(toRate, 4, RoundingMode.HALF_UP);
     }
 
-    /**
-     * Returns a list of rates for the Exchange panel, with buying/selling rates including a simulated spread.
-     * Spread is 0.8% (0.008)
-     */
     public List<CurrencyRateInfo> getExchangeRatesList() {
         fetchRatesIfNeeded();
         List<CurrencyRateInfo> displayList = new ArrayList<>();
@@ -104,8 +94,8 @@ public class ExchangeRateService {
     public static class CurrencyRateInfo {
         private final String code;
         private final BigDecimal midRate;
-        private final BigDecimal buyRate;  // rate at which user buys this currency (using PLN)
-        private final BigDecimal sellRate; // rate at which user sells this currency (obtaining PLN)
+        private final BigDecimal buyRate;
+        private final BigDecimal sellRate;
 
         public CurrencyRateInfo(String code, BigDecimal midRate, BigDecimal buyRate, BigDecimal sellRate) {
             this.code = code;

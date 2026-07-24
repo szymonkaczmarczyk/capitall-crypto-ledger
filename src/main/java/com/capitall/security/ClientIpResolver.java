@@ -22,7 +22,6 @@ public final class ClientIpResolver {
         for (String header : HEADERS) {
             String value = request.getHeader(header);
             if (value != null && !value.isBlank() && !"unknown".equalsIgnoreCase(value)) {
-                // X-Forwarded-For may contain a chain: "client, proxy1, proxy2".
                 int comma = value.indexOf(',');
                 String ip = (comma > 0 ? value.substring(0, comma) : value).trim();
                 if (!ip.isEmpty()) {

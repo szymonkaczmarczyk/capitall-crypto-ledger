@@ -3,6 +3,7 @@
 
 <head th:replace="~{fragments/head :: head('Capitall - Papiery wartościowe')}"></head>
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)} }
         .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
@@ -10,14 +11,13 @@
         .modal-backdrop.modal-open { opacity: 1; }
         .modal-card { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease-in-out; transform: scale(0.9); opacity: 0; }
         .modal-open .modal-card { transform: scale(1); opacity: 1; }
-    </style>
+</style>
 </head>
 
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
     <aside th:replace="~{fragments/nav :: sidebar('securities')}"></aside>
 
-    <!-- Main Content Area -->
     <main class="flex-1 flex flex-col overflow-hidden">
         <header
             class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
@@ -44,7 +44,6 @@
 
         <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
 
-            <!-- Alerts for Success/Error (auto-dismiss after 25s) -->
             <div id="alertSuccess" th:if="${successMessage}"
                  class="bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700 dark:text-green-300 px-4 py-3 rounded relative shadow-sm flex items-center justify-between" role="alert">
                 <span class="block sm:inline" th:text="${successMessage}">Sukces!</span>
@@ -56,7 +55,6 @@
                 <button onclick="this.parentElement.remove()" class="ml-4 text-red-600 hover:text-red-800 font-bold text-lg leading-none">&times;</button>
             </div>
 
-            <!-- Financial Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
                     <p class="text-sm font-medium text-qv-muted mb-1">Wycena całkowita</p>
@@ -82,10 +80,8 @@
                 </div>
             </div>
 
-            <!-- Portfolio and Trade Form Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <!-- Portfolio holdings table -->
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 lg:col-span-2 transition-colors-all flex flex-col">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
@@ -110,8 +106,16 @@
                             <tbody id="holdingsBody">
                                 <tr th:each="item : ${items}" class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
                                     <td class="py-4 px-2">
-                                        <div class="font-bold text-qv-text" th:text="${item.holding.symbol}">AAPL</div>
-                                        <div class="text-[11px] text-qv-muted" th:text="${item.holding.name}">Apple Inc.</div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm"
+                                                 th:attr="data-stock-symbol=${item.holding.symbol}, data-fallback=${#strings.substring(item.holding.symbol, 0, 1)}">
+                                                 <span th:text="${#strings.substring(item.holding.symbol, 0, 1)}">A</span>
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-qv-text" th:text="${item.holding.symbol}">AAPL</div>
+                                                <div class="text-[11px] text-qv-muted" th:text="${item.holding.name}">Apple Inc.</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="py-4 px-2 font-medium" th:text="${#numbers.formatDecimal(item.holding.shares, 1, 'COMMA', 2, 'POINT')}">10</td>
                                     <td class="py-4 px-2 text-qv-muted" th:text="${#numbers.formatDecimal(item.holding.avgCost, 1, 'COMMA', 2, 'POINT') + ' ' + item.holding.currency}">180.00 USD</td>
@@ -130,112 +134,117 @@
                     </div>
                 </div>
 
-                <!-- Fast Transaction Form -->
-                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all">
-                    <h3 class="text-base font-bold text-qv-text mb-4">Dodaj transakcję</h3>
-                    <form th:action="@{/securities/trade}" method="post" id="tradeForm" class="space-y-4">
-                        <!-- BUY / SELL selector - always prominent -->
-                        <div>
-                            <label class="block text-xs font-semibold text-qv-muted mb-2">Wybierz typ transakcji, aby kontynuować</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label id="labelBuy"
-                                    class="relative border-2 border-qv-border bg-qv-surface text-qv-muted rounded-lg py-3 text-center text-sm font-bold cursor-pointer transition-all block hover:border-green-400 hover:text-green-500 ring-0 hover:ring-2 hover:ring-green-400/30">
-                                    <input type="radio" name="side" value="BUY" class="sr-only" onclick="selectSide('BUY')">
-                                    <span class="text-base mr-1">📈</span> Kupno
-                                </label>
-                                <label id="labelSell"
-                                    class="relative border-2 border-qv-border bg-qv-surface text-qv-muted rounded-lg py-3 text-center text-sm font-bold cursor-pointer transition-all block hover:border-red-400 hover:text-red-500 ring-0 hover:ring-2 hover:ring-red-400/30">
-                                    <input type="radio" name="side" value="SELL" class="sr-only" onclick="selectSide('SELL')">
-                                    <span class="text-base mr-1">📉</span> Sprzedaż
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Rest of form - blurred until side selected -->
-                        <div id="formBody" class="space-y-4 transition-all duration-300" style="filter: blur(4px); pointer-events: none; opacity: 0.35; user-select: none;">
-
-                            <div id="popularSelectContainer">
-                                <label class="block text-xs font-semibold text-qv-muted mb-1">Popularne spółki</label>
-                                <select id="popularSelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="fillFromPopular()">
-                                    <option value="">-- Wybierz lub wpisz poniżej --</option>
-                                    <option th:each="entry : ${popularSymbols}" th:value="${entry.key}" th:text="${entry.key + ' - ' + entry.value}" th:data-name="${entry.value}"></option>
-                                </select>
-                            </div>
-
-                            <div id="ownedSelectContainer" class="hidden">
-                                <label class="block text-xs font-semibold text-qv-muted mb-1">Twoje posiadane spółki</label>
-                                <select id="ownedSelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="fillFromOwned()">
-                                    <option value="">-- Wybierz posiadany walor --</option>
-                                    <option th:each="item : ${items}"
-                                        th:value="${item.holding.symbol}"
-                                        th:text="${item.holding.symbol + ' [' + item.holding.currency + '] - ' + item.holding.name + ' (' + item.holding.shares + ' szt.)'}"
-                                        th:data-name="${item.holding.name}"
-                                        th:data-shares="${item.holding.shares}"
-                                        th:data-price="${item.currentPrice}"
-                                        th:data-currency="${item.holding.currency}"></option>
-                                </select>
-                            </div>
-
+                <div class="lg:col-span-1 space-y-6 flex flex-col">
+                    <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all">
+                        <h3 class="text-base font-bold text-qv-text mb-4">Dodaj transakcję</h3>
+                        <form th:action="@{/securities/trade}" method="post" id="tradeForm" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-semibold text-qv-muted mb-1">Symbol (Ticker)</label>
-                                <input type="text" id="symbolInput" name="symbol" required placeholder="np. AAPL, CDR" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent uppercase">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-qv-muted mb-1">Nazwa spółki</label>
-                                <input type="text" id="nameInput" name="name" required placeholder="np. Apple Inc." class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Ilość akcji</label>
-                                    <input type="number" step="0.0001" id="sharesInput" name="shares" required placeholder="0" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Cena za sztukę</label>
-                                    <input type="number" step="0.01" id="priceInput" name="price" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                <label class="block text-xs font-semibold text-qv-muted mb-2">Wybierz typ transakcji, aby kontynuować</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label id="labelBuy"
+                                        class="relative border-2 border-qv-border bg-qv-surface text-qv-muted rounded-lg py-3 text-center text-sm font-bold cursor-pointer transition-all block hover:border-green-400 hover:text-green-500 ring-0 hover:ring-2 hover:ring-green-400/30">
+                                        <input type="radio" name="side" value="BUY" class="sr-only" onclick="selectSide('BUY')">
+                                        <span class="text-base mr-1">📈</span> Kupno
+                                    </label>
+                                    <label id="labelSell"
+                                        class="relative border-2 border-qv-border bg-qv-surface text-qv-muted rounded-lg py-3 text-center text-sm font-bold cursor-pointer transition-all block hover:border-red-400 hover:text-red-500 ring-0 hover:ring-2 hover:ring-red-400/30">
+                                        <input type="radio" name="side" value="SELL" class="sr-only" onclick="selectSide('SELL')">
+                                        <span class="text-base mr-1">📉</span> Sprzedaż
+                                    </label>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Prowizja</label>
-                                    <input type="number" step="0.01" id="feeInput" name="fee" required value="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta</label>
-                                    <!-- currencySelect is the visible UI control -->
-                                    <select id="currencySelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="onCurrencyChange()">
-                                        <option value="USD">USD</option>
-                                        <option value="PLN">PLN</option>
-                                        <option value="EUR">EUR</option>
+                            <div id="formBody" class="space-y-4 transition-all duration-300" style="filter: blur(4px); pointer-events: none; opacity: 0.35; user-select: none;">
+
+                                <div id="popularSelectContainer">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Popularne spółki</label>
+                                    <select id="popularSelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="fillFromPopular()">
+                                        <option value="">-- Wybierz lub wpisz poniżej --</option>
+                                        <option th:each="entry : ${popularSymbols}" th:value="${entry.key}" th:text="${entry.key + ' - ' + entry.value}" th:data-name="${entry.value}"></option>
                                     </select>
-                                    <!-- Hidden input that always submits the value (even when select is visually locked) -->
-                                    <input type="hidden" id="currencyHidden" name="currency" value="USD">
-                                    <!-- Locked currency badge shown on SELL -->
-                                    <div id="currencyLockedBadge" class="hidden w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm font-bold text-qv-muted flex items-center gap-2">
-                                        <span id="currencyLockedLabel">PLN</span>
-                                        <span class="text-[10px] text-qv-muted">(zablokowana — waluta papieru)</span>
+                                </div>
+
+                                <div id="ownedSelectContainer" class="hidden">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Twoje posiadane spółki</label>
+                                    <select id="ownedSelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="fillFromOwned()">
+                                        <option value="">-- Wybierz posiadany walor --</option>
+                                        <option th:each="item : ${items}"
+                                            th:value="${item.holding.symbol}"
+                                            th:text="${item.holding.symbol + ' [' + item.holding.currency + '] - ' + item.holding.name + ' (' + item.holding.shares + ' szt.)'}"
+                                            th:data-name="${item.holding.name}"
+                                            th:data-shares="${item.holding.shares}"
+                                            th:data-price="${item.currentPrice}"
+                                            th:data-currency="${item.holding.currency}"></option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Symbol (Ticker)</label>
+                                    <input type="text" id="symbolInput" name="symbol" required placeholder="np. AAPL, CDR" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent uppercase">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Nazwa spółki</label>
+                                    <input type="text" id="nameInput" name="name" required placeholder="np. Apple Inc." class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-qv-muted mb-1">Ilość akcji</label>
+                                        <input type="number" step="0.0001" id="sharesInput" name="shares" required placeholder="0" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-qv-muted mb-1">Cena za sztukę</label>
+                                        <input type="number" step="0.01" id="priceInput" name="price" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
                                     </div>
                                 </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-qv-muted mb-1">Prowizja</label>
+                                        <input type="number" step="0.01" id="feeInput" name="fee" required value="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta</label>
+                                        <select id="currencySelect" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="onCurrencyChange()">
+                                            <option value="USD">USD</option>
+                                            <option value="PLN">PLN</option>
+                                            <option value="EUR">EUR</option>
+                                        </select>
+                                        <input type="hidden" id="currencyHidden" name="currency" value="USD">
+                                        <div id="currencyLockedBadge" class="hidden w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm font-bold text-qv-muted flex items-center gap-2">
+                                            <span id="currencyLockedLabel">PLN</span>
+                                            <span class="text-[10px] text-qv-muted">(zablokowana — waluta papieru)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-qv-bg border border-qv-border rounded-md px-3 py-2 flex items-center justify-between text-sm">
+                                    <span class="text-qv-muted font-medium">Wartość transakcji (brutto):</span>
+                                    <span id="totalCostDisplay" class="font-bold text-qv-text">0.00</span>
+                                </div>
+
+                                <button type="submit" class="w-full py-3 bg-qv-accent text-white font-bold rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm mt-2 shadow-sm">
+                                    Zatwierdź transakcję
+                                </button>
+
                             </div>
+                        </form>
+                    </div>
 
-                            <!-- Live total cost display -->
-                            <div class="bg-qv-bg border border-qv-border rounded-md px-3 py-2 flex items-center justify-between text-sm">
-                                <span class="text-qv-muted font-medium">Wartość transakcji (brutto):</span>
-                                <span id="totalCostDisplay" class="font-bold text-qv-text">0.00</span>
-                            </div>
-
-                            <button type="submit" class="w-full py-3 bg-qv-accent text-white font-bold rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm mt-2 shadow-sm">
-                                Zatwierdź transakcję
-                            </button>
-
-                        </div><!-- /formBody -->
-                    </form>
+                    <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all flex flex-col justify-between h-96">
+                        <div>
+                            <h3 class="text-base font-bold text-qv-text mb-1">Dywersyfikacja portfela</h3>
+                            <p class="text-xs text-qv-muted mb-4">Podział wartości posiadanych papierów wartościowych (w tym gotówki w USD).</p>
+                        </div>
+                        <div class="relative flex-1 w-full flex items-center justify-center">
+                            <canvas id="secAllocationChart"></canvas>
+                            <div id="secAllocationEmpty" class="hidden absolute inset-0 flex items-center justify-center text-xs text-qv-muted">Brak posiadanych aktywów do wyświetlenia</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Transaction History -->
             <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all">
                 <h3 class="text-base font-bold text-qv-text mb-4">Historia transakcji giełdowych</h3>
                 <div class="overflow-x-auto">
@@ -254,7 +263,15 @@
                         <tbody>
                             <tr th:each="trade : ${trades}" class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
                                 <td class="py-3.5 px-2 text-qv-muted" th:text="${#temporals.format(trade.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-26 20:00</td>
-                                <td class="py-3.5 px-2 font-bold text-qv-text" th:text="${trade.symbol}">AAPL</td>
+                                <td class="py-3.5 px-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0 shadow-sm"
+                                             th:attr="data-stock-symbol=${trade.symbol}, data-fallback=${#strings.substring(trade.symbol, 0, 1)}">
+                                             <span th:text="${#strings.substring(trade.symbol, 0, 1)}">A</span>
+                                        </div>
+                                        <span class="font-bold text-qv-text" th:text="${trade.symbol}">AAPL</span>
+                                    </div>
+                                </td>
                                 <td class="py-3.5 px-2 font-bold" th:classappend="${trade.side.name() == 'BUY' ? 'text-green-500' : 'text-red-500'}" th:text="${trade.side.name() == 'BUY' ? 'KUPNO' : 'SPRZEDAŻ'}">KUPNO</td>
                                 <td class="py-3.5 px-2" th:text="${#numbers.formatDecimal(trade.shares, 1, 'COMMA', 2, 'POINT')}">10</td>
                                 <td class="py-3.5 px-2" th:text="${#numbers.formatDecimal(trade.price, 1, 'COMMA', 2, 'POINT') + ' ' + trade.currency}">180.00 USD</td>
@@ -272,7 +289,6 @@
         </div>
     </main>
 
-    <!-- Mobile menu bar -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-qv-surface border-t border-qv-border z-50 flex justify-around py-3 px-2 shadow-qv">
         <a href="/dashboard" class="flex flex-col items-center text-qv-muted hover:text-qv-text">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +313,6 @@
         </a>
     </div>
 
-    <!-- Deposit Modal -->
     <div id="depositModal"
         class="fixed inset-0 z-50 hidden modal-backdrop bg-slate-900/50 items-center justify-center p-4">
         <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-md w-full">
@@ -348,19 +363,18 @@
     </div>
 
     <script th:inline="javascript">
-        // Forms side selection style toggling
         function selectSide(side) {
             const btnBuy = document.getElementById('labelBuy');
             const btnSell = document.getElementById('labelSell');
             const popContainer = document.getElementById('popularSelectContainer');
             const ownContainer = document.getElementById('ownedSelectContainer');
             const formBody = document.getElementById('formBody');
-            
+
             const radioBuy = document.querySelector('input[name="side"][value="BUY"]');
             const radioSell = document.querySelector('input[name="side"][value="SELL"]');
-            
+
             clearForm();
-            
+
             if (side === 'BUY') {
                 radioBuy.checked = true;
                 btnBuy.className = "relative border-2 border-green-500 bg-green-500/10 text-green-600 rounded-lg py-3 text-center text-sm font-bold cursor-pointer transition-all block ring-2 ring-green-400/40 shadow-lg shadow-green-500/10";
@@ -374,8 +388,7 @@
                 popContainer.classList.add('hidden');
                 ownContainer.classList.remove('hidden');
             }
-            
-            // Unblur and enable form body
+
             formBody.style.filter = 'none';
             formBody.style.pointerEvents = 'auto';
             formBody.style.opacity = '1';
@@ -383,7 +396,6 @@
         }
 
         function setFormControlsDisabled(disabled) {
-            // No-op: blur/unblur approach replaces disabled state
         }
 
         function clearForm() {
@@ -392,7 +404,6 @@
             document.getElementById('sharesInput').value = '';
             document.getElementById('priceInput').value = '';
             document.getElementById('feeInput').value = '0.00';
-            // Reset currency controls
             document.getElementById('currencySelect').value = 'USD';
             document.getElementById('currencySelect').style.display = '';
             document.getElementById('currencyHidden').value = 'USD';
@@ -401,17 +412,15 @@
             document.getElementById('ownedSelect').value = '';
             document.getElementById('sharesInput').removeAttribute('max');
             document.getElementById('totalCostDisplay').textContent = '0.00';
-            // Reset base price tracking
             window._basePriceUSD = null;
         }
 
-        // Auto-fill from popular list selection
-        function fillFromPopular() {
+        async function fillFromPopular() {
             const select = document.getElementById('popularSelect');
             const opt = select.options[select.selectedIndex];
-            if (!opt.value) return;
+            if (!opt || !opt.value) return;
 
-            const nameFull = opt.dataset.name; // e.g. "Apple Inc. (USD)"
+            const nameFull = opt.dataset.name || "";
             let cleanName = nameFull;
             let currency = "USD";
 
@@ -426,24 +435,21 @@
             document.getElementById('currencySelect').value = currency;
             document.getElementById('currencyHidden').value = currency;
 
-            // Base price in that currency
-            let mockPriceUSD = 100.0;
-            if (opt.value === 'AAPL') mockPriceUSD = 185.50;
-            else if (opt.value === 'TSLA') mockPriceUSD = 260.20;
-            else if (opt.value === 'MSFT') mockPriceUSD = 420.00;
-            else if (opt.value === 'NVDA') mockPriceUSD = 125.80;
-            else if (opt.value === 'CDR')  mockPriceUSD = 115.40 * FX['PLN']; // CDR is PLN, store as USD-equiv
-            else if (opt.value === 'PKO')  mockPriceUSD = 58.20 * FX['PLN'];
-            else if (opt.value === 'SPY')  mockPriceUSD = 510.30;
-            else if (opt.value === 'QQQ')  mockPriceUSD = 440.50;
+            const priceInput = document.getElementById('priceInput');
+            if (priceInput) priceInput.placeholder = 'Ładowanie kursu...';
 
-            window._basePriceUSD = mockPriceUSD;
-            const displayPrice = mockPriceUSD / FX[currency];
-            document.getElementById('priceInput').value = displayPrice.toFixed(2);
+            try {
+                const res = await fetch(`/simulator/price?symbol=${encodeURIComponent(opt.value)}`);
+                const data = await res.json();
+                if (data.success && data.price != null) {
+                    const price = parseFloat(data.price);
+                    if (priceInput) priceInput.value = price.toFixed(2);
+                    window._basePriceUSD = price;
+                }
+            } catch (e) {  }
             updateCalculatedFee();
         }
 
-        // Auto-fill from owned list selection (SELL side)
         function fillFromOwned() {
             const select = document.getElementById('ownedSelect');
             const opt = select.options[select.selectedIndex];
@@ -455,7 +461,6 @@
             document.getElementById('symbolInput').value = opt.value;
             document.getElementById('nameInput').value = opt.dataset.name;
 
-            // Lock currency to holding's market currency
             document.getElementById('currencySelect').style.display = 'none';
             document.getElementById('currencyHidden').value = currency;
             document.getElementById('currencyLockedLabel').textContent = currency;
@@ -465,18 +470,15 @@
             document.getElementById('sharesInput').value = opt.dataset.shares;
             document.getElementById('sharesInput').max = opt.dataset.shares;
 
-            // Store base price in original currency for total calculation
-            window._basePriceUSD = priceInOrigCurrency; // already in original currency
+            window._basePriceUSD = priceInOrigCurrency;
             window._lockedCurrency = currency;
             updateTotalCostDisplay();
             updateCalculatedFee();
         }
 
-        // Enforce input fields lock (to fill from dropdown first)
         document.getElementById('symbolInput').readOnly = true;
         document.getElementById('nameInput').readOnly = true;
 
-        // Form submit validation
         document.getElementById('tradeForm').addEventListener('submit', function(e) {
             const sideInput = document.querySelector('input[name="side"]:checked');
             if (!sideInput) {
@@ -503,7 +505,6 @@
             }
         });
 
-        // CSRF Token and Request Helpers
         const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
         const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
         function csrfHeaders(extra) {
@@ -591,15 +592,12 @@
             }
         }
 
-        // Exchange rates (PLN/EUR priced in USD)
         const FX = { USD: 1.0, PLN: 0.25, EUR: 1.10 };
 
-        // When user changes currency in BUY mode - convert the displayed price
         function onCurrencyChange() {
             const newCurr = document.getElementById('currencySelect').value;
             document.getElementById('currencyHidden').value = newCurr;
             if (window._basePriceUSD != null) {
-                // Convert stored USD base price to the new currency
                 const priceInNew = window._basePriceUSD / FX[newCurr];
                 document.getElementById('priceInput').value = priceInNew.toFixed(2);
             }
@@ -607,7 +605,6 @@
             updateCalculatedFee();
         }
 
-        // Total cost live display (shares * price + fee)
         function updateTotalCostDisplay() {
             const shares = parseFloat(document.getElementById('sharesInput').value) || 0;
             const price  = parseFloat(document.getElementById('priceInput').value) || 0;
@@ -619,51 +616,45 @@
                 (symbols[curr] || '') + total.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + curr;
         }
 
-        // Dynamic fee + total calculation
         function updateCalculatedFee() {
             const shares = parseFloat(document.getElementById('sharesInput').value) || 0;
             const price = parseFloat(document.getElementById('priceInput').value) || 0;
-            const calculatedFee = (shares * price * 0.001); // 0.1% rate
+            const calculatedFee = (shares * price * 0.001);
             document.getElementById('feeInput').value = calculatedFee.toFixed(2);
             updateTotalCostDisplay();
         }
         document.getElementById('sharesInput').addEventListener('input', updateCalculatedFee);
         document.getElementById('priceInput').addEventListener('input', () => {
-            // When user types price manually, store as new USD base
             const curr = document.getElementById('currencyHidden').value || 'USD';
             const price = parseFloat(document.getElementById('priceInput').value) || 0;
-            window._basePriceUSD = price * FX[curr]; // convert to USD equivalent for future conversions
+            window._basePriceUSD = price * FX[curr];
             updateCalculatedFee();
         });
 
-        // Live refresh of portfolio valuations
         async function updateLivePortfolio() {
             try {
                 const res = await fetch('/securities/data', { credentials: 'same-origin' });
                 if (!res.ok) return;
                 const data = await res.json();
-                
-                // Update header balance
+
                 if (data.balance != null) {
                     document.getElementById('balanceLabel').textContent = fmtUsd(data.balance);
                 }
-                
-                // Update stats
+
                 if (data.stats) {
                     const stats = data.stats;
                     document.getElementById('totalValueLabel').textContent = fmtUsd(stats.totalValue);
                     document.getElementById('totalCostLabel').textContent = fmtUsd(stats.totalCost);
-                    
+
                     const pnlEl = document.getElementById('totalPnLLabel');
                     pnlEl.textContent = fmtPnl(stats.totalPnL);
                     pnlEl.className = "text-2xl font-bold " + (parseFloat(stats.totalPnL) >= 0 ? "text-green-500" : "text-red-500");
-                    
+
                     const roiEl = document.getElementById('totalRoiLabel');
                     roiEl.textContent = fmtPercent(stats.totalRoi);
                     roiEl.className = "text-2xl font-bold " + (parseFloat(stats.totalRoi) >= 0 ? "text-green-500" : "text-red-500");
                 }
-                
-                // Update holdings table
+
                 const body = document.getElementById('holdingsBody');
                 if (body && data.items) {
                     if (data.items.length === 0) {
@@ -676,7 +667,7 @@
                             const pnlPctVal = parseFloat(item.unrealizedPnLPct);
                             const pnlPctSign = pnlPctVal >= 0 ? '+' : '';
                             const currBadgeClass = item.holding.currency === 'PLN' ? 'bg-red-500/10 text-red-600' : item.holding.currency === 'EUR' ? 'bg-blue-500/10 text-blue-600' : 'bg-green-500/10 text-green-600';
-                            
+
                             return `<tr class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
                                 <td class="py-4 px-2">
                                     <div class="font-bold text-qv-text">${item.holding.symbol} <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${currBadgeClass}">${item.holding.currency}</span></div>
@@ -695,30 +686,124 @@
                     }
                 }
 
-                // Update Twoje posiadane spółki select dropdown options
                 const ownedSelect = document.getElementById('ownedSelect');
                 if (ownedSelect && data.items) {
                     const currentSelectedValue = ownedSelect.value;
                     let optionsHtml = '<option value="">-- Wybierz posiadany walor --</option>';
                     data.items.forEach(item => {
                         const curr = item.holding.currency;
-                        optionsHtml += `<option value="${item.holding.symbol}" 
-                            data-name="${item.holding.name}" 
-                            data-shares="${item.holding.shares}" 
-                            data-price="${item.currentPrice}" 
+                        optionsHtml += `<option value="${item.holding.symbol}"
+                            data-name="${item.holding.name}"
+                            data-shares="${item.holding.shares}"
+                            data-price="${item.currentPrice}"
                             data-currency="${curr}">${item.holding.symbol} [${curr}] - ${item.holding.name} (${parseFloat(item.holding.shares).toFixed(2)} szt.)</option>`;
                     });
                     ownedSelect.innerHTML = optionsHtml;
-                    ownedSelect.value = currentSelectedValue; // restore selected value
+                    ownedSelect.value = currentSelectedValue;
                 }
-            } catch (e) { /* ignore */ }
+
+                updateSecuritiesChart(data);
+            } catch (e) {  }
         }
 
-        // Initialize state and fee listeners (require explicit click on BUY/SELL first)
-        // Form body starts blurred - see #formBody inline style above
+        let secAllocationChart = null;
+
+        function updateSecuritiesChart(data) {
+            if (!data) return;
+            const holdingsList = [];
+            let totalValue = parseFloat(data.balance) || 0;
+            const cashValue = parseFloat(data.balance) || 0;
+
+            if (data.items) {
+                data.items.forEach(item => {
+                    const val = parseFloat(item.currentValue) || 0;
+                    if (val > 0) {
+                        holdingsList.push({
+                            symbol: item.holding.symbol,
+                            value: val
+                        });
+                        totalValue += val;
+                    }
+                });
+            }
+
+            if (totalValue === 0) {
+                document.getElementById('secAllocationEmpty').classList.remove('hidden');
+                if (secAllocationChart) {
+                    secAllocationChart.destroy();
+                    secAllocationChart = null;
+                }
+                return;
+            } else {
+                document.getElementById('secAllocationEmpty').classList.add('hidden');
+            }
+
+            const allocationLabels = ['Gotówka (USD)'];
+            const allocationValues = [cashValue];
+            const allocationColors = ['#10b981'];
+
+            const assetColors = {
+                'AAPL': '#a3a3a3', 'TSLA': '#cc0000', 'MSFT': '#00a4ef', 'NVDA': '#76b900',
+                'GOOGL': '#4285f4', 'AMZN': '#ff9900', 'META': '#0668e1', 'NFLX': '#e50914',
+                'AMD': '#ed1c24', 'INTC': '#0071c5', 'BABA': '#ff6a00', 'NIO': '#00b2a9',
+                'CDR': '#fcd34d', 'PKO': '#1d4ed8', 'PKN': '#ef4444', 'KGH': '#047857', 'LPP': '#111827',
+                'SPY': '#0284c7', 'QQQ': '#4f46e5'
+            };
+
+            holdingsList.forEach((h, index) => {
+                allocationLabels.push(h.symbol);
+                allocationValues.push(h.value);
+                allocationColors.push(assetColors[h.symbol] || `hsl(${(index * 55) % 360}, 65%, 50%)`);
+            });
+
+            if (!secAllocationChart) {
+                const ctx = document.getElementById('secAllocationChart').getContext('2d');
+                secAllocationChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: allocationLabels,
+                        datasets: [{
+                            data: allocationValues,
+                            backgroundColor: allocationColors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 8,
+                                    color: '#64748b',
+                                    font: { size: 10, weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw;
+                                        const pct = ((val / totalValue) * 100).toFixed(1);
+                                        return ` ${context.label}: $${val.toLocaleString(undefined, {minimumFractionDigits: 2})} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            } else {
+                secAllocationChart.data.labels = allocationLabels;
+                secAllocationChart.data.datasets[0].data = allocationValues;
+                secAllocationChart.data.datasets[0].backgroundColor = allocationColors;
+                secAllocationChart.update();
+            }
+        }
+
         updateCalculatedFee();
 
-        // ─── Auto-dismiss flash alerts after 25 seconds ─────────────────────
         ['alertSuccess', 'alertError'].forEach(id => {
             const el = document.getElementById(id);
             if (el) setTimeout(() => {
@@ -728,19 +813,12 @@
             }, 25000);
         });
 
-        // ─── Market hours check ──────────────────────────────────────────────
-        // Returns true if *any* held currency's market is open right now
-        // PLN → GPW Warsaw: Mon-Fri 09:00-17:05 Europe/Warsaw
-        // USD → NYSE:       Mon-Fri 15:30-22:00 Europe/Warsaw
-        // EUR → treated same as USD for simplicity
         function isMarketOpen() {
-            // Current time in Warsaw (handles DST automatically)
             const now = new Date();
             const warsawStr = now.toLocaleString('en-US', { timeZone: 'Europe/Warsaw',
                 hour12: false, weekday: 'short', hour: 'numeric', minute: 'numeric' });
-            // warsawStr e.g. "Fri, 15:42"
             const parts = warsawStr.split(', ');
-            const day = parts[0]; // Mon Tue Wed Thu Fri Sat Sun
+            const day = parts[0];
             const timeParts = parts[1].split(':');
             const h = parseInt(timeParts[0], 10);
             const m = parseInt(timeParts[1], 10);
@@ -749,10 +827,10 @@
             const isWeekday = ['Mon','Tue','Wed','Thu','Fri'].includes(day);
             if (!isWeekday) return { open: false, reason: 'Weekend — giełdy zamknięte' };
 
-            const gpwOpen  = 9  * 60;       // 09:00
-            const gpwClose = 17 * 60 + 5;   // 17:05
-            const nyseOpen  = 15 * 60 + 30; // 15:30
-            const nyseClose = 22 * 60;      // 22:00
+            const gpwOpen  = 9  * 60;
+            const gpwClose = 17 * 60 + 5;
+            const nyseOpen  = 15 * 60 + 30;
+            const nyseClose = 22 * 60;
 
             const gpwNow  = totalMin >= gpwOpen  && totalMin < gpwClose;
             const nyseNow = totalMin >= nyseOpen && totalMin < nyseClose;
@@ -761,7 +839,6 @@
             return { open: false, reason: 'Poza godzinami handlu' };
         }
 
-        // Update the LIVE dot and market-status badge
         function updateMarketStatus(status) {
             const dot = document.querySelector('.live-dot');
             const liveLabel = dot ? dot.parentElement : null;
@@ -773,7 +850,6 @@
                 if (badge) badge.remove();
             } else {
                 if (dot) { dot.classList.add('hidden'); }
-                // Show closed badge if not already there
                 if (!document.getElementById('marketStatusBadge')) {
                     const h3 = document.querySelector('#holdingsBody')?.closest('div')?.querySelector('h3');
                     if (h3) {
@@ -787,21 +863,31 @@
             }
         }
 
-        // Scheduled live refresh - only fires during market hours
         function scheduledRefresh() {
             const status = isMarketOpen();
             updateMarketStatus(status);
-            if (status.open) {
-                updateLivePortfolio();
-            }
+            updateLivePortfolio();
         }
 
-        // Initial fetch regardless of hours (for current data on page load)
         updateLivePortfolio();
 
-        // Then check every 6 seconds whether to refresh
         setInterval(scheduledRefresh, 6000);
-    </script>
+
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('#alertSuccess, #alertError, [role="alert"]');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.maxHeight = '0px';
+                alert.style.marginTop = '0px';
+                alert.style.marginBottom = '0px';
+                alert.style.paddingTop = '0px';
+                alert.style.paddingBottom = '0px';
+                alert.style.overflow = 'hidden';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+</script>
     <script src="/js/alerts-toast.js"></script>
 
     <div th:replace="~{fragments/nav :: mobilebar('securities')}"></div>

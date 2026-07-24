@@ -44,7 +44,7 @@ class SecurityPortfolioServiceTest {
     @BeforeEach
     void setUp() {
         portfolioService = new SecurityPortfolioService(holdingRepository, tradeRepository, priceService, walletRepository, exchangeRateService);
-        
+
         lenient().when(exchangeRateService.convert(any(BigDecimal.class), anyString(), anyString())).thenAnswer(invocation -> {
             BigDecimal amount = invocation.getArgument(0);
             String from = invocation.getArgument(1);
@@ -85,7 +85,7 @@ class SecurityPortfolioServiceTest {
             assertThat(holding.getSymbol()).isEqualTo(symbol);
             assertThat(holding.getName()).isEqualTo(name);
             assertThat(holding.getShares()).isEqualTo(shares);
-            assertThat(holding.getAvgCost()).isEqualTo(new BigDecimal("150.5000")); // (10*150 + 5) / 10 = 150.50
+            assertThat(holding.getAvgCost()).isEqualTo(new BigDecimal("150.5000"));
             return true;
         }));
 
@@ -111,11 +111,6 @@ class SecurityPortfolioServiceTest {
 
         portfolioService.executeTrade(userId, SecurityTrade.Side.BUY, symbol, name, buyShares, buyPrice, buyFee, "USD");
 
-        // Expected AvgCost calculation:
-        // currentTotalCost = 10 * 100 = 1000
-        // tradeCost = 5 * 160 + 10 = 810
-        // newShares = 15
-        // newAvgCost = 1810 / 15 = 120.6667
         verify(holdingRepository).save(argThat(holding -> {
             assertThat(holding.getShares()).isEqualTo(new BigDecimal("15"));
             assertThat(holding.getAvgCost()).isEqualTo(new BigDecimal("120.6667"));
@@ -184,7 +179,7 @@ class SecurityPortfolioServiceTest {
 
         verify(holdingRepository).save(argThat(holding -> {
             assertThat(holding.getShares()).isEqualTo(new BigDecimal("7"));
-            assertThat(holding.getAvgCost()).isEqualTo(new BigDecimal("100")); // avg cost shouldn't change on sell
+            assertThat(holding.getAvgCost()).isEqualTo(new BigDecimal("100"));
             return true;
         }));
         verify(tradeRepository).save(any(SecurityTrade.class));
@@ -207,11 +202,6 @@ class SecurityPortfolioServiceTest {
 
         SecurityPortfolioService.SecurityPortfolioSummary summary = portfolioService.getPortfolioSummary(userId);
 
-        // AAPL totalCost = 10 * 150 = 1500, value = 10 * 160 = 1600. PnL = +100
-        // TSLA totalCost = 5 * 200 = 1000, value = 5 * 190 = 950. PnL = -50
-        // Overall totalCost = 2500, totalValue = 2550
-        // totalPnL = +50
-        // totalRoi = 50 * 100 / 2500 = 2.00%
         assertThat(summary.getTotalCost()).isEqualTo(new BigDecimal("2500.00"));
         assertThat(summary.getTotalValue()).isEqualTo(new BigDecimal("2550.00"));
         assertThat(summary.getTotalPnL()).isEqualTo(new BigDecimal("50.00"));
@@ -228,7 +218,6 @@ class SecurityPortfolioServiceTest {
         BigDecimal fee = new BigDecimal("5");
         String currency = "USD";
 
-        // Wallet with only $1000
         com.capitall.model.Wallet wallet = new com.capitall.model.Wallet(userId, new BigDecimal("1000.00"));
         when(walletRepository.findByUserIdForUpdate(userId)).thenReturn(Optional.of(wallet));
 
@@ -247,14 +236,12 @@ class SecurityPortfolioServiceTest {
         BigDecimal fee = new BigDecimal("5");
         String currency = "USD";
 
-        // Wallet with $2000
         com.capitall.model.Wallet wallet = new com.capitall.model.Wallet(userId, new BigDecimal("2000.00"));
         when(walletRepository.findByUserIdForUpdate(userId)).thenReturn(Optional.of(wallet));
         when(holdingRepository.findByUserIdAndSymbol(userId, symbol)).thenReturn(Optional.empty());
 
         portfolioService.executeTrade(userId, SecurityTrade.Side.BUY, symbol, name, shares, price, fee, currency);
 
-        // $2000 - ($1500 + $5) = $495
         assertThat(wallet.getUsdBalance()).isEqualTo(new BigDecimal("495.00"));
         verify(walletRepository).save(wallet);
     }
