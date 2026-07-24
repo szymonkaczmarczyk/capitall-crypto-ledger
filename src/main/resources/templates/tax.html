@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Raport Podatkowy')}"></head>
+<head>
+    <style>
+        .tax-card {
+            background: var(--qv-surface-2);
+            border: 1px solid var(--qv-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 7.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .tax-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('tax')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold text-qv-text">Raport Podatkowy (PIT-38)</h2>
+                <span class="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 text-xs font-semibold rounded-full border border-yellow-500/20">ROZLICZENIA</span>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <div class="p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 space-y-8">
+            
+            <!-- Controls Row -->
+            <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Rok podatkowy</label>
+                        <select id="taxYear" class="bg-qv-surface-2 border border-qv-border rounded-xl px-4 py-2.5 text-sm text-qv-text focus:outline-none focus:border-qv-accent">
+                            <option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Metoda rozliczania</label>
+                        <select id="taxMethod" class="bg-qv-surface-2 border border-qv-border rounded-xl px-4 py-2.5 text-sm text-qv-text focus:outline-none focus:border-qv-accent">
+                            <option value="FIFO" selected>FIFO (First-In First-Out)</option>
+                            <option value="LIFO">LIFO (Last-In First-Out)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="fetchTaxReport()" class="px-5 py-2.5 bg-qv-accent hover:bg-qv-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-qv-accent/20">
+                        Generuj raport
+                    </button>
+                    <button onclick="downloadCsv()" class="px-5 py-2.5 bg-qv-surface-2 hover:bg-qv-border/40 text-qv-text border border-qv-border text-sm font-bold rounded-xl transition-all">
+                        Eksportuj CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-16 gap-4">
+                <svg class="animate-spin w-10 h-10 text-qv-accent" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p class="text-qv-muted text-sm font-medium">Trwa obliczanie podatku (FIFO/LIFO)...</p>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="reportContent" class="space-y-8">
+                <!-- Summary Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div class="tax-card">
+                        <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Przychód (Sprzedaż)</span>
+                        <span id="statRevenue" class="text-2xl font-extrabold text-qv-text">0.00 zł</span>
+                    </div>
+                    <div class="tax-card">
+                        <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Koszt zakupu (z prowizjami)</span>
+                        <span id="statCost" class="text-2xl font-extrabold text-qv-text">0.00 zł</span>
+                    </div>
+                    <div class="tax-card">
+                        <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Opłaty i Prowizje</span>
+                        <span id="statFees" class="text-2xl font-extrabold text-qv-muted">0.00 zł</span>
+                    </div>
+                    <div class="tax-card">
+                        <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Dochód / Strata</span>
+                        <span id="statProfit" class="text-2xl font-extrabold">—</span>
+                    </div>
+                    <div class="tax-card border-qv-accent/30 bg-qv-accent/5">
+                        <span class="text-xs font-bold text-qv-accent uppercase tracking-wider">Podatek PIT-38 (19%)</span>
+                        <span id="statTax" class="text-2xl font-extrabold text-qv-accent">0.00 zł</span>
+                    </div>
+                </div>
+
+                <!-- Transaction matches table -->
+                <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv space-y-4">
+                    <div>
+                        <h3 class="text-base font-bold text-qv-text">Zestawienie dopasowanych transakcji</h3>
+                        <p class="text-xs text-qv-muted">Zgodnie z polskim prawem podatkowym, każda sprzedaż została dopasowana do chronologicznych zakupów (metodą FIFO/LIFO). Wszystkie kwoty są automatycznie przeliczane z walut obcych (np. USD, EUR) na PLN po historycznych kursach średnich NBP z dnia transakcji.</p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b border-qv-border text-qv-muted font-bold">
+                                    <th class="py-3 px-4">Walor</th>
+                                    <th class="py-3 px-4">Typ</th>
+                                    <th class="py-3 px-4">Data zakupu</th>
+                                    <th class="py-3 px-4">Data sprzedaży</th>
+                                    <th class="py-3 px-4 text-right">Ilość</th>
+                                    <th class="py-3 px-4 text-right">Cena kupna (PLN)</th>
+                                    <th class="py-3 px-4 text-right">Cena sprzedaży (PLN)</th>
+                                    <th class="py-3 px-4 text-right">Koszt (PLN)</th>
+                                    <th class="py-3 px-4 text-right">Przychód (PLN)</th>
+                                    <th class="py-3 px-4 text-right">Wynik netto (PLN)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionRows">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/nav :: mobilebar('tax')}"></div>
+
+    <script th:inline="javascript">
+        async function fetchTaxReport() {
+            const year = document.getElementById('taxYear').value;
+            const method = document.getElementById('taxMethod').value;
+            const loader = document.getElementById('loadingState');
+            const content = document.getElementById('reportContent');
+
+            loader.classList.remove('hidden');
+            content.classList.add('opacity-50');
+
+            try {
+                const res = await fetch(`/api/tax/report?year=${year}&method=${method}`);
+                if (!res.ok) throw new Error('Błąd serwera');
+                const data = await res.json();
+
+                // Set summaries
+                document.getElementById('statRevenue').textContent = data.totalRevenue.toFixed(2) + ' zł';
+                document.getElementById('statCost').textContent = data.totalCost.toFixed(2) + ' zł';
+                document.getElementById('statFees').textContent = data.totalFees.toFixed(2) + ' zł';
+                
+                const netProfitEl = document.getElementById('statProfit');
+                if (data.netProfit >= 0) {
+                    netProfitEl.textContent = '+' + data.netProfit.toFixed(2) + ' zł';
+                    netProfitEl.className = 'text-2xl font-extrabold text-emerald-500';
+                } else {
+                    netProfitEl.textContent = '-' + Math.abs(data.netProfit).toFixed(2) + ' zł';
+                    netProfitEl.className = 'text-2xl font-extrabold text-red-500';
+                }
+
+                document.getElementById('statTax').textContent = data.estimatedTax.toFixed(2) + ' zł';
+
+                // Set table rows
+                const tbody = document.getElementById('transactionRows');
+                tbody.innerHTML = '';
+
+                if (data.rows.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-8 text-qv-muted">Brak transakcji do rozliczenia w tym roku podatkowym.</td>
+                        </tr>
+                    `;
+                } else {
+                    data.rows.forEach(r => {
+                        const profitClass = r.profit >= 0 ? 'text-emerald-500' : 'text-red-500';
+                        const profitSign = r.profit >= 0 ? '+' : '';
+                        
+                        tbody.innerHTML += `
+                            <tr class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors">
+                                <td class="py-3.5 px-4 font-bold text-qv-text">${r.symbol}</td>
+                                <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.assetType === 'CRYPTO' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-400'}">${r.assetType}</span></td>
+                                <td class="py-3.5 px-4 text-xs text-qv-muted">${formatDate(r.buyDate)}</td>
+                                <td class="py-3.5 px-4 text-xs text-qv-muted">${formatDate(r.sellDate)}</td>
+                                <td class="py-3.5 px-4 text-right font-medium">${r.amount.toFixed(6)}</td>
+                                <td class="py-3.5 px-4 text-right">${r.buyPrice.toFixed(2)} zł</td>
+                                <td class="py-3.5 px-4 text-right">${r.sellPrice.toFixed(2)} zł</td>
+                                <td class="py-3.5 px-4 text-right text-red-400">${r.cost.toFixed(2)} zł</td>
+                                <td class="py-3.5 px-4 text-right text-emerald-400">${r.revenue.toFixed(2)} zł</td>
+                                <td class="py-3.5 px-4 text-right font-bold ${profitClass}">${profitSign}${r.profit.toFixed(2)} zł</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                loader.classList.add('hidden');
+                content.classList.remove('opacity-50');
+            }
+        }
+
+        function downloadCsv() {
+            const year = document.getElementById('taxYear').value;
+            const method = document.getElementById('taxMethod').value;
+            window.location.href = `/api/tax/export?year=${year}&method=${method}`;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr);
+            return d.toLocaleString('pl-PL', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Init load
+        fetchTaxReport();
+    </script>
+</body>
+</html>

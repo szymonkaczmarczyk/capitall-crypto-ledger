@@ -36,12 +36,19 @@ class AnalyticsServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.capitall.repository.HoldingRepository holdingRepository;
+
+    @Mock
+    private SecuritiesPriceService priceService;
+
     private AnalyticsService analyticsService;
 
     @BeforeEach
     void setUp() {
-        analyticsService = new AnalyticsServiceImpl(exchangeAccountRepository, allocationRepository, userRepository);
+        analyticsService = new AnalyticsServiceImpl(exchangeAccountRepository, allocationRepository, userRepository, holdingRepository, priceService);
     }
+
 
     @Test
     void getDashboardStats_ShouldReturnAumAndDiversificationMap() {

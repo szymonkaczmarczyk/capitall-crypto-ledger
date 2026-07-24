@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Zlecenia DCA')}"></head>
+<head>
+    <style>
+        .premium-card {
+            background: linear-gradient(135deg, var(--qv-surface) 0%, var(--qv-surface-2) 100%);
+            border: 1px solid var(--qv-border);
+            border-radius: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.3);
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+        .coin-img {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 9999px;
+            object-fit: cover;
+            border: 1px solid var(--qv-border);
+            background: var(--qv-surface-2);
+        }
+        /* Remove spin buttons from number inputs */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('dca')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <h2 class="text-lg font-bold text-qv-text tracking-tight">Automatyczne Zlecenia Cykliczne (DCA)</h2>
+                <span class="px-2.5 py-0.5 bg-purple-500/10 text-purple-400 text-[10px] font-bold uppercase rounded-full border border-purple-500/20 tracking-wider">Dollar-Cost Averaging</span>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <!-- Scrollable Content Wrapper -->
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
+            
+            <!-- Top Metric Cards Row (Leveled, same height) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 flex-shrink-0">
+                <!-- Active Plans Card -->
+                <div class="premium-card p-6 flex flex-col justify-between h-36">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Aktywne Plany DCA</span>
+                        <div class="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metricActivePlans" class="text-2xl lg:text-3xl font-black text-qv-text">0</span>
+                        <p class="text-[10px] text-qv-muted mt-1">Liczba uruchomionych strategii kupna</p>
+                    </div>
+                </div>
+
+                <!-- Available Balance Card -->
+                <div class="premium-card p-6 flex flex-col justify-between h-36">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Dostępne Saldo</span>
+                        <div class="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl lg:text-3xl font-black text-qv-text" th:text="${'$' + #numbers.formatDecimal(usdBalance, 1, 'DEFAULT', 2, 'DEFAULT')}">$0.00</span>
+                        <p class="text-[10px] text-qv-muted mt-1">Środki w USD gotowe do inwestycji</p>
+                    </div>
+                </div>
+
+                <!-- Monthly Spend Estimate -->
+                <div class="premium-card p-6 flex flex-col justify-between h-36">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Szacowany koszt / m-c</span>
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m6-6a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metricMonthlySpend" class="text-2xl lg:text-3xl font-black text-emerald-500">$0.00</span>
+                        <p class="text-[10px] text-qv-muted mt-1">Przewidywana miesięczna suma zakupów</p>
+                    </div>
+                </div>
+
+                <!-- Scheduler Status Card -->
+                <div class="premium-card p-6 flex flex-col justify-between h-36">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Status Automatu</span>
+                        <div class="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between">
+                        <div>
+                            <span class="text-lg font-black text-qv-text flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                Aktywny
+                            </span>
+                            <p class="text-[10px] text-qv-muted mt-1">AllocationScheduler sprawdza zlecenia</p>
+                        </div>
+                        <span class="px-2 py-1 bg-qv-surface-2 border border-qv-border text-[10px] font-mono font-bold rounded-lg text-qv-muted">co 15s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                
+                <!-- Left: Form Create DCA Plan (5 Cols) -->
+                <div class="lg:col-span-5 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between">
+                    <div>
+                        <div class="border-b border-qv-border/40 pb-4">
+                            <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                Stwórz Nowy Plan DCA
+                            </h3>
+                            <p class="text-xs text-qv-muted mt-1">System będzie automatycznie kupował wybraną kryptowalutę za stałą kwotę USD w ustalonym odstępie czasu.</p>
+                        </div>
+
+                        <form id="dcaForm" onsubmit="handleCreatePlan(event)" class="space-y-5 mt-6">
+                            <!-- Select Symbol -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Wybór Aktywa</label>
+                                <div class="flex items-center gap-3 bg-qv-surface-2/40 border border-qv-border/40 p-2.5 rounded-2xl">
+                                    <img id="formCoinIcon" class="coin-img w-8 h-8 rounded-full flex-shrink-0" src="https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/btc.png">
+                                    <select id="dcaSymbol" onchange="updateFormIcon()" class="bg-qv-bg border border-qv-border rounded-xl px-3 py-2 text-sm text-qv-text font-black focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-full h-10">
+                                        <option value="BTC" selected>BTC - Bitcoin</option>
+                                        <option value="ETH">ETH - Ethereum</option>
+                                        <option value="SOL">SOL - Solana</option>
+                                        <option value="ADA">ADA - Cardano</option>
+                                        <option value="XRP">XRP - Ripple</option>
+                                        <option value="LTC">LTC - Litecoin</option>
+                                        <option value="LINK">LINK - Chainlink</option>
+                                        <option value="AVAX">AVAX - Avalanche</option>
+                                        <option value="DOT">DOT - Polkadot</option>
+                                        <option value="SHIB">SHIB - Shiba Inu</option>
+                                        <option value="DOGE">DOGE - Dogecoin</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Amount USD -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Kwota pojedynczego zakupu (USD)</label>
+                                <div class="relative h-10">
+                                    <input type="number" step="0.01" id="dcaAmount" required placeholder="50.00" class="bg-qv-bg border border-qv-border rounded-xl px-3 py-2 text-sm text-qv-text font-black text-right pr-8 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-full h-10" min="1">
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-qv-muted font-bold">$</span>
+                                </div>
+                            </div>
+
+                            <!-- Interval Selection -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Częstotliwość cyklu</label>
+                                <select id="dcaInterval" class="bg-qv-bg border border-qv-border rounded-xl px-3 py-2 text-sm text-qv-text font-black focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-full h-10">
+                                    <option value="1">Codziennie (co 1 dzień)</option>
+                                    <option value="7" selected>Tygodniowo (co 7 dni)</option>
+                                    <option value="14">Co 2 tygodnie (co 14 dni)</option>
+                                    <option value="30">Miesięcznie (co 30 dni)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="w-full h-12 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                Aktywuj Plan DCA
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Active Plans List (7 Cols) -->
+                <div class="lg:col-span-7 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between">
+                    <div class="w-full space-y-4">
+                        <div class="border-b border-qv-border/40 pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    Twoje Strategie DCA
+                                </h3>
+                                <p class="text-xs text-qv-muted mt-1">Zarządzaj cyklicznymi zakupami i monitoruj statusy.</p>
+                            </div>
+                            <button onclick="fetchPlans()" class="p-2 hover:bg-qv-surface-2 rounded-xl border border-qv-border/40 text-qv-muted transition-colors" title="Odśwież">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Plans Container -->
+                        <div id="dcaPlansList" class="space-y-3">
+                            <!-- Dynamic DCA Plan Cards -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/nav :: mobilebar('dca')}"></div>
+
+    <script th:inline="javascript">
+        function getCoinIconUrl(sym) {
+            return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`;
+        }
+
+        function updateFormIcon() {
+            const sym = document.getElementById('dcaSymbol').value;
+            document.getElementById('formCoinIcon').src = getCoinIconUrl(sym);
+        }
+
+        function formatDate(val) {
+            if (!val) return '—';
+            try {
+                const str = String(val);
+                const d = new Date(str.includes('T') || str.includes('-') ? str : Number(str));
+                if (isNaN(d.getTime())) return str;
+                return d.toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
+            } catch (e) {
+                return String(val);
+            }
+        }
+
+        async function fetchPlans() {
+            try {
+                const res = await fetch('/api/dca');
+                if (res.ok) {
+                    const plans = await res.json();
+                    renderPlans(plans);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderPlans(plans) {
+            const container = document.getElementById('dcaPlansList');
+            container.innerHTML = '';
+
+            let activeCount = 0;
+            let totalMonthly = 0;
+
+            if (!plans || plans.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 px-6 text-qv-muted text-sm font-semibold bg-qv-surface-2/20 border border-dashed border-qv-border rounded-2xl">
+                        <div class="w-12 h-12 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        Brak aktywnych planów DCA. Stwórz swój pierwszy plan po lewej stronie!
+                    </div>
+                `;
+                document.getElementById('metricActivePlans').textContent = '0';
+                document.getElementById('metricMonthlySpend').textContent = '$0.00';
+                return;
+            }
+
+            plans.forEach(p => {
+                if (p.active) {
+                    activeCount++;
+                    const monthlyFactor = 30 / p.intervalDays;
+                    totalMonthly += p.usdAmount * monthlyFactor;
+                }
+
+                const coinIcon = getCoinIconUrl(p.symbol);
+                const statusBadge = p.active 
+                    ? `<span class="px-2.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-md uppercase">AKTYWNY</span>` 
+                    : `<span class="px-2.5 py-0.5 bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px] font-black rounded-md uppercase">WSTRZYMANY</span>`;
+
+                const intervalText = p.intervalDays === 1 ? 'Codziennie' : `Co ${p.intervalDays} dni`;
+
+                const nextRunDate = formatDate(p.nextExecution);
+                const lastRunDate = p.lastExecution ? formatDate(p.lastExecution) : 'Jeszcze nie';
+
+                container.innerHTML += `
+                    <div class="bg-qv-surface-2/30 hover:bg-qv-surface-2/50 border border-qv-border/40 p-4 rounded-2xl flex items-center justify-between gap-4 transition-all h-20">
+                        <div class="flex items-center gap-3.5">
+                            <img class="coin-img w-10 h-10 rounded-full flex-shrink-0" src="${coinIcon}" onerror="this.src='https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/usd.png'">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-black text-qv-text tracking-wide">${p.symbol}</span>
+                                    ${statusBadge}
+                                </div>
+                                <p class="text-xs text-qv-muted mt-0.5">
+                                    Zakup: <span class="font-black text-qv-text">$${Number(p.usdAmount).toFixed(2)}</span> <span class="text-qv-muted">(${intervalText})</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-xs font-bold text-qv-text">Następny: ${nextRunDate}</p>
+                                <p class="text-[10px] text-qv-muted mt-0.5">Ostatni: ${lastRunDate}</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="togglePlan('${p.id}')" class="p-2.5 rounded-xl border border-qv-border/40 hover:bg-qv-surface-2 text-qv-muted transition-colors" title="${p.active ? 'Wstrzymaj' : 'Wznów'}">
+                                    ${p.active ? 
+                                        `<svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` : 
+                                        `<svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                                    }
+                                </button>
+                                <button onclick="deletePlan('${p.id}')" class="p-2.5 rounded-xl border border-qv-border/40 hover:bg-red-500/10 text-qv-muted hover:text-red-500 transition-colors" title="Usuń plan">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('metricActivePlans').textContent = activeCount;
+            document.getElementById('metricMonthlySpend').textContent = '$' + totalMonthly.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }
+
+        async function handleCreatePlan(e) {
+            e.preventDefault();
+            const symbol = document.getElementById('dcaSymbol').value;
+            const usdAmount = parseFloat(document.getElementById('dcaAmount').value);
+            const intervalDays = parseInt(document.getElementById('dcaInterval').value);
+
+            try {
+                const res = await fetch('/api/dca', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol, usdAmount, intervalDays })
+                });
+
+                if (res.ok) {
+                    document.getElementById('dcaAmount').value = '';
+                    fetchPlans();
+                } else {
+                    const err = await res.text();
+                    alert(err || 'Błąd tworzenia planu DCA');
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function togglePlan(id) {
+            try {
+                const res = await fetch(`/api/dca/${id}/toggle`, { method: 'POST' });
+                if (res.ok) {
+                    fetchPlans();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deletePlan(id) {
+            if (!confirm('Czy na pewno chcesz usunąć ten plan DCA?')) return;
+            try {
+                const res = await fetch(`/api/dca/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    fetchPlans();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Initialize page
+        updateFormIcon();
+        fetchPlans();
+    </script>
+</body>
+</html>

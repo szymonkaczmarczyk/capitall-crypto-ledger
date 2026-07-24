@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface SecurityTradeRepository extends JpaRepository<SecurityTrade, UUID> {
     List<SecurityTrade> findByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<SecurityTrade> findByUserIdOrderByCreatedAtAsc(UUID userId);
 }

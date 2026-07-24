@@ -216,6 +216,74 @@ public class SecuritiesPriceService {
         return popular;
     }
 
+    /**
+     * Fetches OHLCV bars for backtesting.
+     * @param rawSymbol  user-facing symbol (e.g. "BTC-USD", "AAPL", "CDR")
+     * @param range      Yahoo Finance range param, e.g. "1mo", "3mo", "6mo", "1y", "2y"
+     * @param interval   Yahoo Finance interval, e.g. "1d", "1wk"
+     * @return list of OHLCVBar objects ordered oldest→newest
+     */
+    public List<com.capitall.dto.BacktestResult.OHLCVBar> fetchOHLCV(String rawSymbol, String range, String interval) {
+        String sym = toYahooSymbol(rawSymbol);
+        List<com.capitall.dto.BacktestResult.OHLCVBar> bars = new ArrayList<>();
+        try {
+            String url = "https://query1.finance.yahoo.com/v8/finance/chart/" + sym
+                    + "?range=" + range + "&interval=" + interval;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                System.err.println("[PriceService] OHLCV HTTP " + response.statusCode() + " for " + sym);
+                return bars;
+            }
+
+            JsonNode root       = objectMapper.readTree(response.body());
+            JsonNode resultNode = root.path("chart").path("result");
+            if (!resultNode.isArray() || resultNode.size() == 0) return bars;
+
+            JsonNode result     = resultNode.get(0);
+            JsonNode timestamps = result.path("timestamp");
+            JsonNode quote      = result.path("indicators").path("quote").get(0);
+
+            if (timestamps == null || !timestamps.isArray() || quote == null) return bars;
+
+            JsonNode opens  = quote.path("open");
+            JsonNode highs  = quote.path("high");
+            JsonNode lows   = quote.path("low");
+            JsonNode closes = quote.path("close");
+            JsonNode volumes= quote.path("volume");
+
+            for (int i = 0; i < timestamps.size(); i++) {
+                double close = closes.get(i).asDouble(0);
+                if (close <= 0) continue; // skip null/invalid bars
+
+                long epochSec = timestamps.get(i).asLong();
+                String date = java.time.Instant.ofEpochSecond(epochSec)
+                        .atZone(java.time.ZoneOffset.UTC)
+                        .toLocalDate()
+                        .toString();
+
+                bars.add(new com.capitall.dto.BacktestResult.OHLCVBar(
+                        date,
+                        opens.get(i).asDouble(close),
+                        highs.get(i).asDouble(close),
+                        lows.get(i).asDouble(close),
+                        close,
+                        volumes.get(i).asLong(0)
+                ));
+            }
+        } catch (Exception e) {
+            System.err.println("[PriceService] OHLCV fetch error for " + sym + ": " + e.getMessage());
+        }
+        return bars;
+    }
+
     public List<BigDecimal> getHistoricalPrices(String rawSymbol) {
         String sym = toYahooSymbol(rawSymbol);
         List<BigDecimal> prices = new ArrayList<>();

@@ -9,4 +9,5 @@ import java.util.UUID;
 
 public interface TradeRepository extends JpaRepository<Trade, UUID> {
     List<Trade> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    List<Trade> findByUserIdOrderByCreatedAtAsc(UUID userId);
 }

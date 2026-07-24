@@ -2,18 +2,47 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pl">
 
 <head th:replace="~{fragments/head :: head('Capitall - Wirtualny kantor')}"></head>
+
 <head>
     <style>
         @keyframes pulseDot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.4); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.4);
+            }
         }
-        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
-        .modal-backdrop { transition: opacity 0.25s ease-in-out; opacity: 0; }
-        .modal-backdrop.modal-open { opacity: 1; }
-        .modal-card { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease-in-out; transform: scale(0.9); opacity: 0; }
-        .modal-open .modal-card { transform: scale(1); opacity: 1; }
-</style>
+
+        .live-dot {
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+
+        .modal-backdrop {
+            transition: opacity 0.25s ease-in-out;
+            opacity: 0;
+        }
+
+        .modal-backdrop.modal-open {
+            opacity: 1;
+        }
+
+        .modal-card {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease-in-out;
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        .modal-open .modal-card {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
@@ -38,10 +67,11 @@
         <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
 
             <div id="notificationModal" th:if="${successMessage != null || errorMessage != null}"
-                 class="fixed inset-0 z-50 flex modal-backdrop bg-slate-900/60 items-center justify-center p-4">
-                <div class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-sm w-full p-6 text-center space-y-4">
+                class="fixed inset-0 z-50 flex modal-backdrop bg-slate-900/60 items-center justify-center p-4">
+                <div
+                    class="modal-card bg-qv-surface border border-qv-border rounded-2xl shadow-qv-lg max-w-sm w-full p-6 text-center space-y-4">
                     <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold"
-                         th:classappend="${successMessage != null ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">
+                        th:classappend="${successMessage != null ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">
                         <span th:text="${successMessage != null ? '✓' : '✕'}">✓</span>
                     </div>
 
@@ -49,11 +79,11 @@
                         <h4 class="text-base font-bold text-qv-text"
                             th:text="${successMessage != null ? 'Operacja udana' : 'Błąd operacji'}">Status</h4>
                         <p class="text-sm text-qv-muted leading-relaxed"
-                           th:text="${successMessage != null ? successMessage : errorMessage}">Opis operacji...</p>
+                            th:text="${successMessage != null ? successMessage : errorMessage}">Opis operacji...</p>
                     </div>
 
                     <button onclick="closeNotificationModal()"
-                            class="w-full py-2.5 bg-qv-accent hover:opacity-90 text-white text-sm font-bold rounded-md transition-all shadow-sm">
+                        class="w-full py-2.5 bg-qv-accent hover:opacity-90 text-white text-sm font-bold rounded-md transition-all shadow-sm">
                         Zamknij
                     </button>
                 </div>
@@ -62,36 +92,47 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
                     <p class="text-xs font-semibold text-red-500 mb-1">Saldo PLN</p>
-                    <h3 class="text-2xl font-bold text-qv-text" id="plnBalanceLabel" th:text="${#numbers.formatDecimal(wallet.plnBalance, 1, 'COMMA', 2, 'POINT') + ' PLN'}">0.00 PLN</h3>
+                    <h3 class="text-2xl font-bold text-qv-text" id="plnBalanceLabel"
+                        th:text="${#numbers.formatDecimal(wallet.plnBalance, 1, 'COMMA', 2, 'POINT') + ' PLN'}">0.00 PLN
+                    </h3>
                     <p class="text-[11px] font-medium text-qv-muted mt-1">Polski Złoty</p>
                 </div>
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
                     <p class="text-xs font-semibold text-green-500 mb-1">Saldo USD</p>
-                    <h3 class="text-2xl font-bold text-qv-text" id="usdBalanceLabel" th:text="${'$' + #numbers.formatDecimal(wallet.usdBalance, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                    <h3 class="text-2xl font-bold text-qv-text" id="usdBalanceLabel"
+                        th:text="${'$' + #numbers.formatDecimal(wallet.usdBalance, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
                     <p class="text-[11px] font-medium text-qv-muted mt-1">Dolar Amerykański</p>
                 </div>
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
                     <p class="text-xs font-semibold text-blue-500 mb-1">Saldo EUR</p>
-                    <h3 class="text-2xl font-bold text-qv-text" id="eurBalanceLabel" th:text="${#numbers.formatDecimal(wallet.eurBalance, 1, 'COMMA', 2, 'POINT') + ' EUR'}">0.00 EUR</h3>
+                    <h3 class="text-2xl font-bold text-qv-text" id="eurBalanceLabel"
+                        th:text="${#numbers.formatDecimal(wallet.eurBalance, 1, 'COMMA', 2, 'POINT') + ' EUR'}">0.00 EUR
+                    </h3>
                     <p class="text-[11px] font-medium text-qv-muted mt-1">Euro</p>
                 </div>
                 <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-5 transition-colors-all">
                     <p class="text-xs font-semibold text-yellow-600 mb-1">Saldo GBP</p>
-                    <h3 class="text-2xl font-bold text-qv-text" id="gbpBalanceLabel" th:text="${#numbers.formatDecimal(wallet.gbpBalance, 1, 'COMMA', 2, 'POINT') + ' GBP'}">0.00 GBP</h3>
+                    <h3 class="text-2xl font-bold text-qv-text" id="gbpBalanceLabel"
+                        th:text="${#numbers.formatDecimal(wallet.gbpBalance, 1, 'COMMA', 2, 'POINT') + ' GBP'}">0.00 GBP
+                    </h3>
                     <p class="text-[11px] font-medium text-qv-muted mt-1">Funt Brytyjski</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 lg:col-span-2 transition-colors-all flex flex-col justify-between">
+                <div
+                    class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 lg:col-span-2 transition-colors-all flex flex-col justify-between">
                     <div>
                         <h3 class="text-base font-bold text-qv-text mb-4">Wymiana Walutowa</h3>
                         <form th:action="@{/exchange/convert}" method="post" class="space-y-6">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta źródłowa</label>
-                                    <select id="fromCurrency" name="from" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="calculateExchangeResult()">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta
+                                        źródłowa</label>
+                                    <select id="fromCurrency" name="from"
+                                        class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent"
+                                        onchange="calculateExchangeResult()">
                                         <option value="PLN">PLN</option>
                                         <option value="USD">USD</option>
                                         <option value="EUR">EUR</option>
@@ -99,8 +140,11 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta docelowa</label>
-                                    <select id="toCurrency" name="to" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" onchange="calculateExchangeResult()">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Waluta
+                                        docelowa</label>
+                                    <select id="toCurrency" name="to"
+                                        class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent"
+                                        onchange="calculateExchangeResult()">
                                         <option value="USD" selected>USD</option>
                                         <option value="PLN">PLN</option>
                                         <option value="EUR">EUR</option>
@@ -111,21 +155,33 @@
 
                             <div>
                                 <label class="block text-xs font-semibold text-qv-muted mb-1">Kwota do sprzedaży</label>
-                                <input type="number" step="0.01" id="exchangeAmount" name="amount" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent" oninput="calculateExchangeResult()">
+                                <input type="number" step="0.01" id="exchangeAmount" name="amount" required
+                                    placeholder="0.00"
+                                    class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent"
+                                    oninput="calculateExchangeResult()">
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-qv-bg border border-qv-border rounded-lg p-6 text-center flex flex-col justify-center">
-                                    <span class="block text-xs font-semibold text-qv-muted uppercase tracking-wider mb-1.5">Kurs Wymiany</span>
-                                    <span id="exchangeRateEst" class="text-base font-bold text-qv-text tracking-wide">0.00</span>
+                                <div
+                                    class="bg-qv-bg border border-qv-border rounded-lg p-6 text-center flex flex-col justify-center">
+                                    <span
+                                        class="block text-xs font-semibold text-qv-muted uppercase tracking-wider mb-1.5">Kurs
+                                        Wymiany</span>
+                                    <span id="exchangeRateEst"
+                                        class="text-base font-bold text-qv-text tracking-wide">0.00</span>
                                 </div>
-                                <div class="bg-qv-accent/10 border border-qv-accent/30 rounded-lg p-6 text-center flex flex-col justify-center">
-                                    <span class="block text-xs font-semibold text-qv-accent uppercase tracking-wider mb-1.5">Szacowany Wynik</span>
-                                    <span id="exchangeResultEst" class="text-xl font-black text-qv-accent tracking-wide">0.00</span>
+                                <div
+                                    class="bg-qv-accent/10 border border-qv-accent/30 rounded-lg p-6 text-center flex flex-col justify-center">
+                                    <span
+                                        class="block text-xs font-semibold text-qv-accent uppercase tracking-wider mb-1.5">Szacowany
+                                        Wynik</span>
+                                    <span id="exchangeResultEst"
+                                        class="text-xl font-black text-qv-accent tracking-wide">0.00</span>
                                 </div>
                             </div>
 
-                            <button type="submit" class="w-full py-3.5 bg-qv-accent text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
+                            <button type="submit"
+                                class="w-full py-3.5 bg-qv-accent text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
                                 Wykonaj wymianę
                             </button>
                         </form>
@@ -152,14 +208,17 @@
                     </div>
                 </div>
 
-                <div class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all flex flex-col justify-between">
+                <div
+                    class="bg-qv-surface border border-qv-border rounded-lg shadow-qv p-6 transition-colors-all flex flex-col justify-between">
                     <div>
                         <h3 class="text-base font-bold text-qv-text mb-4">Wirtualny Terminal Bankowy</h3>
 
-                        <div class="relative w-full h-36 rounded-xl bg-gradient-to-br from-indigo-900 via-purple-800 to-slate-900 text-white p-4 shadow-lg mb-6 overflow-hidden flex flex-col justify-between">
+                        <div
+                            class="relative w-full h-36 rounded-xl bg-gradient-to-br from-indigo-900 via-purple-800 to-slate-900 text-white p-4 shadow-lg mb-6 overflow-hidden flex flex-col justify-between">
                             <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-white/5 rounded-full blur-xl"></div>
                             <div class="flex items-center justify-between z-10">
-                                <span class="text-xs font-semibold uppercase tracking-widest text-white/70">Wirtualny Przelew Bankowy</span>
+                                <span class="text-xs font-semibold uppercase tracking-widest text-white/70">Wirtualny
+                                    Przelew Bankowy</span>
                                 <span class="text-xs font-bold text-white/50" id="cardModeLabel">WPŁATA</span>
                             </div>
                             <div class="z-10 my-2">
@@ -174,18 +233,22 @@
 
                         <div class="space-y-4">
                             <div class="grid grid-cols-2 gap-1 bg-qv-bg p-1 rounded-lg border border-qv-border">
-                                <button type="button" id="btnModeDeposit" onclick="setBankingMode('DEPOSIT')" class="py-2 text-center text-xs font-bold rounded-md bg-qv-surface text-qv-text shadow-sm border border-qv-border/40 transition-all">
+                                <button type="button" id="btnModeDeposit" onclick="setBankingMode('DEPOSIT')"
+                                    class="py-2 text-center text-xs font-bold rounded-md bg-qv-surface text-qv-text shadow-sm border border-qv-border/40 transition-all">
                                     Wpłata
                                 </button>
-                                <button type="button" id="btnModeWithdraw" onclick="setBankingMode('WITHDRAW')" class="py-2 text-center text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all">
+                                <button type="button" id="btnModeWithdraw" onclick="setBankingMode('WITHDRAW')"
+                                    class="py-2 text-center text-xs font-bold rounded-md text-qv-muted hover:text-qv-text transition-all">
                                     Wypłata
                                 </button>
                             </div>
 
                             <form id="bankingForm" th:action="@{/exchange/deposit}" method="post" class="space-y-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Wybierz walutę konta</label>
-                                    <select name="currency" id="bankingCurrency" onchange="onBankingCurrencyChange()" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Wybierz walutę
+                                        konta</label>
+                                    <select name="currency" id="bankingCurrency" onchange="onBankingCurrencyChange()"
+                                        class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
                                         <option value="PLN">PLN (Polski Złoty)</option>
                                         <option value="USD">USD (Dolar amerykański)</option>
                                         <option value="EUR">EUR (Euro)</option>
@@ -193,18 +256,26 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Kwota transakcji</label>
-                                    <input type="number" step="0.01" name="amount" id="bankingAmount" required placeholder="0.00" class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
+                                    <label class="block text-xs font-semibold text-qv-muted mb-1">Kwota
+                                        transakcji</label>
+                                    <input type="number" step="0.01" name="amount" id="bankingAmount" required
+                                        placeholder="0.00"
+                                        class="w-full h-10 px-3 bg-qv-bg border border-qv-border rounded-md text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent">
                                 </div>
 
                                 <div class="grid grid-cols-4 gap-1.5">
-                                    <button type="button" onclick="setQuickAmount(100)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+100</button>
-                                    <button type="button" onclick="setQuickAmount(500)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+500</button>
-                                    <button type="button" onclick="setQuickAmount(1000)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+1k</button>
-                                    <button type="button" onclick="setQuickAmount(5000)" class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+5k</button>
+                                    <button type="button" onclick="setQuickAmount(100)"
+                                        class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+100</button>
+                                    <button type="button" onclick="setQuickAmount(500)"
+                                        class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+500</button>
+                                    <button type="button" onclick="setQuickAmount(1000)"
+                                        class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+1k</button>
+                                    <button type="button" onclick="setQuickAmount(5000)"
+                                        class="py-1 text-center text-[11px] font-bold rounded bg-qv-bg border border-qv-border text-qv-muted hover:bg-qv-accent hover:text-white transition-all">+5k</button>
                                 </div>
 
-                                <button type="submit" id="bankingSubmitBtn" class="w-full py-3 bg-green-600 text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
+                                <button type="submit" id="bankingSubmitBtn"
+                                    class="w-full py-3 bg-green-600 text-white font-bold rounded-md hover:opacity-90 transition-all text-sm shadow-sm">
                                     Autoryzuj Wpłatę Bankową
                                 </button>
                             </form>
@@ -234,12 +305,17 @@
                             </tr>
                         </thead>
                         <tbody id="ratesTableBody">
-                            <tr th:each="rate : ${rates}" class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <tr th:each="rate : ${rates}"
+                                class="border-b border-slate-100 dark:border-slate-800 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
                                 <td class="py-4 px-2 font-bold text-qv-text" th:text="${rate.code}">USD</td>
-                                <td class="py-4 px-2 text-qv-muted" th:text="${rate.code == 'USD' ? 'Dolar amerykański' : rate.code == 'EUR' ? 'Euro' : 'Funt szterling'}">Dolar amerykański</td>
+                                <td class="py-4 px-2 text-qv-muted"
+                                    th:text="${rate.code == 'USD' ? 'Dolar amerykański' : rate.code == 'EUR' ? 'Euro' : 'Funt szterling'}">
+                                    Dolar amerykański</td>
                                 <td class="py-4 px-2" th:text="${rate.midRate + ' PLN'}">4.00 PLN</td>
-                                <td class="py-4 px-2 font-semibold text-green-500" th:text="${rate.buyRate + ' PLN'}">3.9680 PLN</td>
-                                <td class="py-4 px-2 font-semibold text-red-500" th:text="${rate.sellRate + ' PLN'}">4.0320 PLN</td>
+                                <td class="py-4 px-2 font-semibold text-green-500" th:text="${rate.buyRate + ' PLN'}">
+                                    3.9680 PLN</td>
+                                <td class="py-4 px-2 font-semibold text-red-500" th:text="${rate.sellRate + ' PLN'}">
+                                    4.0320 PLN</td>
                             </tr>
                         </tbody>
                     </table>
@@ -334,8 +410,8 @@
             const wallet = window._walletData;
             if (wallet) {
                 const val = curr === 'PLN' ? wallet.plnBalance :
-                            curr === 'USD' ? wallet.usdBalance :
-                            curr === 'EUR' ? wallet.eurBalance : wallet.gbpBalance;
+                    curr === 'USD' ? wallet.usdBalance :
+                        curr === 'EUR' ? wallet.eurBalance : wallet.gbpBalance;
                 if (curr === 'USD') {
                     balText = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2 });
                 } else {
@@ -420,15 +496,15 @@
                 }
 
                 calculateExchangeResult();
-            } catch (e) {}
+            } catch (e) { }
         }
 
         /*[# th:each="r : ${rates}"]*/
-        ratesDict['[[${r.code}]]'] = {
-            code: '[[${r.code}]]',
-            midRate: parseFloat('[[${r.midRate}]]'),
-            buyRate: parseFloat('[[${r.buyRate}]]'),
-            sellRate: parseFloat('[[${r.sellRate}]]')
+        ratesDict['[(${r.code})]'] = {
+            code: '[(${r.code})]',
+            midRate: parseFloat('[(${r.midRate})]'),
+            buyRate: parseFloat('[(${r.buyRate})]'),
+            sellRate: parseFloat('[(${r.sellRate})]')
         };
         /*[/]*/
 
@@ -452,7 +528,7 @@
         onBankingCurrencyChange();
 
         setInterval(updateLiveRates, 6000);
-</script>
+    </script>
     <script src="/js/alerts-toast.js"></script>
 
     <div th:replace="~{fragments/nav :: mobilebar('exchange')}"></div>

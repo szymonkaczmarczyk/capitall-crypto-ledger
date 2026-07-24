@@ -470,6 +470,43 @@ public class ViewController {
         return "tools";
     }
 
+    @GetMapping("/backtest")
+    public String showBacktest(Model model) {
+        model.addAttribute("active", "backtest");
+        return "backtest";
+    }
+
+    @GetMapping("/analytics")
+    public String showAnalytics(Model model) {
+        model.addAttribute("active", "analytics");
+        return "analytics";
+    }
+
+    @GetMapping("/tax")
+    public String showTaxReport(Model model) {
+        model.addAttribute("active", "tax");
+        return "tax";
+    }
+
+    @GetMapping("/rebalance")
+    public String showRebalancing(Model model) {
+        model.addAttribute("active", "rebalance");
+        return "rebalance";
+    }
+
+    @GetMapping("/dca")
+    public String showDca(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        model.addAttribute("active", "dca");
+        if (user != null) {
+            com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
+            model.addAttribute("usdBalance", wallet.getUsdBalance());
+        } else {
+            model.addAttribute("usdBalance", java.math.BigDecimal.ZERO);
+        }
+        return "dca";
+    }
+
+
     @GetMapping("/market")
     public String showMarket(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());

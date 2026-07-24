@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Backtesting Strategii')}"></head>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .slide-in { animation: slideIn 0.4s ease forwards; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.8s linear infinite; }
+
+        .tab-btn.active {
+            background: rgb(var(--color-accent) / 0.15);
+            color: rgb(var(--color-accent));
+            border-color: rgb(var(--color-accent) / 0.4);
+        }
+
+        .metric-card {
+            background: var(--qv-surface-2);
+            border: 1px solid var(--qv-border);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .metric-up   { color: #22c55e; }
+        .metric-down { color: #ef4444; }
+        .metric-neutral { color: #a0aec0; }
+    </style>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('backtest')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold text-qv-text">Backtesting Strategii</h2>
+                <span class="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs font-semibold rounded-full border border-violet-500/20">SYMULACJA HISTORYCZNA</span>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <div class="p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 space-y-8">
+
+            <!-- ══════════════════════════════════════════════
+                 CONFIG PANEL
+            ══════════════════════════════════════════════ -->
+            <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv">
+                <h3 class="text-sm font-bold text-qv-text uppercase tracking-wider mb-5">Konfiguracja testu</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6" id="baseConfig">
+
+                    <!-- Symbol -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Symbol aktywa</label>
+                        <select id="cfgSymbol"
+                                class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors-all">
+                            <optgroup label="Kryptowaluty">
+                                <option value="BTC-USD">Bitcoin (BTC)</option>
+                                <option value="ETH-USD">Ethereum (ETH)</option>
+                                <option value="SOL-USD">Solana (SOL)</option>
+                                <option value="ADA-USD">Cardano (ADA)</option>
+                                <option value="XRP-USD">Ripple (XRP)</option>
+                                <option value="BNB-USD">Binance Coin (BNB)</option>
+                                <option value="AVAX-USD">Avalanche (AVAX)</option>
+                                <option value="DOGE-USD">Dogecoin (DOGE)</option>
+                                <option value="LINK-USD">Chainlink (LINK)</option>
+                            </optgroup>
+                            <optgroup label="Akcje US">
+                                <option value="AAPL">Apple (AAPL)</option>
+                                <option value="TSLA">Tesla (TSLA)</option>
+                                <option value="NVDA">NVIDIA (NVDA)</option>
+                                <option value="MSFT">Microsoft (MSFT)</option>
+                                <option value="GOOGL">Google (GOOGL)</option>
+                                <option value="AMZN">Amazon (AMZN)</option>
+                                <option value="META">Meta (META)</option>
+                                <option value="AMD">AMD (AMD)</option>
+                            </optgroup>
+                            <optgroup label="GPW Polska">
+                                <option value="CDR">CD Projekt (CDR)</option>
+                                <option value="PKO">PKO BP (PKO)</option>
+                                <option value="PKN">Orlen (PKN)</option>
+                                <option value="KGH">KGHM (KGH)</option>
+                                <option value="LPP">LPP (LPP)</option>
+                            </optgroup>
+                            <optgroup label="ETF">
+                                <option value="SPY">S&amp;P 500 ETF (SPY)</option>
+                                <option value="QQQ">Nasdaq ETF (QQQ)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Strategy -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Strategia</label>
+                        <select id="cfgStrategy" onchange="onStrategyChange()"
+                                class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors-all">
+                            <option value="SMA_CROSSOVER">SMA Crossover</option>
+                            <option value="RSI">RSI Oversold/Overbought</option>
+                            <option value="BOLLINGER_BANDS">Bollinger Bands</option>
+                        </select>
+                    </div>
+
+                    <!-- Period -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Zakres danych</label>
+                        <select id="cfgPeriod"
+                                class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors-all">
+                            <option value="ONE_MONTH">1 miesiąc</option>
+                            <option value="THREE_MONTHS">3 miesiące</option>
+                            <option value="SIX_MONTHS" selected>6 miesięcy</option>
+                            <option value="ONE_YEAR">1 rok</option>
+                            <option value="TWO_YEARS">2 lata</option>
+                        </select>
+                    </div>
+
+                    <!-- Capital -->
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Kapitał startowy (USD)</label>
+                        <input type="number" id="cfgCapital" value="10000" min="100" step="100"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors-all" />
+                    </div>
+                </div>
+
+                <!-- ── Strategy-specific params ── -->
+                <div id="paramsSma" class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">SMA krótka (sesje)</label>
+                        <input type="number" id="cfgSmaShort" value="10" min="2" max="200"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">SMA długa (sesje)</label>
+                        <input type="number" id="cfgSmaLong" value="30" min="5" max="500"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                </div>
+
+                <div id="paramsRsi" class="hidden grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Okres RSI (sesje)</label>
+                        <input type="number" id="cfgRsiPeriod" value="14" min="2" max="100"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Próg wykupienia (RSI)</label>
+                        <input type="number" id="cfgRsiOverbought" value="70" min="51" max="99"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Próg wyprzedania (RSI)</label>
+                        <input type="number" id="cfgRsiOversold" value="30" min="1" max="49"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                </div>
+
+                <div id="paramsBb" class="hidden grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Okres BB (sesje)</label>
+                        <input type="number" id="cfgBbPeriod" value="20" min="5" max="200"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-qv-muted mb-1">Odchylenie std. (σ)</label>
+                        <input type="number" id="cfgBbStdDev" value="2.0" min="0.5" max="5" step="0.1"
+                               class="w-full bg-qv-surface-2 border border-qv-border rounded-lg px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    </div>
+                </div>
+
+                <!-- Run button -->
+                <button id="runBtn" onclick="runBacktest()"
+                        class="w-full md:w-auto px-8 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-violet-500/30 transition-all flex items-center gap-2 justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Uruchom backtest
+                </button>
+            </div>
+
+            <!-- ══════════════════════════════════════════════
+                 LOADING
+            ══════════════════════════════════════════════ -->
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-16 gap-4">
+                <svg class="spinner w-12 h-12 text-violet-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p class="text-qv-muted text-sm font-medium">Pobieranie danych historycznych i obliczanie wyników…</p>
+            </div>
+
+            <!-- ══════════════════════════════════════════════
+                 ERROR
+            ══════════════════════════════════════════════ -->
+            <div id="errorState" class="hidden p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium slide-in"></div>
+
+            <!-- ══════════════════════════════════════════════
+                 RESULTS
+            ══════════════════════════════════════════════ -->
+            <div id="resultsSection" class="hidden space-y-6 slide-in">
+
+                <!-- Header bar -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                        <h3 id="resultTitle" class="text-xl font-extrabold text-qv-text"></h3>
+                        <p id="resultSubtitle" class="text-xs text-qv-muted mt-0.5"></p>
+                    </div>
+                    <span id="resultBadge" class="self-start md:self-auto px-3 py-1 text-xs font-bold rounded-full border"></span>
+                </div>
+
+                <!-- Metrics grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Kapitał końcowy</span>
+                        <span id="mFinalEquity" class="text-xl font-extrabold text-qv-text"></span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Zwrot całkowity</span>
+                        <span id="mReturn" class="text-xl font-extrabold"></span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Max. obsunięcie</span>
+                        <span id="mDrawdown" class="text-xl font-extrabold metric-down"></span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Sharpe Ratio</span>
+                        <span id="mSharpe" class="text-xl font-extrabold metric-neutral"></span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Win Rate</span>
+                        <span id="mWinRate" class="text-xl font-extrabold metric-neutral"></span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="text-[10px] font-bold text-qv-muted uppercase tracking-wider">Liczba transakcji</span>
+                        <span id="mTrades" class="text-xl font-extrabold text-qv-text"></span>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 border-b border-qv-border pb-0">
+                    <button onclick="showTab('equity')" id="tabEquity"
+                            class="tab-btn active px-4 py-2 text-xs font-bold rounded-t-lg border border-b-0 border-qv-border transition-all">
+                        Krzywa Equity
+                    </button>
+                    <button onclick="showTab('price')" id="tabPrice"
+                            class="tab-btn px-4 py-2 text-xs font-bold rounded-t-lg border border-b-0 border-qv-border text-qv-muted transition-all">
+                        Wykres ceny
+                    </button>
+                    <button onclick="showTab('trades')" id="tabTrades"
+                            class="tab-btn px-4 py-2 text-xs font-bold rounded-t-lg border border-b-0 border-qv-border text-qv-muted transition-all">
+                        Lista transakcji
+                    </button>
+                </div>
+
+                <!-- Tab: Equity curve -->
+                <div id="panelEquity" class="bg-qv-surface border border-qv-border rounded-b-2xl rounded-tr-2xl p-6 shadow-qv" style="height: 420px; position:relative;">
+                    <canvas id="equityChart"></canvas>
+                </div>
+
+                <!-- Tab: Price chart with trade markers -->
+                <div id="panelPrice" class="hidden bg-qv-surface border border-qv-border rounded-b-2xl rounded-tr-2xl p-6 shadow-qv" style="height: 420px; position:relative;">
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <!-- Tab: Trades table -->
+                <div id="panelTrades" class="hidden bg-qv-surface border border-qv-border rounded-b-2xl rounded-tr-2xl shadow-qv overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead>
+                                <tr class="border-b border-qv-border text-xs font-bold text-qv-muted bg-qv-surface-2/30">
+                                    <th class="py-3 px-6">Data</th>
+                                    <th class="py-3 px-4">Typ</th>
+                                    <th class="py-3 px-4 text-right">Cena</th>
+                                    <th class="py-3 px-4 text-right">Jednostki</th>
+                                    <th class="py-3 px-4 text-right">Wartość</th>
+                                    <th class="py-3 px-6 text-right">Zrealizowany P&amp;L</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/nav :: mobilebar('backtest')}"></div>
+
+    <script th:inline="javascript">
+        // ══════════════════════════════════════════════
+        //  Strategy param toggling
+        // ══════════════════════════════════════════════
+        function onStrategyChange() {
+            const s = document.getElementById('cfgStrategy').value;
+            document.getElementById('paramsSma').classList.toggle('hidden', s !== 'SMA_CROSSOVER');
+            document.getElementById('paramsSma').classList.toggle('grid', s === 'SMA_CROSSOVER');
+            document.getElementById('paramsRsi').classList.toggle('hidden', s !== 'RSI');
+            document.getElementById('paramsRsi').classList.toggle('grid', s === 'RSI');
+            document.getElementById('paramsBb').classList.toggle('hidden', s !== 'BOLLINGER_BANDS');
+            document.getElementById('paramsBb').classList.toggle('grid', s === 'BOLLINGER_BANDS');
+        }
+        onStrategyChange(); // init
+
+        // ══════════════════════════════════════════════
+        //  Run backtest
+        // ══════════════════════════════════════════════
+        let equityChartInst = null;
+        let priceChartInst  = null;
+
+        async function runBacktest() {
+            const symbol   = document.getElementById('cfgSymbol').value;
+            const strategy = document.getElementById('cfgStrategy').value;
+            const period   = document.getElementById('cfgPeriod').value;
+            const capital  = parseFloat(document.getElementById('cfgCapital').value) || 0;
+
+            if (capital <= 0) {
+                showError('Podaj prawidłowy kapitał startowy.');
+                return;
+            }
+
+            const payload = {
+                symbol,
+                strategy,
+                period,
+                initialCapital: capital,
+                smaShort:       parseInt(document.getElementById('cfgSmaShort').value) || 10,
+                smaLong:        parseInt(document.getElementById('cfgSmaLong').value)  || 30,
+                rsiPeriod:      parseInt(document.getElementById('cfgRsiPeriod').value) || 14,
+                rsiOversold:    parseInt(document.getElementById('cfgRsiOversold').value) || 30,
+                rsiOverbought:  parseInt(document.getElementById('cfgRsiOverbought').value) || 70,
+                bbPeriod:       parseInt(document.getElementById('cfgBbPeriod').value) || 20,
+                bbStdDev:       parseFloat(document.getElementById('cfgBbStdDev').value) || 2.0
+            };
+
+            setLoading(true);
+            hideResults();
+            hideError();
+
+            const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content || '';
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            const headers    = { 'Content-Type': 'application/json' };
+            if (csrfToken) headers[csrfHeader] = csrfToken;
+
+            try {
+                const res  = await fetch('/backtest/run', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                setLoading(false);
+
+                if (!data.success) {
+                    showError(data.error || 'Nieznany błąd serwera.');
+                    return;
+                }
+
+                renderResults(data.result);
+            } catch (e) {
+                setLoading(false);
+                showError('Błąd połączenia z serwerem: ' + e.message);
+            }
+        }
+
+        // ══════════════════════════════════════════════
+        //  Render results
+        // ══════════════════════════════════════════════
+        function renderResults(r) {
+            // Header
+            document.getElementById('resultTitle').textContent =
+                r.symbol + ' — ' + r.strategy;
+            document.getElementById('resultSubtitle').textContent =
+                'Zakres: ' + r.period + ' · Kapitał startowy: $' + fmt2(r.initialCapital);
+
+            const isPositive = r.totalReturnPct >= 0;
+            const badge = document.getElementById('resultBadge');
+            badge.textContent = isPositive
+                ? `+${r.totalReturnPct.toFixed(2)}% ↑`
+                : `${r.totalReturnPct.toFixed(2)}% ↓`;
+            badge.className = 'self-start md:self-auto px-3 py-1 text-xs font-bold rounded-full border '
+                + (isPositive
+                    ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                    : 'bg-red-500/10 text-red-400 border-red-500/30');
+
+            // Metrics
+            document.getElementById('mFinalEquity').textContent = '$' + fmt2(r.finalEquity);
+            const retEl = document.getElementById('mReturn');
+            retEl.textContent = (isPositive ? '+' : '') + r.totalReturnPct.toFixed(2) + '%';
+            retEl.className = 'text-xl font-extrabold ' + (isPositive ? 'metric-up' : 'metric-down');
+
+            document.getElementById('mDrawdown').textContent = '-' + r.maxDrawdownPct.toFixed(2) + '%';
+
+            const sharpeEl = document.getElementById('mSharpe');
+            sharpeEl.textContent = r.sharpeRatio.toFixed(2);
+            sharpeEl.className = 'text-xl font-extrabold ' + (r.sharpeRatio >= 1 ? 'metric-up' : r.sharpeRatio > 0 ? 'metric-neutral' : 'metric-down');
+
+            const wrEl = document.getElementById('mWinRate');
+            wrEl.textContent = r.winRate.toFixed(1) + '%';
+            wrEl.className = 'text-xl font-extrabold ' + (r.winRate >= 50 ? 'metric-up' : 'metric-down');
+
+            document.getElementById('mTrades').textContent = r.totalTrades + ' (' + r.winningTrades + ' ✓)';
+
+            // Charts
+            buildEquityChart(r);
+            buildPriceChart(r);
+
+            // Trades table
+            const tbody = document.getElementById('tradesTableBody');
+            tbody.innerHTML = '';
+            if (r.trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-qv-muted text-sm">Brak transakcji wygenerowanych przez strategię w tym okresie.</td></tr>';
+            } else {
+                r.trades.forEach(t => {
+                    const isBuy = t.side === 'BUY';
+                    const pnlStr = isBuy ? '—' : (t.pnl >= 0 ? '+$' + fmt2(t.pnl) : '-$' + fmt2(Math.abs(t.pnl)));
+                    const pnlClass = isBuy ? 'text-qv-muted' : (t.pnl >= 0 ? 'text-green-500' : 'text-red-500');
+                    tbody.innerHTML += `
+                        <tr class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors">
+                            <td class="py-3 px-6 text-qv-muted text-xs">${t.date}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isBuy ? 'text-green-500 bg-green-500/10 border border-green-500/20' : 'text-red-500 bg-red-500/10 border border-red-500/20'}">
+                                    ${isBuy ? 'KUPNO' : 'SPRZEDAŻ'}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-medium text-qv-text">$${fmt4(t.price)}</td>
+                            <td class="py-3 px-4 text-right font-medium text-qv-text">${t.shares.toFixed(6)}</td>
+                            <td class="py-3 px-4 text-right font-bold text-qv-text">$${fmt2(t.value)}</td>
+                            <td class="py-3 px-6 text-right font-bold ${pnlClass}">${pnlStr}</td>
+                        </tr>`;
+                });
+            }
+
+            document.getElementById('resultsSection').classList.remove('hidden');
+            showTab('equity');
+        }
+
+        // ══════════════════════════════════════════════
+        //  Chart builders
+        // ══════════════════════════════════════════════
+        function buildEquityChart(r) {
+            if (equityChartInst) { equityChartInst.destroy(); equityChartInst = null; }
+
+            const labels   = r.equityCurve.map(p => p.date);
+            const equities = r.equityCurve.map(p => p.equity);
+            const initial  = r.initialCapital;
+
+            // buy-and-hold benchmark: scale raw price to start at initialCapital
+            const firstPrice = r.ohlcv[0]?.close || 1;
+            const bah        = r.ohlcv.map(b => initial / firstPrice * b.close);
+            const bahLabels  = r.ohlcv.map(b => b.date);
+
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            equityChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Equity strategii',
+                            data: equities,
+                            borderColor: '#a855f7',
+                            backgroundColor: 'rgba(168,85,247,0.08)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Buy & Hold',
+                            data: bah,
+                            labels: bahLabels,
+                            borderColor: '#6366f1',
+                            borderWidth: 1.5,
+                            borderDash: [4, 3],
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 0
+                        }
+                    ]
+                },
+                options: chartOptions('Wartość portfela (USD)', true)
+            });
+        }
+
+        function buildPriceChart(r) {
+            if (priceChartInst) { priceChartInst.destroy(); priceChartInst = null; }
+
+            const labels = r.ohlcv.map(b => b.date);
+            const prices = r.ohlcv.map(b => b.close);
+
+            // Map trade dates to scatter points
+            const buyPoints  = [];
+            const sellPoints = [];
+            r.trades.forEach(t => {
+                const idx = labels.indexOf(t.date);
+                if (idx === -1) return;
+                const pt = { x: t.date, y: t.price };
+                if (t.side === 'BUY')  buyPoints.push(pt);
+                else                   sellPoints.push(pt);
+            });
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Cena zamknięcia',
+                            data: prices,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56,189,248,0.06)',
+                            borderWidth: 1.5,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            pointHoverRadius: 3
+                        },
+                        {
+                            label: 'Kupno',
+                            type: 'scatter',
+                            data: buyPoints,
+                            backgroundColor: '#22c55e',
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            pointRadius: 7,
+                            pointStyle: 'triangle'
+                        },
+                        {
+                            label: 'Sprzedaż',
+                            type: 'scatter',
+                            data: sellPoints,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            pointRadius: 7,
+                            pointStyle: 'triangle',
+                            rotation: 180
+                        }
+                    ]
+                },
+                options: chartOptions('Cena (USD)', false)
+            });
+        }
+
+        function chartOptions(yLabel, dollarFormat) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const v = ctx.parsed.y ?? ctx.raw?.y;
+                                if (v == null) return ctx.dataset.label;
+                                return ctx.dataset.label + ': $' + fmt2(v);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#6b7280', maxTicksLimit: 8, font: { size: 10 } },
+                        grid:  { color: 'rgba(255,255,255,0.04)' }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#6b7280', font: { size: 10 },
+                            callback: v => '$' + Math.round(v).toLocaleString()
+                        },
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        title: { display: true, text: yLabel, color: '#6b7280', font: { size: 10 } }
+                    }
+                }
+            };
+        }
+
+        // ══════════════════════════════════════════════
+        //  Tab switching
+        // ══════════════════════════════════════════════
+        function showTab(name) {
+            ['equity', 'price', 'trades'].forEach(t => {
+                document.getElementById('panel' + cap(t)).classList.toggle('hidden', t !== name);
+                document.getElementById('tab'   + cap(t)).classList.toggle('active', t === name);
+                document.getElementById('tab'   + cap(t)).classList.toggle('text-qv-muted', t !== name);
+            });
+        }
+
+        function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // ══════════════════════════════════════════════
+        //  Helpers
+        // ══════════════════════════════════════════════
+        function setLoading(on) {
+            document.getElementById('loadingState').classList.toggle('hidden', !on);
+            const btn = document.getElementById('runBtn');
+            btn.disabled = on;
+            btn.textContent = on ? 'Obliczanie…' : 'Uruchom backtest';
+        }
+        function showError(msg) {
+            const el = document.getElementById('errorState');
+            el.textContent = '⚠ ' + msg;
+            el.classList.remove('hidden');
+        }
+        function hideError()   { document.getElementById('errorState').classList.add('hidden'); }
+        function hideResults() { document.getElementById('resultsSection').classList.add('hidden'); }
+
+        function fmt2(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function fmt4(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
+    </script>
+</body>
+</html>

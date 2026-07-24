@@ -72,4 +72,5 @@ public class Trade {
     public BigDecimal getRealizedPnl() { return realizedPnl; }
     public void setRealizedPnl(BigDecimal realizedPnl) { this.realizedPnl = realizedPnl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

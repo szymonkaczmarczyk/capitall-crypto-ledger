@@ -24,13 +24,19 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final ExchangeAccountRepository exchangeAccountRepository;
     private final AllocationRepository allocationRepository;
     private final UserRepository userRepository;
+    private final com.capitall.repository.HoldingRepository holdingRepository;
+    private final SecuritiesPriceService priceService;
 
     public AnalyticsServiceImpl(ExchangeAccountRepository exchangeAccountRepository,
             AllocationRepository allocationRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            com.capitall.repository.HoldingRepository holdingRepository,
+            SecuritiesPriceService priceService) {
         this.exchangeAccountRepository = exchangeAccountRepository;
         this.allocationRepository = allocationRepository;
         this.userRepository = userRepository;
+        this.holdingRepository = holdingRepository;
+        this.priceService = priceService;
     }
 
     @Override
@@ -118,4 +124,151 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         return points;
     }
+
+    @Override
+    public com.capitall.dto.PortfolioAnalyticsResponse getPortfolioAnalytics(UUID userId) {
+        List<com.capitall.model.Holding> holdings = holdingRepository.findByUserId(userId);
+        
+        if (holdings.isEmpty()) {
+            return new com.capitall.dto.PortfolioAnalyticsResponse(0.0, 0.0, 0.0, 0.0, 
+                    List.of(), new double[0][0], Map.of());
+        }
+
+        List<String> symbols = new ArrayList<>();
+        Map<String, Double> symbolValues = new HashMap<>();
+        double totalPortfolioValue = 0.0;
+
+        for (com.capitall.model.Holding h : holdings) {
+            BigDecimal currentPrice = priceService.getCurrentPrice(h.getSymbol());
+            if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                currentPrice = h.getAvgCost();
+            }
+            if (currentPrice == null) currentPrice = BigDecimal.ZERO;
+            
+            double value = h.getAmount().multiply(currentPrice).doubleValue();
+            if (value > 0.0) {
+                symbols.add(h.getSymbol());
+                symbolValues.put(h.getSymbol(), value);
+                totalPortfolioValue += value;
+            }
+        }
+
+        if (totalPortfolioValue == 0.0) {
+            return new com.capitall.dto.PortfolioAnalyticsResponse(0.0, 0.0, 0.0, 0.0, 
+                    List.of(), new double[0][0], Map.of());
+        }
+
+        Map<String, Double> weights = new HashMap<>();
+        for (String s : symbols) {
+            weights.put(s, symbolValues.get(s) / totalPortfolioValue);
+        }
+
+        // Fetch OHLCV data for 30 days for returns calculation
+        Map<String, double[]> returnsMap = new HashMap<>();
+        int dataPoints = 30;
+        
+        for (String s : symbols) {
+            List<com.capitall.dto.BacktestResult.OHLCVBar> bars = priceService.fetchOHLCV(s, "30d", "1d");
+            double[] pctChanges = new double[dataPoints];
+            for (int i = 1; i < Math.min(bars.size(), dataPoints + 1); i++) {
+                double prev = bars.get(i - 1).close;
+                double curr = bars.get(i).close;
+                pctChanges[i - 1] = prev > 0 ? (curr - prev) / prev : 0.0;
+            }
+            returnsMap.put(s, pctChanges);
+        }
+
+        // Fetch BTC for beta calculation
+        double[] btcReturns = new double[dataPoints];
+        List<com.capitall.dto.BacktestResult.OHLCVBar> btcBars = priceService.fetchOHLCV("BTC-USD", "30d", "1d");
+        for (int i = 1; i < Math.min(btcBars.size(), dataPoints + 1); i++) {
+            double prev = btcBars.get(i - 1).close;
+            double curr = btcBars.get(i).close;
+            btcReturns[i - 1] = prev > 0 ? (curr - prev) / prev : 0.0;
+        }
+
+        // Compute Portfolio Daily Returns
+        double[] portfolioReturns = new double[dataPoints];
+        for (int i = 0; i < dataPoints; i++) {
+            double dayReturn = 0.0;
+            for (String s : symbols) {
+                double[] assetRet = returnsMap.get(s);
+                if (assetRet != null && i < assetRet.length) {
+                    dayReturn += assetRet[i] * weights.get(s);
+                }
+            }
+            portfolioReturns[i] = dayReturn;
+        }
+
+        // 1. Sharpe Ratio (assumed daily to annual risk-free rate 0.03 -> daily ~ 0.00012)
+        double meanDaily = Arrays.stream(portfolioReturns).average().orElse(0.0);
+        double varDaily = 0.0;
+        for (double r : portfolioReturns) varDaily += Math.pow(r - meanDaily, 2);
+        varDaily /= dataPoints;
+        double stdDaily = Math.sqrt(varDaily);
+        double sharpe = stdDaily > 0 ? (meanDaily / stdDaily) * Math.sqrt(252) : 0.0;
+
+        // 2. Max Drawdown (simulated on 30-day cumulative equity)
+        double maxDrawdown = 0.0;
+        double peak = 10000.0;
+        double current = 10000.0;
+        for (double r : portfolioReturns) {
+            current *= (1.0 + r);
+            if (current > peak) peak = current;
+            double dd = (peak - current) / peak * 100.0;
+            if (dd > maxDrawdown) maxDrawdown = dd;
+        }
+
+        // 3. Beta relative to BTC-USD
+        double meanBtc = Arrays.stream(btcReturns).average().orElse(0.0);
+        double cov = 0.0;
+        double varBtc = 0.0;
+        for (int i = 0; i < dataPoints; i++) {
+            cov += (portfolioReturns[i] - meanDaily) * (btcReturns[i] - meanBtc);
+            varBtc += Math.pow(btcReturns[i] - meanBtc, 2);
+        }
+        double beta = varBtc > 0 ? cov / varBtc : 1.0;
+
+        // 4. Value at Risk (Historical 95% 1-day)
+        double[] sortedReturns = portfolioReturns.clone();
+        Arrays.sort(sortedReturns);
+        int indexVaR = Math.max(0, (int) (dataPoints * 0.05));
+        double valueAtRisk = -sortedReturns[indexVaR] * 100.0;
+        if (valueAtRisk < 0.0) valueAtRisk = 0.0; // clamp to positive representing loss percentage
+
+        // 5. Correlation Matrix (Pearson)
+        int size = symbols.size();
+        double[][] correlationMatrix = new double[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (i == j) {
+                    correlationMatrix[i][j] = 1.0;
+                    continue;
+                }
+                double[] retI = returnsMap.get(symbols.get(i));
+                double[] retJ = returnsMap.get(symbols.get(j));
+                correlationMatrix[i][j] = computePearson(retI, retJ, dataPoints);
+            }
+        }
+
+        return new com.capitall.dto.PortfolioAnalyticsResponse(sharpe, maxDrawdown, beta, valueAtRisk,
+                symbols, correlationMatrix, weights);
+    }
+
+    private double computePearson(double[] x, double[] y, int n) {
+        if (x == null || y == null) return 0.0;
+        double sumX = 0, sumY = 0, sumXY = 0;
+        double sumX2 = 0, sumY2 = 0;
+        for (int i = 0; i < n; i++) {
+            sumX += x[i];
+            sumY += y[i];
+            sumXY += x[i] * y[i];
+            sumX2 += x[i] * x[i];
+            sumY2 += y[i] * y[i];
+        }
+        double num = n * sumXY - sumX * sumY;
+        double den = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+        return den > 0 ? num / den : 0.0;
+    }
+
 }

@@ -37,4 +37,14 @@ public class AnalyticsController {
         List<PnLPoint> simulation = analyticsService.simulatePnL(userId, days);
         return ResponseEntity.ok(simulation);
     }
+
+    @GetMapping("/portfolio")
+    public ResponseEntity<com.capitall.dto.PortfolioAnalyticsResponse> getPortfolioAnalytics(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(analyticsService.getPortfolioAnalytics(user.getId()));
+    }
+
 }

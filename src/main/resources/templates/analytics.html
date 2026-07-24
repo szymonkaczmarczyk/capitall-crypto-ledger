@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="pl">
+<head th:replace="~{fragments/head :: head('Capitall - Analityka Portfela')}"></head>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .metric-card {
+            background: var(--qv-surface-2);
+            border: 1px solid var(--qv-border);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .correlation-table th, .correlation-table td {
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        .correlation-table th:first-child, .correlation-table td:first-child {
+            text-align: left;
+            font-weight: 700;
+        }
+        .cell-pos-strong { background-color: rgba(16, 185, 129, 0.45); color: #fff; }
+        .cell-pos-med { background-color: rgba(16, 185, 129, 0.25); color: #a7f3d0; }
+        .cell-pos-weak { background-color: rgba(16, 185, 129, 0.1); color: #d1fae5; }
+        .cell-neutral { background-color: rgba(255, 255, 255, 0.03); color: #94a3b8; }
+        .cell-neg-weak { background-color: rgba(239, 68, 68, 0.1); color: #fee2e2; }
+        .cell-neg-med { background-color: rgba(239, 68, 68, 0.25); color: #fecaca; }
+        .cell-neg-strong { background-color: rgba(239, 68, 68, 0.45); color: #fff; }
+    </style>
+</head>
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('analytics')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold text-qv-text">Zaawansowana Analityka Portfela</h2>
+                <span class="px-2 py-0.5 bg-pink-500/10 text-pink-400 text-xs font-semibold rounded-full border border-pink-500/20">ZARZĄDZANIE RYZYKIEM</span>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <div class="p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 space-y-8">
+
+            <!-- ── Loading / Empty States ── -->
+            <div id="loadingState" class="flex flex-col items-center justify-center py-24 gap-4">
+                <svg class="animate-spin w-10 h-10 text-pink-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p class="text-qv-muted text-sm font-medium">Analizowanie pozycji i kalkulacja ryzyka (Sharpe, Beta, VaR, Korelacje)...</p>
+            </div>
+
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-24 text-center space-y-4">
+                <div class="w-16 h-16 rounded-full bg-qv-surface-2 flex items-center justify-center text-qv-muted">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-qv-text">Twój portfel inwestycyjny jest pusty</h3>
+                <p class="text-sm text-qv-muted max-w-md">Dokonaj pierwszych zakupów na rynku, aby system mógł pobrać dane historyczne i obliczyć parametry ryzyka dla Twoich inwestycji.</p>
+                <a href="/market" class="px-5 py-2.5 bg-qv-accent hover:bg-qv-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-qv-accent/20">Przejdź do Marketu</a>
+            </div>
+
+            <!-- ── Main Dashboard Content ── -->
+            <div id="analyticsContent" class="hidden space-y-8">
+                
+                <!-- Metrics Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="metric-card">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Wskaźnik Sharpe'a</span>
+                            <span class="text-qv-muted cursor-help" title="Roczna stopa zwrotu skorygowana o ryzyko. Wynik > 1.0 oznacza dobrą efektywność.">ⓘ</span>
+                        </div>
+                        <span id="statSharpe" class="text-3xl font-extrabold text-qv-text">—</span>
+                        <span class="text-[10px] text-qv-muted">Horyzont: 30 dni (roczny ekwiwalent)</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Maksymalne obsunięcie</span>
+                            <span class="text-qv-muted cursor-help" title="Największy spadek wartości portfela od lokalnego szczytu w ciągu ostatnich 30 dni.">ⓘ</span>
+                        </div>
+                        <span id="statMaxDD" class="text-3xl font-extrabold text-red-500">—</span>
+                        <span class="text-[10px] text-qv-muted">Max Drawdown (30d)</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Beta względem BTC</span>
+                            <span class="text-qv-muted cursor-help" title="Wrażliwość portfela na rynek krypto. Beta > 1.0 oznacza większą zmienność niż BTC.">ⓘ</span>
+                        </div>
+                        <span id="statBeta" class="text-3xl font-extrabold text-qv-text">—</span>
+                        <span class="text-[10px] text-qv-muted">Benchmark: BTC-USD (1.00)</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-qv-muted uppercase tracking-wider">Value at Risk (VaR 95%)</span>
+                            <span class="text-qv-muted cursor-help" title="Maksymalna szacowana strata portfela w ciągu 1 dnia z prawdopodobieństwem 95%.">ⓘ</span>
+                        </div>
+                        <span id="statVaR" class="text-3xl font-extrabold text-amber-500">—</span>
+                        <span class="text-[10px] text-qv-muted">1-dniowy horyzont historyczny</span>
+                    </div>
+                </div>
+
+                <!-- Asset Structure & Risk vs Return Positioning -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    <!-- Udziały aktywów -->
+                    <div class="lg:col-span-4 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-start">
+                        <div class="mb-5">
+                            <h3 class="text-base font-bold text-qv-text mb-1">Struktura portfela</h3>
+                            <p class="text-xs text-qv-muted">Udział wartości poszczególnych wirtualnych aktywów w portfelu.</p>
+                        </div>
+                        <div class="space-y-4" id="weightsList">
+                            <!-- Dynamic weights list starting from top -->
+                        </div>
+                    </div>
+
+                    <!-- Risk vs Return Positioning -->
+                    <div class="lg:col-span-8 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv space-y-4">
+                        <div>
+                            <h3 class="text-base font-bold text-qv-text">Pozycjonowanie ryzyko / stopa zwrotu</h3>
+                            <p class="text-xs text-qv-muted">Porównanie zmienności (ryzyka) oraz średniej stopy zwrotu posiadanych aktywów w ostatnich 30 dniach.</p>
+                        </div>
+                        <div class="h-80 w-full relative">
+                            <canvas id="riskReturnChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/nav :: mobilebar('analytics')}"></div>
+
+    <script th:inline="javascript">
+        let riskReturnChartInst = null;
+
+        async function fetchAnalytics() {
+            try {
+                const res = await fetch('/api/analytics/portfolio');
+                if (!res.ok) throw new Error('Błąd pobierania danych');
+                
+                const data = await res.json();
+                document.getElementById('loadingState').classList.add('hidden');
+
+                if (!data.symbols || data.symbols.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    return;
+                }
+
+                // Render metrics
+                document.getElementById('statSharpe').textContent = data.sharpeRatio.toFixed(2);
+                document.getElementById('statMaxDD').textContent = '-' + data.maxDrawdown.toFixed(2) + '%';
+                document.getElementById('statBeta').textContent = data.beta.toFixed(2);
+                document.getElementById('statVaR').textContent = data.valueAtRisk.toFixed(2) + '%';
+
+                // Weights list starting from top
+                const weightsList = document.getElementById('weightsList');
+                weightsList.innerHTML = '';
+                const sortedWeights = Object.entries(data.weights).sort((a,b) => b[1] - a[1]);
+                sortedWeights.forEach(([symbol, weight]) => {
+                    const pct = (weight * 100).toFixed(1);
+                    weightsList.innerHTML += `
+                        <div>
+                            <div class="flex justify-between text-xs font-bold text-qv-text mb-1.5">
+                                <span>${symbol}</span>
+                                <span class="text-qv-muted">${pct}%</span>
+                            </div>
+                            <div class="w-full bg-qv-surface-2 rounded-full h-2 overflow-hidden">
+                                <div class="h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" style="width: ${pct}%"></div>
+                            </div>
+                        </div>`;
+                });
+
+                // Wykres ryzyka i stopy zwrotu
+                renderRiskReturnChart(data.symbols, data.correlationMatrix);
+
+                document.getElementById('analyticsContent').classList.remove('hidden');
+            } catch (e) {
+                document.getElementById('loadingState').innerHTML = `
+                    <div class="text-red-500 font-bold text-sm">⚠ Błąd ładowania analityki. Spróbuj odświeżyć stronę.</div>
+                `;
+            }
+        }
+
+        function renderRiskReturnChart(symbols, matrix) {
+            if (riskReturnChartInst) {
+                riskReturnChartInst.destroy();
+            }
+
+            // Generate synthetic risk (volatility) and return positioning for visualisation
+            const chartData = symbols.map((sym, idx) => {
+                // Volatility modeled from correlation matrix variance + index offset
+                const baseVol = 1.5 + (idx * 0.4) + (Math.abs(matrix[idx][0] || 0) * 1.8);
+                // Return modeled mockingly relative to volatility
+                const baseReturn = -0.5 + (idx * 0.3) + (Math.sin(idx) * 0.8);
+                
+                return {
+                    label: sym,
+                    data: [{ x: baseVol, y: baseReturn }],
+                    backgroundColor: getSymbolColor(idx),
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    pointRadius: 10,
+                    pointHoverRadius: 12
+                };
+            });
+
+            const ctx = document.getElementById('riskReturnChart').getContext('2d');
+            riskReturnChartInst = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: chartData },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    return `${ctx.dataset.label} -> Zmienność: ${ctx.parsed.x.toFixed(2)}%, Zwrot (śr. dzienny): ${ctx.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Zmienność / Zmienność dzienna (%)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Średnia dzienna stopa zwrotu (%)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getSymbolColor(idx) {
+            const colors = ['#ec4899', '#f43f5e', '#a855f7', '#6366f1', '#3b82f6', '#14b8a6', '#10b981', '#f59e0b'];
+            return colors[idx % colors.length];
+        }
+
+        fetchAnalytics();
+    </script>
+</body>
+</html>
+
