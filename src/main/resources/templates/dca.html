@@ -55,7 +55,7 @@
         <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
             
             <!-- Top Metric Cards Row (Leveled, same height) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 flex-shrink-0">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 flex-shrink-0">
                 <!-- Active Plans Card -->
                 <div class="premium-card p-6 flex flex-col justify-between h-36">
                     <div class="flex items-center justify-between">
@@ -98,6 +98,20 @@
                     </div>
                 </div>
 
+                <!-- Remaining Balance Card -->
+                <div class="premium-card p-6 flex flex-col justify-between h-36">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-qv-muted uppercase tracking-wider">Pozostałe Środki</span>
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="metricRemainingBalance" class="text-2xl lg:text-3xl font-black text-blue-500">$0.00</span>
+                        <p class="text-[10px] text-qv-muted mt-1">Dostępne saldo po odjęciu kosztów DCA</p>
+                    </div>
+                </div>
+
                 <!-- Scheduler Status Card -->
                 <div class="premium-card p-6 flex flex-col justify-between h-36">
                     <div class="flex items-center justify-between">
@@ -123,7 +137,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 
                 <!-- Left: Form Create DCA Plan (5 Cols) -->
-                <div class="lg:col-span-5 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between">
+                <div class="lg:col-span-5 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between h-full">
                     <div>
                         <div class="border-b border-qv-border/40 pb-4">
                             <h3 class="text-base font-bold text-qv-text flex items-center gap-2">
@@ -175,6 +189,21 @@
                                 </select>
                             </div>
 
+                            <!-- Smart DCA Toggle -->
+                            <div class="flex items-center justify-between p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl mt-2">
+                                <div>
+                                    <h4 class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        Smart DCA (Kupowanie dołków)
+                                    </h4>
+                                    <p class="text-[10px] text-qv-muted mt-0.5">Podwaja kwotę (2x), gdy cena spadnie o 10%.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" id="dcaSmart" class="sr-only peer">
+                                  <div class="w-9 h-5 bg-qv-surface-2 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500"></div>
+                                </label>
+                            </div>
+
                             <button type="submit" class="w-full h-12 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                 Aktywuj Plan DCA
@@ -184,7 +213,7 @@
                 </div>
 
                 <!-- Right: Active Plans List (7 Cols) -->
-                <div class="lg:col-span-7 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between">
+                <div class="lg:col-span-7 bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-qv flex flex-col justify-between h-full">
                     <div class="w-full space-y-4">
                         <div class="border-b border-qv-border/40 pb-4 flex justify-between items-center">
                             <div>
@@ -214,6 +243,9 @@
     <div th:replace="~{fragments/nav :: mobilebar('dca')}"></div>
 
     <script th:inline="javascript">
+        const rawUsdBalance = /*[[${usdBalance}]]*/ 0;
+        const currentUsdBalance = parseFloat(rawUsdBalance) || 0;
+
         function getCoinIconUrl(sym) {
             return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`;
         }
@@ -280,6 +312,8 @@
                     ? `<span class="px-2.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-md uppercase">AKTYWNY</span>` 
                     : `<span class="px-2.5 py-0.5 bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px] font-black rounded-md uppercase">WSTRZYMANY</span>`;
 
+                const smartBadge = p.smartDca ? `<span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] font-black rounded-md flex items-center gap-1" title="Smart DCA włączone"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> SMART</span>` : '';
+
                 const intervalText = p.intervalDays === 1 ? 'Codziennie' : `Co ${p.intervalDays} dni`;
 
                 const nextRunDate = formatDate(p.nextExecution);
@@ -293,6 +327,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-black text-qv-text tracking-wide">${p.symbol}</span>
                                     ${statusBadge}
+                                    ${smartBadge}
                                 </div>
                                 <p class="text-xs text-qv-muted mt-0.5">
                                     Zakup: <span class="font-black text-qv-text">$${Number(p.usdAmount).toFixed(2)}</span> <span class="text-qv-muted">(${intervalText})</span>
@@ -324,6 +359,9 @@
 
             document.getElementById('metricActivePlans').textContent = activeCount;
             document.getElementById('metricMonthlySpend').textContent = '$' + totalMonthly.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            
+            const remaining = Math.max(0, currentUsdBalance - totalMonthly);
+            document.getElementById('metricRemainingBalance').textContent = '$' + remaining.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
 
         async function handleCreatePlan(e) {
@@ -331,12 +369,13 @@
             const symbol = document.getElementById('dcaSymbol').value;
             const usdAmount = parseFloat(document.getElementById('dcaAmount').value);
             const intervalDays = parseInt(document.getElementById('dcaInterval').value);
+            const smartDca = document.getElementById('dcaSmart').checked;
 
             try {
                 const res = await fetch('/api/dca', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ symbol, usdAmount, intervalDays })
+                    body: JSON.stringify({ symbol, usdAmount, intervalDays, smartDca })
                 });
 
                 if (res.ok) {

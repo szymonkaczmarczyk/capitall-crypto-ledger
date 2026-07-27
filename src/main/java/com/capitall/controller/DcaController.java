@@ -31,7 +31,7 @@ public class DcaController {
         return ResponseEntity.ok(dcaService.getUserOrders(user.getId()));
     }
 
-    public record CreateDcaRequest(String symbol, BigDecimal usdAmount, Integer intervalDays) {}
+    public record CreateDcaRequest(String symbol, BigDecimal usdAmount, Integer intervalDays, Boolean smartDca) {}
 
     @PostMapping
     public ResponseEntity<?> createOrder(
@@ -46,7 +46,8 @@ public class DcaController {
                     user.getId(),
                     request.symbol(),
                     request.usdAmount(),
-                    request.intervalDays()
+                    request.intervalDays(),
+                    request.smartDca() != null ? request.smartDca() : false
             );
             return ResponseEntity.ok(order);
         } catch (IllegalArgumentException e) {

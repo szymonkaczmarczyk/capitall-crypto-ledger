@@ -26,10 +26,12 @@ public class SimulatorController {
 
     private final SimulatorService simulatorService;
     private final com.capitall.service.SecuritiesPriceService priceService;
+    private final com.capitall.repository.SimulatedHoldingRepository holdingRepository;
 
-    public SimulatorController(SimulatorService simulatorService, com.capitall.service.SecuritiesPriceService priceService) {
+    public SimulatorController(SimulatorService simulatorService, com.capitall.service.SecuritiesPriceService priceService, com.capitall.repository.SimulatedHoldingRepository holdingRepository) {
         this.simulatorService = simulatorService;
         this.priceService = priceService;
+        this.holdingRepository = holdingRepository;
     }
 
     @GetMapping("/price")
@@ -226,6 +228,35 @@ public class SimulatorController {
             return Map.of("success", true, "labels", labels, "datasets", datasets);
         } catch (Exception e) {
             return Map.of("success", false, "error", e.getMessage() != null ? e.getMessage() : "Błąd");
+        }
+    }
+
+    @PostMapping("/trailing-stop")
+    @ResponseBody
+    public Map<String, Object> setTrailingStop(@AuthenticationPrincipal User user,
+                                               @RequestParam java.util.UUID holdingId,
+                                               @RequestParam Boolean enabled,
+                                               @RequestParam(required = false) BigDecimal percent) {
+        if (user == null) return Map.of("success", false, "error", "Unauthorized");
+        try {
+            com.capitall.model.SimulatedHolding holding = holdingRepository.findById(holdingId).orElse(null);
+            if (holding == null || !holding.getUserId().equals(user.getId())) {
+                return Map.of("success", false, "error", "Nie znaleziono aktywa");
+            }
+            holding.setTrailingStopEnabled(enabled);
+            if (enabled && percent != null) {
+                holding.setTrailingStopPercent(percent);
+                BigDecimal currentPrice = priceService.getCurrentPrice(holding.getSymbol());
+                if (currentPrice != null) {
+                    holding.setHighestPriceReached(currentPrice);
+                } else {
+                    holding.setHighestPriceReached(holding.getAvgCost());
+                }
+            }
+            holdingRepository.save(holding);
+            return Map.of("success", true);
+        } catch (Exception e) {
+            return Map.of("success", false, "error", e.getMessage() != null ? e.getMessage() : "Błąd serwera");
         }
     }
 }

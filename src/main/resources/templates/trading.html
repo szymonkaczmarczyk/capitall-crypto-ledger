@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+
+<head th:replace="~{fragments/head :: head('Capitall - Giełda Papierów Wartościowych Pro')}"></head>
+
+<head>
+    <style>
+        @keyframes marqueeSeamless {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-seamless {
+            display: flex;
+            width: max-content;
+            animation: marqueeSeamless 35s linear infinite;
+            pointer-events: none;
+        }
+        .depth-bar-bid {
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), transparent);
+        }
+        .depth-bar-ask {
+            background: linear-gradient(90deg, rgba(244, 63, 94, 0.15), transparent);
+        }
+        .stock-chip-active {
+            border-color: #6366f1 !important;
+            background-color: rgba(99, 102, 241, 0.15) !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+    </style>
+</head>
+
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('trading')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Live Market Ticker Marquee Header Tape -->
+        <div class="bg-qv-surface-2/80 border-b border-qv-border overflow-hidden py-1.5 px-4 text-xs font-mono shrink-0 select-none">
+            <div class="animate-marquee-seamless">
+                <div id="marqueeTrack1" class="flex items-center space-x-8 pr-8">
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">S&P 500</span> <span class="text-green-400 font-semibold">$540.20 (+0.42%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">NASDAQ 100</span> <span class="text-green-400 font-semibold">$480.50 (+0.78%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">NVDA</span> <span class="text-green-400 font-semibold">$126.40 (+2.15%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">AAPL</span> <span class="text-green-400 font-semibold">$214.20 (+0.85%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">TSLA</span> <span class="text-red-400 font-semibold">$248.50 (-1.30%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">MSFT</span> <span class="text-green-400 font-semibold">$445.10 (+1.10%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">CDR</span> <span class="text-green-400 font-semibold">142.50 PLN (+1.40%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">PKO</span> <span class="text-green-400 font-semibold">58.20 PLN (+0.90%)</span></span>
+                </div>
+                <div id="marqueeTrack2" class="flex items-center space-x-8 pr-8">
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">S&P 500</span> <span class="text-green-400 font-semibold">$540.20 (+0.42%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">NASDAQ 100</span> <span class="text-green-400 font-semibold">$480.50 (+0.78%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">NVDA</span> <span class="text-green-400 font-semibold">$126.40 (+2.15%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">AAPL</span> <span class="text-green-400 font-semibold">$214.20 (+0.85%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">TSLA</span> <span class="text-red-400 font-semibold">$248.50 (-1.30%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">MSFT</span> <span class="text-green-400 font-semibold">$445.10 (+1.10%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">CDR</span> <span class="text-green-400 font-semibold">142.50 PLN (+1.40%)</span></span>
+                    <span class="flex items-center space-x-1.5"><span class="font-bold text-qv-text">PKO</span> <span class="text-green-400 font-semibold">58.20 PLN (+0.90%)</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Navigation Header -->
+        <header class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all shrink-0">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+                    <h2 class="text-lg font-black text-qv-text tracking-tight">Giełda Papierów Wartościowych Pro</h2>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    REAL-TIME MARKET TERMINAL
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 font-black text-xs flex items-center justify-center"
+                         th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
+                    <span class="text-sm font-semibold text-qv-text" th:text="${traderName}">Użytkownik</span>
+                </div>
+                <div th:replace="~{fragments/theme :: toggle}"></div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+
+            <!-- Company Selector Grid (Zero Horizontal Scrollbar - All fit nicely) -->
+            <div class="bg-qv-surface border border-qv-border rounded-2xl p-5 shadow-qv space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="relative w-64">
+                            <input type="text" id="stockSearchInput" onkeyup="filterStockOptions()" placeholder="Szukaj spółki (np. Apple, Tesla, CD Projekt)..." class="w-full bg-qv-surface-2 border border-qv-border text-qv-text font-semibold text-xs rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all">
+                            <svg class="w-4 h-4 text-qv-muted absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                        <input type="hidden" id="symbolSelect" value="AAPL">
+
+                        <button onclick="openCompanyModal()" class="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Podgląd i Wskaźniki Spółki</span>
+                        </button>
+                    </div>
+
+                    <!-- Category Chips -->
+                    <div class="flex items-center space-x-1 bg-qv-surface-2 p-1 rounded-xl border border-qv-border text-xs">
+                        <button onclick="filterCategory('ALL')" class="cat-chip active font-bold px-3 py-1 rounded-lg transition-all text-qv-text">Wszystkie</button>
+                        <button onclick="filterCategory('US Tech')" class="cat-chip font-semibold px-3 py-1 rounded-lg transition-all text-qv-muted hover:text-qv-text">US Tech</button>
+                        <button onclick="filterCategory('GPW Warszawa')" class="cat-chip font-semibold px-3 py-1 rounded-lg transition-all text-qv-muted hover:text-qv-text">GPW Warszawa</button>
+                        <button onclick="filterCategory('ETF-y')" class="cat-chip font-semibold px-3 py-1 rounded-lg transition-all text-qv-muted hover:text-qv-text">ETF-y</button>
+                    </div>
+                </div>
+
+                <!-- ALL COMPANIES IN A CLEAN FIT-TO-SCREEN GRID (No Scrollbar!) -->
+                <div>
+                    <label class="block text-[11px] font-bold text-qv-muted uppercase tracking-wider mb-2">Wybierz spółkę giełdową:</label>
+                    <div id="stockIconsGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-2">
+                        
+                        <div onclick="selectStockCard('AAPL')" id="card-AAPL" class="stock-card stock-chip-active cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-indigo-500 rounded-xl transition-all flex items-center space-x-2 shadow-sm" data-category="US Tech" data-name="apple inc">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="AAPL" data-fallback="A"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">AAPL</div>
+                                <div class="text-[9px] text-qv-muted truncate">Apple Inc.</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('TSLA')" id="card-TSLA" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="tesla inc">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="TSLA" data-fallback="T"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">TSLA</div>
+                                <div class="text-[9px] text-qv-muted truncate">Tesla Inc.</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('NVDA')" id="card-NVDA" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="nvidia corp">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="NVDA" data-fallback="N"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">NVDA</div>
+                                <div class="text-[9px] text-qv-muted truncate">NVIDIA</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('MSFT')" id="card-MSFT" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="microsoft corp">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="MSFT" data-fallback="M"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">MSFT</div>
+                                <div class="text-[9px] text-qv-muted truncate">Microsoft</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('AMZN')" id="card-AMZN" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="amazon com">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="AMZN" data-fallback="A"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">AMZN</div>
+                                <div class="text-[9px] text-qv-muted truncate">Amazon</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('GOOGL')" id="card-GOOGL" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="google alphabet">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="GOOGL" data-fallback="G"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">GOOGL</div>
+                                <div class="text-[9px] text-qv-muted truncate">Alphabet</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('META')" id="card-META" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="meta facebook">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="META" data-fallback="M"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">META</div>
+                                <div class="text-[9px] text-qv-muted truncate">Meta</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('NFLX')" id="card-NFLX" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="netflix inc">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="NFLX" data-fallback="N"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">NFLX</div>
+                                <div class="text-[9px] text-qv-muted truncate">Netflix</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('AMD')" id="card-AMD" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="advanced micro devices">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="AMD" data-fallback="A"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">AMD</div>
+                                <div class="text-[9px] text-qv-muted truncate">AMD</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('INTC')" id="card-INTC" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="intel corp">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="INTC" data-fallback="I"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">INTC</div>
+                                <div class="text-[9px] text-qv-muted truncate">Intel</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('PLTR')" id="card-PLTR" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="palantir tech">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="PLTR" data-fallback="P"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">PLTR</div>
+                                <div class="text-[9px] text-qv-muted truncate">Palantir</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('DIS')" id="card-DIS" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="US Tech" data-name="disney walt">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="DIS" data-fallback="D"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">DIS</div>
+                                <div class="text-[9px] text-qv-muted truncate">Disney</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('CDR')" id="card-CDR" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="cd projekt">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="CDR" data-fallback="C"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">CDR</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">CD Projekt</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('PKO')" id="card-PKO" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="pko bp bank">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="PKO" data-fallback="P"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">PKO</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">PKO BP</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('PKN')" id="card-PKN" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="orlen pkn">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="PKN" data-fallback="O"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">PKN</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">Orlen</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('KGH')" id="card-KGH" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="kghm miedz">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="KGH" data-fallback="K"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">KGH</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">KGHM</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('LPP')" id="card-LPP" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="lpp reserved">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="LPP" data-fallback="L"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">LPP</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">LPP SA</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('DNP')" id="card-DNP" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="dino polska">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="DNP" data-fallback="D"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">DNP</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">Dino PL</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('ALE')" id="card-ALE" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="GPW Warszawa" data-name="allegro">
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow" data-stock-symbol="ALE" data-fallback="A"></div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">ALE</div>
+                                <div class="text-[9px] text-rose-400 font-bold truncate">Allegro</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('SPY')" id="card-SPY" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="ETF-y" data-name="spy s&p 500 etf">
+                            <div class="w-7 h-7 rounded-lg bg-purple-800 text-white font-black text-xs flex items-center justify-center shrink-0 shadow border border-purple-500/30">
+                                <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">SPY</div>
+                                <div class="text-[9px] text-emerald-400 font-bold truncate">S&P 500</div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectStockCard('QQQ')" id="card-QQQ" class="stock-card cursor-pointer p-2 bg-qv-surface-2 hover:bg-qv-surface-3 border-2 border-transparent rounded-xl transition-all flex items-center space-x-2" data-category="ETF-y" data-name="qqq nasdaq etf">
+                            <div class="w-7 h-7 rounded-lg bg-indigo-800 text-white font-black text-xs flex items-center justify-center shrink-0 shadow border border-indigo-500/30">
+                                <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-black text-xs text-qv-text truncate">QQQ</div>
+                                <div class="text-[9px] text-emerald-400 font-bold truncate">NASDAQ</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Live Ticker Banner Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 pt-3 border-t border-qv-border/60 text-xs">
+                    <div>
+                        <div class="text-qv-muted font-semibold uppercase text-[10px] tracking-wider">Aktualny Kurs</div>
+                        <div id="tickerPrice" class="text-xl font-black text-qv-text tracking-tight">$0.00</div>
+                    </div>
+                    <div>
+                        <div class="text-qv-muted font-semibold uppercase text-[10px] tracking-wider">Zmiana 24h</div>
+                        <div id="tickerChange" class="text-base font-bold text-green-500">+0.00%</div>
+                    </div>
+                    <div>
+                        <div class="text-qv-muted font-semibold uppercase text-[10px] tracking-wider">Maks. 24h</div>
+                        <div id="tickerHigh" class="text-base font-bold text-qv-text">$0.00</div>
+                    </div>
+                    <div>
+                        <div class="text-qv-muted font-semibold uppercase text-[10px] tracking-wider">Min. 24h</div>
+                        <div id="tickerLow" class="text-base font-bold text-qv-text">$0.00</div>
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <div class="text-qv-muted font-semibold uppercase text-[10px] tracking-wider">Dostępne Saldo USD</div>
+                        <div id="walletBalanceDisplay" class="text-base font-black text-emerald-400" th:text="'$' + ${#numbers.formatDecimal(wallet.balance, 1, 2)}">$10,000.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pro Trading Terminal Grid (Chart + Order Book + Order Form) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left 8 Columns: TradingView-Style Interactive Chart -->
+                <div class="lg:col-span-8 bg-qv-surface border border-qv-border rounded-2xl p-5 shadow-qv flex flex-col justify-between space-y-4">
+                    <!-- Chart Control Toolbar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center space-x-3">
+                            <h3 id="chartTitle" class="text-base font-black text-qv-text">Apple Inc. (AAPL)</h3>
+                            <span id="chartLoadingBadge" class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full animate-pulse">Ładowanie świec Yahoo...</span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Chart Type Switcher -->
+                            <div class="flex items-center space-x-1 bg-qv-surface-2 p-1 rounded-xl border border-qv-border text-xs">
+                                <button onclick="setChartType('CANDLE')" id="typeBtnCandle" class="chart-type-btn active px-2.5 py-1 rounded-lg font-bold bg-qv-surface-3 text-indigo-400 transition-all">Świece</button>
+                                <button onclick="setChartType('LINE')" id="typeBtnLine" class="chart-type-btn px-2.5 py-1 rounded-lg font-semibold text-qv-muted hover:text-qv-text transition-all">Linia</button>
+                                <button onclick="setChartType('AREA')" id="typeBtnArea" class="chart-type-btn px-2.5 py-1 rounded-lg font-semibold text-qv-muted hover:text-qv-text transition-all">Obszar</button>
+                            </div>
+
+                            <!-- Indicator Toggles -->
+                            <button onclick="toggleSMA()" id="smaToggleBtn" class="px-2.5 py-1 rounded-xl border border-qv-border bg-qv-surface-2 text-xs font-semibold text-qv-muted hover:text-qv-text transition-all">SMA 20</button>
+
+                            <!-- Range Selector -->
+                            <div class="flex items-center space-x-1 bg-qv-surface-2 p-1 rounded-xl border border-qv-border text-xs">
+                                <button onclick="setChartRange('1mo', '1d')" class="range-btn px-2.5 py-1 rounded-lg font-semibold text-qv-muted hover:text-qv-text transition-all">1M</button>
+                                <button onclick="setChartRange('3mo', '1d')" class="range-btn active px-2.5 py-1 rounded-lg font-bold bg-qv-surface-3 text-indigo-400 transition-all">3M</button>
+                                <button onclick="setChartRange('1y', '1wk')" class="range-btn px-2.5 py-1 rounded-lg font-semibold text-qv-muted hover:text-qv-text transition-all">1R</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Interactive Chart Container -->
+                    <div class="relative w-full h-[420px] bg-qv-bg/70 border border-qv-border/40 rounded-xl overflow-hidden p-2">
+                        <canvas id="candlestickCanvas" class="w-full h-full block"></canvas>
+                        <!-- Hover Data Overlay -->
+                        <div id="chartHoverOverlay" class="hidden absolute top-3 left-4 bg-qv-surface/90 border border-qv-border backdrop-blur-md px-3 py-1.5 rounded-lg text-[11px] font-mono space-x-3 text-qv-text shadow-lg z-10">
+                            <span>O: <strong id="hoverOpen" class="text-qv-accent">0.00</strong></span>
+                            <span>H: <strong id="hoverHigh" class="text-green-400">0.00</strong></span>
+                            <span>L: <strong id="hoverLow" class="text-red-400">0.00</strong></span>
+                            <span>C: <strong id="hoverClose" class="text-qv-text">0.00</strong></span>
+                            <span>Vol: <span id="hoverVol" class="text-qv-muted">0</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Chart Footer Info -->
+                    <div class="flex items-center justify-between text-xs text-qv-muted pt-1">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Słupki wolumenu transakcji widoczne na dole wykresu</span>
+                        </span>
+                        <span>Dane w czasie rzeczywistym z <strong class="text-qv-text">Yahoo Finance API</strong></span>
+                    </div>
+                </div>
+
+                <!-- Right 4 Columns: Order Exec Form + Order Book -->
+                <div class="lg:col-span-4 space-y-6 flex flex-col justify-between">
+
+                    <!-- Order Execution Form Card -->
+                    <div class="bg-qv-surface border border-qv-border rounded-2xl p-5 shadow-qv space-y-4">
+                        <div class="flex border-b border-qv-border">
+                            <button id="tabBuy" onclick="setSide('BUY')" class="flex-1 py-2.5 text-center text-sm font-black border-b-2 border-green-500 text-green-500 transition-all">Kupno (BUY)</button>
+                            <button id="tabSell" onclick="setSide('SELL')" class="flex-1 py-2.5 text-center text-sm font-bold text-qv-muted hover:text-qv-text transition-all">Sprzedaż (SELL)</button>
+                        </div>
+
+                        <form id="orderForm" onsubmit="submitOrder(event)" class="space-y-3.5">
+                            <input type="hidden" id="orderSide" value="BUY">
+
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-qv-surface-2 rounded-xl border border-qv-border text-xs">
+                                <button type="button" id="typeMarket" onclick="setOrderType('MARKET')" class="py-1.5 rounded-lg font-bold bg-qv-surface-3 text-qv-text transition-all">Market (Rynkowe)</button>
+                                <button type="button" id="typeLimit" onclick="setOrderType('LIMIT')" class="py-1.5 rounded-lg font-semibold text-qv-muted transition-all">Limit (Zlecenie)</button>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-qv-muted mb-1">Cena Akcji ($)</label>
+                                <input type="number" step="0.01" id="orderPriceInput" readonly class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3 py-2 text-sm text-qv-text font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-xs font-semibold text-qv-muted">Liczba Akcji</label>
+                                    <span class="text-[10px] text-indigo-400 font-bold" id="unitHint">0.00 szt.</span>
+                                </div>
+                                <input type="number" step="0.01" id="orderSharesInput" min="0.01" oninput="calculateTotalCost()" placeholder="0.00" required class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3 py-2 text-sm text-qv-text font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+                            </div>
+
+                            <!-- Quick Percentage Selector Buttons -->
+                            <div class="grid grid-cols-4 gap-1.5 text-xs font-bold">
+                                <button type="button" onclick="setQuickShares(0.25)" class="py-1.5 bg-qv-surface-2 hover:bg-qv-surface-3 rounded-lg border border-qv-border text-qv-text transition-all">25%</button>
+                                <button type="button" onclick="setQuickShares(0.50)" class="py-1.5 bg-qv-surface-2 hover:bg-qv-surface-3 rounded-lg border border-qv-border text-qv-text transition-all">50%</button>
+                                <button type="button" onclick="setQuickShares(0.75)" class="py-1.5 bg-qv-surface-2 hover:bg-qv-surface-3 rounded-lg border border-qv-border text-qv-text transition-all">75%</button>
+                                <button type="button" onclick="setQuickShares(1.00)" class="py-1.5 bg-qv-surface-2 hover:bg-qv-surface-3 rounded-lg border border-qv-border text-qv-text transition-all">100%</button>
+                            </div>
+
+                            <div class="p-3 bg-qv-surface-2/60 border border-qv-border rounded-xl flex justify-between items-center text-xs">
+                                <span class="text-qv-muted font-semibold">Wartość Całkowita:</span>
+                                <span id="totalCostDisplay" class="font-black text-base text-qv-text">$0.00</span>
+                            </div>
+
+                            <button type="submit" id="submitOrderBtn" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-black text-sm rounded-xl shadow-lg transition-all transform active:scale-95">
+                                Kup Akcje (BUY)
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Pro Order Book (Księga Zleceń) with Depth Fill Bars -->
+                    <div class="bg-qv-surface border border-qv-border rounded-2xl p-4 shadow-qv space-y-3">
+                        <div class="flex justify-between items-center text-xs font-bold text-qv-text">
+                            <span>Księga Zleceń (Order Book)</span>
+                            <span class="text-[10px] text-green-400 font-mono">SPREAD: $0.04</span>
+                        </div>
+
+                        <div class="space-y-1 font-mono text-[11px]">
+                            <!-- Asks (Red) -->
+                            <div id="orderBookAsks" class="space-y-0.5"></div>
+                            <!-- Current Market Price Divider -->
+                            <div id="orderBookCurrent" class="py-1 text-center font-black text-xs bg-qv-surface-2 border-y border-qv-border text-indigo-400">---</div>
+                            <!-- Bids (Green) -->
+                            <div id="orderBookBids" class="space-y-0.5"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Active Stock Positions Table (ONLY STOCKS TRADED ON GIEŁDA) -->
+            <div class="bg-qv-surface border border-qv-border rounded-2xl shadow-qv overflow-hidden">
+                <div class="px-6 py-4 border-b border-qv-border flex justify-between items-center">
+                    <div>
+                        <h3 class="text-md font-black text-qv-text">Posiadane Akcje na Giełdzie</h3>
+                        <p class="text-xs text-qv-muted">Portfel zakupionych akcji firm i papierów wartościowych</p>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-bold">STOCK PORTFOLIO</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-qv-surface-2/40 border-b border-qv-border text-xs font-semibold text-qv-muted uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3.5 px-6">Spółka / Symbol</th>
+                                <th class="py-3.5 px-4 text-right">Liczba Akcji</th>
+                                <th class="py-3.5 px-4 text-right">Śr. Cena Zakupu</th>
+                                <th class="py-3.5 px-4 text-right">Aktualny Kurs</th>
+                                <th class="py-3.5 px-4 text-right">Wartość Rynkowa</th>
+                                <th class="py-3.5 px-6 text-right">Wynik (PnL)</th>
+                                <th class="py-3.5 px-4 text-center">Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(holdings)}" class="border-b border-qv-border/30">
+                                <td colspan="7" class="py-8 text-center text-qv-muted">Nie posiadasz jeszcze akcji na Giełdzie. Wybierz spółkę z siatki powyżej i złóż swoje pierwsze zlecenie!</td>
+                            </tr>
+                            <tr th:each="item : ${holdings}" class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors">
+                                <td class="py-3.5 px-6 font-bold text-qv-text flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-black text-xs flex items-center justify-center" th:text="${item.holding.symbol.substring(0, 1)}">A</div>
+                                    <div>
+                                        <div class="font-bold text-qv-text" th:text="${item.holding.name}">Apple Inc.</div>
+                                        <div class="text-xs text-qv-muted font-mono" th:text="${item.holding.symbol}">AAPL</div>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4 text-right font-bold text-qv-text" th:text="${item.holding.shares}">10.00</td>
+                                <td class="py-3.5 px-4 text-right font-medium text-qv-text" th:text="'$' + ${#numbers.formatDecimal(item.holding.avgCost, 1, 2)}">$150.00</td>
+                                <td class="py-3.5 px-4 text-right font-medium text-qv-text" th:text="'$' + ${#numbers.formatDecimal(item.currentPrice, 1, 2)}">$175.00</td>
+                                <td class="py-3.5 px-4 text-right font-black text-qv-text" th:text="'$' + ${#numbers.formatDecimal(item.currentValue, 1, 2)}">$1,750.00</td>
+                                <td class="py-3.5 px-6 text-right font-bold">
+                                    <span th:class="${item.pnl.doubleValue() >= 0 ? 'text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full text-xs' : 'text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full text-xs'}"
+                                          th:text="${item.pnl.doubleValue() >= 0 ? '+$' : '-$'} + ${#numbers.formatDecimal(item.pnl.abs(), 1, 2)} + ' (' + ${item.roi} + '%)'"></span>
+                                </td>
+                                <td class="py-3.5 px-4 text-center">
+                                    <button th:onclick="'quickSellStock(\'' + ${item.holding.symbol} + '\', ' + ${item.holding.shares} + ')'" 
+                                            class="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold transition-all">
+                                        Sprzedaj 1-Click
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Company Details Modal (Podgląd Spółki i Wskaźników) -->
+    <div id="companyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
+        <div class="bg-qv-surface border border-qv-border rounded-3xl p-6 shadow-2xl max-w-xl w-full space-y-6">
+            <div class="flex items-start justify-between border-b border-qv-border pb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="modalStockBadge" class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-black text-lg flex items-center justify-center">A</div>
+                    <div>
+                        <h3 id="modalStockName" class="text-lg font-black text-qv-text">Apple Inc. (AAPL)</h3>
+                        <span id="modalStockSector" class="text-xs text-qv-muted font-semibold">Technologia / Elektronika</span>
+                    </div>
+                </div>
+                <button onclick="closeCompanyModal()" class="text-qv-muted hover:text-qv-text text-xl font-bold p-1">✕</button>
+            </div>
+
+            <!-- Financial Indicators Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div class="bg-qv-surface-2 p-3 rounded-2xl border border-qv-border">
+                    <div class="text-qv-muted font-medium">Kapitalizacja</div>
+                    <div id="modalMarketCap" class="text-sm font-black text-qv-text mt-1">--</div>
+                </div>
+                <div class="bg-qv-surface-2 p-3 rounded-2xl border border-qv-border">
+                    <div class="text-qv-muted font-medium">Cena / Zysk (P/E)</div>
+                    <div id="modalPERatio" class="text-sm font-black text-qv-text mt-1">--</div>
+                </div>
+                <div class="bg-qv-surface-2 p-3 rounded-2xl border border-qv-border">
+                    <div class="text-qv-muted font-medium">Stopa Dywidendy</div>
+                    <div id="modalDivYield" class="text-sm font-black text-qv-text mt-1">--</div>
+                </div>
+                <div class="bg-qv-surface-2 p-3 rounded-2xl border border-qv-border">
+                    <div class="text-qv-muted font-medium">Śr. Wolumen</div>
+                    <div id="modalAvgVol" class="text-sm font-black text-qv-text mt-1">--</div>
+                </div>
+            </div>
+
+            <!-- 52-Week Range Bar -->
+            <div class="bg-qv-surface-2 p-4 rounded-2xl border border-qv-border space-y-2 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-qv-muted font-semibold">Zakres 52-tygodniowy (Min / Maks)</span>
+                    <span id="modal52RangeText" class="font-bold text-qv-text">$0 - $0</span>
+                </div>
+                <div class="relative w-full h-2 bg-qv-surface-3 rounded-full overflow-hidden">
+                    <div id="modal52Bar" class="absolute top-0 bottom-0 bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full" style="width: 50%;"></div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <h4 class="text-xs font-bold text-qv-muted uppercase tracking-wider mb-1">O Spółce</h4>
+                <p id="modalStockDesc" class="text-xs text-qv-text leading-relaxed bg-qv-surface-2/40 p-3 rounded-2xl border border-qv-border/60">Ładowanie opisu...</p>
+            </div>
+
+            <button onclick="closeCompanyModal()" class="w-full py-2.5 bg-qv-surface-2 hover:bg-qv-surface-3 border border-qv-border text-qv-text font-bold text-xs rounded-xl transition-all">
+                Zamknij Podgląd
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Toast Modal -->
+    <div id="tradeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-qv-surface border border-qv-border rounded-2xl p-6 shadow-2xl max-w-sm w-full space-y-4 text-center">
+            <div id="tradeModalIcon" class="w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-green-500/10 text-green-500 font-bold text-xl">✓</div>
+            <h3 id="tradeModalTitle" class="text-base font-bold text-qv-text">Status Zlecenia</h3>
+            <p id="tradeModalMsg" class="text-xs text-qv-muted">Zleczenie wykonano pomyślnie</p>
+            <button onclick="closeTradeModal()" class="w-full py-2 bg-qv-accent hover:bg-qv-accent-hover text-white text-xs font-bold rounded-xl transition-all">OK</button>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        let currentSymbol = 'AAPL';
+        let currentPrice = 0.0;
+        let currentRange = '3mo';
+        let currentInterval = '1d';
+        let chartType = 'CANDLE'; // CANDLE, LINE, AREA
+        let showSMA = false;
+        let cachedBars = [];
+        let userBalance = /*[[${wallet.balance}]]*/ 10000.0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectStockCard('AAPL');
+            fetchMarqueeRealtime();
+            setInterval(fetchMarqueeRealtime, 15000);
+        });
+
+        function fetchMarqueeRealtime() {
+            fetch('/trading/api/marquee')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success && data.items && data.items.length > 0) {
+                        let html = '';
+                        data.items.forEach(item => {
+                            const isPos = item.changePct >= 0;
+                            const sign = isPos ? '+' : '';
+                            const colorClass = isPos ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold';
+                            html += `<span class="flex items-center space-x-1.5 whitespace-nowrap">
+                                <span class="font-bold text-qv-text">${item.label}</span>
+                                <span class="${colorClass}">${item.price} (${sign}${item.changePct.toFixed(2)}%)</span>
+                            </span>`;
+                        });
+                        document.getElementById('marqueeTrack1').innerHTML = html;
+                        document.getElementById('marqueeTrack2').innerHTML = html;
+                    }
+                })
+                .catch(err => console.error("Error loading marquee items:", err));
+        }
+
+        function selectStockCard(symbol) {
+            document.getElementById('symbolSelect').value = symbol;
+            currentSymbol = symbol;
+            
+            // Highlight active card
+            document.querySelectorAll('.stock-card').forEach(card => {
+                card.classList.remove('stock-chip-active', 'border-indigo-500');
+                card.classList.add('border-transparent');
+            });
+            const activeCard = document.getElementById('card-' + symbol);
+            if (activeCard) {
+                activeCard.classList.remove('border-transparent');
+                activeCard.classList.add('stock-chip-active', 'border-indigo-500');
+            }
+
+            fetchTicker();
+            fetchCandles();
+        }
+
+        function filterStockOptions() {
+            const query = document.getElementById('stockSearchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.stock-card').forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                const sym = card.id.replace('card-', '').toLowerCase();
+                const matches = name.includes(query) || sym.includes(query);
+                card.style.display = matches ? 'flex' : 'none';
+            });
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active', 'bg-qv-surface-3', 'text-qv-text', 'font-bold'));
+            event.target.classList.add('active', 'bg-qv-surface-3', 'text-qv-text', 'font-bold');
+
+            let firstMatch = null;
+            document.querySelectorAll('.stock-card').forEach(card => {
+                const cardCat = card.getAttribute('data-category');
+                if (cat === 'ALL' || cardCat === cat) {
+                    card.style.display = 'flex';
+                    if (!firstMatch) firstMatch = card.id.replace('card-', '');
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (firstMatch && cat !== 'ALL') {
+                selectStockCard(firstMatch);
+            }
+        }
+
+        function setChartType(type) {
+            chartType = type;
+            document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active', 'bg-qv-surface-3', 'text-indigo-400'));
+            event.target.classList.add('active', 'bg-qv-surface-3', 'text-indigo-400');
+            renderChart(cachedBars);
+        }
+
+        function toggleSMA() {
+            showSMA = !showSMA;
+            const btn = document.getElementById('smaToggleBtn');
+            btn.className = showSMA ? "px-2.5 py-1 rounded-xl border border-indigo-500/40 bg-indigo-500/10 text-xs font-bold text-indigo-400 transition-all" : "px-2.5 py-1 rounded-xl border border-qv-border bg-qv-surface-2 text-xs font-semibold text-qv-muted hover:text-qv-text transition-all";
+            renderChart(cachedBars);
+        }
+
+        function setChartRange(range, interval) {
+            currentRange = range;
+            currentInterval = interval;
+            document.querySelectorAll('.range-btn').forEach(btn => btn.classList.remove('active', 'bg-qv-surface-3', 'text-indigo-400'));
+            event.target.classList.add('active', 'bg-qv-surface-3', 'text-indigo-400');
+            fetchCandles();
+        }
+
+        function fetchTicker() {
+            fetch(`/trading/api/ticker?symbol=${currentSymbol}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        currentPrice = data.price;
+                        document.getElementById('tickerPrice').innerText = '$' + data.price.toFixed(2);
+                        document.getElementById('orderPriceInput').value = data.price.toFixed(2);
+                        
+                        const changeEl = document.getElementById('tickerChange');
+                        const sign = data.changePercent >= 0 ? '+' : '';
+                        changeEl.innerText = `${sign}${data.changePercent.toFixed(2)}%`;
+                        changeEl.className = data.changePercent >= 0 ? 'text-base font-bold text-green-500' : 'text-base font-bold text-red-500';
+
+                        document.getElementById('tickerHigh').innerText = '$' + data.high24h.toFixed(2);
+                        document.getElementById('tickerLow').innerText = '$' + data.low24h.toFixed(2);
+
+                        calculateTotalCost();
+                        generateOrderBook(data.price);
+                    }
+                })
+                .catch(err => console.error("Error fetching ticker:", err));
+        }
+
+        function fetchCandles() {
+            const badge = document.getElementById('chartLoadingBadge');
+            badge.classList.remove('hidden');
+
+            fetch(`/trading/api/ohlcv?symbol=${currentSymbol}&range=${currentRange}&interval=${currentInterval}`)
+                .then(res => res.json())
+                .then(data => {
+                    badge.classList.add('hidden');
+                    if (data.success && data.bars) {
+                        cachedBars = data.bars;
+                        const activeCard = document.getElementById('card-' + currentSymbol);
+                        const name = activeCard ? activeCard.getAttribute('data-name') : currentSymbol;
+                        document.getElementById('chartTitle').innerText = `${currentSymbol} - ${name.toUpperCase()}`;
+                        renderChart(cachedBars);
+                    }
+                })
+                .catch(err => {
+                    badge.classList.add('hidden');
+                    console.error("Error fetching OHLCV:", err);
+                });
+        }
+
+        function renderChart(bars) {
+            const canvas = document.getElementById('candlestickCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!bars || bars.length === 0) return;
+
+            let minPrice = Infinity;
+            let maxPrice = -Infinity;
+            let maxVol = 0;
+
+            bars.forEach(b => {
+                if (b.low < minPrice) minPrice = b.low;
+                if (b.high > maxPrice) maxPrice = b.high;
+                if (b.volume > maxVol) maxVol = b.volume;
+            });
+
+            const padding = 35;
+            const chartHeight = (canvas.height - padding * 2) * 0.75;
+            const volHeight = (canvas.height - padding * 2) * 0.20;
+            const barWidth = Math.max(3, (canvas.width - padding * 2) / bars.length - 2);
+
+            // Draw Background Grid
+            ctx.strokeStyle = 'rgba(150, 150, 150, 0.08)';
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= 4; i++) {
+                let y = padding + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+
+            // Draw Volume Bars at bottom
+            bars.forEach((b, idx) => {
+                let x = padding + idx * (barWidth + 2);
+                let vH = maxVol > 0 ? (b.volume / maxVol) * volHeight : 0;
+                let vY = canvas.height - padding - vH;
+
+                ctx.fillStyle = b.close >= b.open ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+                ctx.fillRect(x, vY, barWidth, vH);
+            });
+
+            // Draw Price Area / Line / Candlesticks
+            if (chartType === 'AREA') {
+                ctx.beginPath();
+                bars.forEach((b, idx) => {
+                    let x = padding + idx * (barWidth + 2) + barWidth / 2;
+                    let y = padding + chartHeight - ((b.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.strokeStyle = '#6366f1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                let grad = ctx.createLinearGradient(0, padding, 0, padding + chartHeight);
+                grad.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
+                grad.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+                ctx.lineTo(padding + (bars.length - 1) * (barWidth + 2) + barWidth / 2, padding + chartHeight);
+                ctx.lineTo(padding + barWidth / 2, padding + chartHeight);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+            } else if (chartType === 'LINE') {
+                ctx.beginPath();
+                bars.forEach((b, idx) => {
+                    let x = padding + idx * (barWidth + 2) + barWidth / 2;
+                    let y = padding + chartHeight - ((b.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+            } else { // CANDLE
+                bars.forEach((b, idx) => {
+                    let x = padding + idx * (barWidth + 2);
+                    let openY = padding + chartHeight - ((b.open - minPrice) / (maxPrice - minPrice)) * chartHeight;
+                    let closeY = padding + chartHeight - ((b.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
+                    let highY = padding + chartHeight - ((b.high - minPrice) / (maxPrice - minPrice)) * chartHeight;
+                    let lowY = padding + chartHeight - ((b.low - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+                    const isGreen = b.close >= b.open;
+                    ctx.strokeStyle = isGreen ? '#22c55e' : '#ef4444';
+                    ctx.fillStyle = isGreen ? '#22c55e' : '#ef4444';
+
+                    // Wick
+                    ctx.beginPath();
+                    ctx.moveTo(x + barWidth / 2, highY);
+                    ctx.lineTo(x + barWidth / 2, lowY);
+                    ctx.stroke();
+
+                    // Body
+                    let bodyY = Math.min(openY, closeY);
+                    let bodyHeight = Math.max(2, Math.abs(closeY - openY));
+                    ctx.fillRect(x, bodyY, barWidth, bodyHeight);
+                });
+            }
+
+            // SMA 20 Overlay Line
+            if (showSMA && bars.length >= 5) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.8;
+                let period = 5;
+                for (let i = period - 1; i < bars.length; i++) {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) sum += bars[i - j].close;
+                    let avg = sum / period;
+
+                    let x = padding + i * (barWidth + 2) + barWidth / 2;
+                    let y = padding + chartHeight - ((avg - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+                    if (i === period - 1) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function generateOrderBook(basePrice) {
+            const asksContainer = document.getElementById('orderBookAsks');
+            const bidsContainer = document.getElementById('orderBookBids');
+            document.getElementById('orderBookCurrent').innerText = `$${basePrice.toFixed(2)} (LIVE MARKET)`;
+
+            let asksHTML = '';
+            for (let i = 3; i >= 1; i--) {
+                let p = basePrice + i * 0.12;
+                let qty = (Math.random() * 200 + 30).toFixed(0);
+                let depthPct = Math.min(100, (qty / 230) * 100);
+                asksHTML += `<div class="relative flex justify-between items-center py-0.5 px-2 text-red-400 depth-bar-ask rounded">
+                    <div class="absolute inset-y-0 right-0 bg-red-500/10 rounded" style="width: ${depthPct}%;"></div>
+                    <span class="relative z-10 font-bold">$${p.toFixed(2)}</span>
+                    <span class="relative z-10 text-qv-muted">${qty} wol.</span>
+                </div>`;
+            }
+            asksContainer.innerHTML = asksHTML;
+
+            let bidsHTML = '';
+            for (let i = 1; i <= 3; i++) {
+                let p = basePrice - i * 0.12;
+                let qty = (Math.random() * 200 + 30).toFixed(0);
+                let depthPct = Math.min(100, (qty / 230) * 100);
+                bidsHTML += `<div class="relative flex justify-between items-center py-0.5 px-2 text-green-400 depth-bar-bid rounded">
+                    <div class="absolute inset-y-0 right-0 bg-green-500/10 rounded" style="width: ${depthPct}%;"></div>
+                    <span class="relative z-10 font-bold">$${p.toFixed(2)}</span>
+                    <span class="relative z-10 text-qv-muted">${qty} wol.</span>
+                </div>`;
+            }
+            bidsContainer.innerHTML = bidsHTML;
+        }
+
+        function openCompanyModal() {
+            fetch(`/trading/api/details?symbol=${currentSymbol}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        document.getElementById('modalStockBadge').innerText = (data.symbol || 'S').substring(0, 1);
+                        document.getElementById('modalStockName').innerText = `${data.name || data.symbol} (${data.symbol})`;
+                        document.getElementById('modalStockSector').innerText = `${data.sector || 'Giełda'} • ${data.category || 'Papiery'}`;
+                        document.getElementById('modalMarketCap').innerText = data.marketCap || '--';
+                        document.getElementById('modalPERatio').innerText = data.peRatio || '--';
+                        document.getElementById('modalDivYield').innerText = data.divYield || '--';
+                        document.getElementById('modalAvgVol').innerText = data.avgVolume || '--';
+                        document.getElementById('modalStockDesc').innerText = data.desc || 'Brak dodatkowego opisu.';
+
+                        const low = typeof data.low52 === 'number' ? data.low52 : parseFloat(data.low52) || 0;
+                        const high = typeof data.high52 === 'number' ? data.high52 : parseFloat(data.high52) || 0;
+                        const price = typeof data.price === 'number' ? data.price : parseFloat(data.price) || 0;
+
+                        document.getElementById('modal52RangeText').innerText = `$${low.toFixed(2)} - $${high.toFixed(2)}`;
+                        
+                        let pct = 50;
+                        if (high > low) {
+                            pct = ((price - low) / (high - low)) * 100;
+                            pct = Math.max(5, Math.min(95, pct));
+                        }
+                        document.getElementById('modal52Bar').style.width = pct + '%';
+
+                        document.getElementById('companyModal').classList.remove('hidden');
+                    } else {
+                        alert("Nie udało się pobrać szczegółowych danych dla symbolu: " + currentSymbol);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error opening company modal:", err);
+                    alert("Wystąpił błąd podczas ładowania podglądu spółki.");
+                });
+        }
+
+        function closeCompanyModal() {
+            document.getElementById('companyModal').classList.add('hidden');
+        }
+
+        function setSide(side) {
+            document.getElementById('orderSide').value = side;
+            const buyBtn = document.getElementById('tabBuy');
+            const sellBtn = document.getElementById('tabSell');
+            const submitBtn = document.getElementById('submitOrderBtn');
+
+            if (side === 'BUY') {
+                buyBtn.className = "flex-1 py-2.5 text-center text-sm font-black border-b-2 border-green-500 text-green-500 transition-all";
+                sellBtn.className = "flex-1 py-2.5 text-center text-sm font-bold text-qv-muted hover:text-qv-text transition-all";
+                submitBtn.className = "w-full py-3 bg-green-500 hover:bg-green-600 text-white font-black text-sm rounded-xl shadow-lg transition-all transform active:scale-95";
+                submitBtn.innerText = "Kup Akcje (BUY)";
+            } else {
+                sellBtn.className = "flex-1 py-2.5 text-center text-sm font-black border-b-2 border-red-500 text-red-500 transition-all";
+                buyBtn.className = "flex-1 py-2.5 text-center text-sm font-bold text-qv-muted hover:text-qv-text transition-all";
+                submitBtn.className = "w-full py-3 bg-red-500 hover:bg-red-600 text-white font-black text-sm rounded-xl shadow-lg transition-all transform active:scale-95";
+                submitBtn.innerText = "Sprzedaj Akcje (SELL)";
+            }
+        }
+
+        function setOrderType(type) {
+            const btnMarket = document.getElementById('typeMarket');
+            const btnLimit = document.getElementById('typeLimit');
+
+            if (type === 'MARKET') {
+                btnMarket.className = "py-1.5 rounded-lg font-bold bg-qv-surface-3 text-qv-text transition-all";
+                btnLimit.className = "py-1.5 rounded-lg font-semibold text-qv-muted transition-all";
+                document.getElementById('orderPriceInput').readOnly = true;
+            } else {
+                btnLimit.className = "py-1.5 rounded-lg font-bold bg-qv-surface-3 text-qv-text transition-all";
+                btnMarket.className = "py-1.5 rounded-lg font-semibold text-qv-muted transition-all";
+                document.getElementById('orderPriceInput').readOnly = false;
+            }
+        }
+
+        function setQuickShares(pct) {
+            if (currentPrice <= 0) return;
+            const maxShares = userBalance / currentPrice;
+            const targetShares = (maxShares * pct).toFixed(2);
+            document.getElementById('orderSharesInput').value = targetShares;
+            calculateTotalCost();
+        }
+
+        function calculateTotalCost() {
+            const shares = parseFloat(document.getElementById('orderSharesInput').value) || 0;
+            const price = parseFloat(document.getElementById('orderPriceInput').value) || 0;
+            const cost = shares * price;
+            document.getElementById('totalCostDisplay').innerText = '$' + cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('unitHint').innerText = `${shares.toFixed(2)} szt.`;
+        }
+
+        function submitOrder(e) {
+            e.preventDefault();
+            const side = document.getElementById('orderSide').value;
+            const shares = document.getElementById('orderSharesInput').value;
+
+            const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+            const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+            const formData = new URLSearchParams();
+            formData.append('side', side);
+            formData.append('symbol', currentSymbol);
+            formData.append('shares', shares);
+
+            fetch('/trading/order', {
+                method: 'POST',
+                headers: {
+                    [CSRF_HEADER]: CSRF_TOKEN,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                showTradeModal(data.success, data.message);
+                if (data.success && data.newBalance !== undefined) {
+                    userBalance = data.newBalance;
+                    document.getElementById('walletBalanceDisplay').innerText = '$' + data.newBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                }
+            })
+            .catch(err => showTradeModal(false, err.message));
+        }
+
+        function quickSellStock(symbol, shares) {
+            selectStockCard(symbol);
+            setSide('SELL');
+            document.getElementById('orderSharesInput').value = shares;
+            calculateTotalCost();
+        }
+
+        function showTradeModal(success, msg) {
+            const modal = document.getElementById('tradeModal');
+            const icon = document.getElementById('tradeModalIcon');
+            const title = document.getElementById('tradeModalTitle');
+            const msgEl = document.getElementById('tradeModalMsg');
+
+            if (success) {
+                icon.className = "w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-green-500/10 text-green-400 font-bold text-xl";
+                icon.innerText = "✓";
+                title.innerText = "Zlecenie zrealizowane";
+            } else {
+                icon.className = "w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-red-500/10 text-red-400 font-bold text-xl";
+                icon.innerText = "✕";
+                title.innerText = "Błąd zlecenia";
+            }
+            msgEl.innerText = msg;
+            modal.classList.remove('hidden');
+        }
+
+        function closeTradeModal() {
+            document.getElementById('tradeModal').classList.add('hidden');
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

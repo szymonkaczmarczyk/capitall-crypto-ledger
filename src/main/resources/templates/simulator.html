@@ -15,6 +15,49 @@
 </head>
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
+    <div th:replace="~{fragments/nav :: mobilebar('simulator')}"></div>
+
+    <!-- Trailing Stop Modal -->
+    <div id="trailingStopModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-qv-surface border border-qv-border rounded-2xl w-full max-w-md shadow-qv overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-qv-border flex justify-between items-center bg-qv-surface-2/30">
+                <h3 class="text-lg font-bold text-qv-text flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    Trailing Stop-Loss
+                </h3>
+                <button onclick="closeTrailingStopModal()" class="text-qv-muted hover:text-qv-text transition-colors">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <p class="text-sm text-qv-muted mb-6">Zabezpiecz swoje zyski. System automatycznie przesunie limit sprzedaży do góry wraz z rosnącą ceną. Jeśli cena spadnie o ustawiony procent względem szczytu, pozycja zostanie automatycznie sprzedana.</p>
+                
+                <input type="hidden" id="tsHoldingId">
+                
+                <div class="space-y-4">
+                    <label class="flex items-center gap-3 p-4 border border-qv-border rounded-xl cursor-pointer hover:bg-qv-surface-2 transition-colors">
+                        <input type="checkbox" id="tsEnabled" class="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-qv-bg border-qv-border cursor-pointer">
+                        <span class="text-sm font-bold text-qv-text">Aktywuj Trailing Stop</span>
+                    </label>
+                    
+                    <div id="tsPercentWrapper" class="space-y-2 opacity-50 transition-opacity">
+                        <label class="text-xs font-bold text-qv-muted uppercase tracking-wider">Tolerancja spadku (%)</label>
+                        <div class="relative">
+                            <input type="number" id="tsPercent" step="0.1" min="0.1" max="50" class="bg-qv-bg border border-qv-border rounded-xl px-4 py-2.5 text-sm text-qv-text font-black w-full focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50" placeholder="5.0" disabled>
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-qv-muted font-bold">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-qv-border bg-qv-surface-2/30 flex justify-end gap-3">
+                <button onclick="closeTrailingStopModal()" class="px-5 py-2.5 rounded-xl border border-qv-border hover:bg-qv-surface-3 text-sm font-bold text-qv-text transition-colors">Anuluj</button>
+                <button onclick="saveTrailingStop()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black transition-colors shadow-md">Zapisz Ustawienia</button>
+            </div>
+        </div>
+    </div>
+
     <aside th:replace="~{fragments/nav :: sidebar('simulator')}"></aside>
 
     <main class="flex-1 flex flex-col overflow-y-auto">
@@ -378,11 +421,12 @@
                                         <th class="py-3.5 px-4 text-right">Aktualny kurs</th>
                                         <th class="py-3.5 px-4 text-right">Wartość</th>
                                         <th class="py-3.5 px-6 text-right whitespace-nowrap">Zysk / Strata</th>
+                                        <th class="py-3.5 px-4 text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:if="${#lists.isEmpty(holdings)}" class="border-b border-qv-border/30 no-holdings-row">
-                                        <td colspan="6" class="py-8 text-center text-qv-muted">Twój wirtualny portfel jest obecnie pusty. Dokonaj pierwszego zakupu!</td>
+                                        <td colspan="7" class="py-8 text-center text-qv-muted">Twój wirtualny portfel jest obecnie pusty. Dokonaj pierwszego zakupu!</td>
                                     </tr>
                                     <tr th:each="item : ${holdings}" th:id="'row-' + ${item.holding.symbol}" class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors holding-row" th:data-symbol="${item.holding.symbol}" th:data-shares="${item.holding.shares}" th:data-avgcost="${item.holding.avgCost}">
                                         <td class="py-3.5 px-6 flex items-center gap-3">
@@ -399,6 +443,16 @@
                                         <td class="py-3.5 px-6 text-right font-bold pnl-cell whitespace-nowrap">
                                             <span th:class="${item.pnl.doubleValue() >= 0 ? 'text-green-500' : 'text-red-500'}"
                                                   th:text="${item.pnl.doubleValue() >= 0 ? '+$' : '-$'} + ${#numbers.formatDecimal(item.pnl.abs(), 1, 2)} + ' (' + ${item.roi} + '%)'"></span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center">
+                                            <button th:data-id="${item.holding.id}"
+                                                    th:data-enabled="${item.holding.trailingStopEnabled}"
+                                                    onclick="openTrailingStopModal(this.getAttribute('data-id'), this.getAttribute('data-enabled') === 'true')" 
+                                                    class="p-2 rounded-lg transition-colors border text-xs font-bold"
+                                                    th:classappend="${item.holding.trailingStopEnabled} ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-qv-surface-2 text-qv-muted border-qv-border hover:bg-qv-surface-3'"
+                                                    title="Skonfiguruj Trailing Stop-Loss">
+                                                <svg class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -456,8 +510,9 @@
                             <tr th:each="t : ${trades}" class="border-b border-qv-border/30 hover:bg-qv-surface-2/20 transition-colors">
                                 <td class="py-3 px-6 text-qv-muted text-xs" th:text="${#temporals.format(t.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></td>
                                 <td class="py-3 px-4">
-                                    <span th:class="${#strings.toString(t.side) == 'BUY' ? 'text-green-500 bg-green-500/10 border border-green-500/20' : 'text-red-500 bg-red-500/10 border border-red-500/20'}"
-                                          class="px-2 py-0.5 rounded-full text-[10px] font-bold" th:text="${#strings.toString(t.side) == 'BUY' ? 'KUPNO' : 'SPRZEDAŻ'}"></span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                                          th:classappend="${#strings.toString(t.side) == 'BUY' ? 'text-green-500 bg-green-500/10 border border-green-500/20' : 'text-red-500 bg-red-500/10 border border-red-500/20'}"
+                                          th:text="${#strings.toString(t.side) == 'BUY' ? 'KUPNO' : 'SPRZEDAŻ'}"></span>
                                 </td>
                                 <td class="py-3 px-4 font-bold text-qv-text" th:text="${t.symbol}"></td>
                                 <td class="py-3 px-4 text-qv-muted" th:text="${t.name}"></td>
@@ -1103,6 +1158,69 @@
                 });
             }, 5000);
         });
+
+        function openTrailingStopModal(holdingId, isEnabled) {
+            document.getElementById('tsHoldingId').value = holdingId;
+            const enabledCheckbox = document.getElementById('tsEnabled');
+            const percentInput = document.getElementById('tsPercent');
+            const wrapper = document.getElementById('tsPercentWrapper');
+            
+            enabledCheckbox.checked = isEnabled;
+            percentInput.disabled = !isEnabled;
+            wrapper.style.opacity = isEnabled ? '1' : '0.5';
+            
+            document.getElementById('trailingStopModal').classList.remove('hidden');
+        }
+
+        function closeTrailingStopModal() {
+            document.getElementById('trailingStopModal').classList.add('hidden');
+        }
+
+        document.getElementById('tsEnabled').addEventListener('change', function(e) {
+            const isEnabled = e.target.checked;
+            const percentInput = document.getElementById('tsPercent');
+            const wrapper = document.getElementById('tsPercentWrapper');
+            
+            percentInput.disabled = !isEnabled;
+            wrapper.style.opacity = isEnabled ? '1' : '0.5';
+            if (isEnabled && !percentInput.value) {
+                percentInput.value = "5.0"; // default 5%
+            }
+        });
+
+        function saveTrailingStop() {
+            const holdingId = document.getElementById('tsHoldingId').value;
+            const enabled = document.getElementById('tsEnabled').checked;
+            const percent = document.getElementById('tsPercent').value;
+            
+            if (enabled && (!percent || percent <= 0)) {
+                alert("Proszę podać poprawny procent (większy od 0).");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('holdingId', holdingId);
+            formData.append('enabled', enabled);
+            if (enabled) {
+                formData.append('percent', percent);
+            }
+
+            fetch('/simulator/trailing-stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Wystąpił błąd');
+                }
+            })
+            .catch(err => alert(err));
+        }
+
 </script>
 </body>
 </html>

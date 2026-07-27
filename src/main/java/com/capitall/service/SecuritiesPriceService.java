@@ -32,11 +32,11 @@ public class SecuritiesPriceService {
         "DOGE-USD", "LTC-USD", "LINK-USD", "BNB-USD", "AVAX-USD", "POL-USD", "SHIB-USD",
         "AAPL", "TSLA", "MSFT", "NVDA", "GOOGL", "AMZN", "META",
         "NFLX", "AMD", "INTC", "BABA", "NIO",
-        "CDR.WA", "PKO.WA", "PKN.WA", "KGH.WA", "LPP.WA",
+        "CDR.WA", "PKO.WA", "PKN.WA", "KGH.WA", "LPP.WA", "ALE.WA", "DNP.WA",
         "SPY", "QQQ"
     );
 
-    private static final Set<String> WSE_SHORT = Set.of("CDR","PKO","PKN","KGH","LPP");
+    private static final Set<String> WSE_SHORT = Set.of("CDR","PKO","PKN","KGH","LPP","ALE","DNP","PZU","JSW","ALR","MBK","OPL");
     private static final Set<String> CRYPTO_SHORT = Set.of(
         "BTC","ETH","SOL","ADA","DOT","XRP","DOGE","LTC","LINK","BNB","AVAX","POL","SHIB"
     );

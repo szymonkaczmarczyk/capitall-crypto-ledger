@@ -40,6 +40,12 @@ public class RecurringOrder {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "smart_dca", nullable = false)
+    private Boolean smartDca = false;
+
+    @Column(name = "smart_multiplier", precision = 5, scale = 2)
+    private BigDecimal smartMultiplier = BigDecimal.valueOf(2.0);
+
     public RecurringOrder() {}
 
     public RecurringOrder(UUID userId, String symbol, BigDecimal usdAmount, Integer intervalDays, LocalDateTime nextExecution) {
@@ -83,4 +89,10 @@ public class RecurringOrder {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getSmartDca() { return smartDca; }
+    public void setSmartDca(Boolean smartDca) { this.smartDca = smartDca; }
+
+    public BigDecimal getSmartMultiplier() { return smartMultiplier; }
+    public void setSmartMultiplier(BigDecimal smartMultiplier) { this.smartMultiplier = smartMultiplier; }
 }

@@ -17,26 +17,6 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                <div class="bg-qv-surface border border-qv-border rounded-xl p-6 shadow-qv transition-colors-all">
-                    <h3 class="text-md font-bold text-qv-text mb-2">Kalkulator ryzyka i rebalansingu</h3>
-                    <p class="text-xs text-qv-muted mb-4">Podaj kwotę kapitału, aby zasymulować zbilansowany podział ryzyka.</p>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-qv-text mb-1">Kwota kapitału ($)</label>
-                            <input type="number" id="rebalanceInput" value="10000" class="w-full bg-qv-surface-2 border border-qv-border rounded-md px-3 py-2 text-sm text-qv-text focus:outline-none focus:ring-1 focus:ring-qv-accent transition-colors-all" />
-                        </div>
-                        <button onclick="calculateRebalance()" class="w-full py-2 bg-qv-accent hover:bg-qv-accent-hover text-white font-semibold text-sm rounded-md transition-colors">
-                            Oblicz rebalancing
-                        </button>
-
-                        <div id="rebalanceResult" class="hidden p-4 bg-qv-surface-2 border border-qv-border rounded-lg space-y-2 text-xs text-qv-text transition-colors-all">
-                            <div class="flex justify-between"><span>Binance (50%):</span><span class="font-bold" id="resBinance">$0.00</span></div>
-                            <div class="flex justify-between"><span>Kraken (30%):</span><span class="font-bold" id="resKraken">$0.00</span></div>
-                            <div class="flex justify-between"><span>Cold Storage (20%):</span><span class="font-bold" id="resCold">$0.00</span></div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="bg-qv-surface border border-qv-border rounded-xl p-6 shadow-qv transition-colors-all flex flex-col justify-between">
                     <div>
@@ -93,19 +73,7 @@
         const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
         const csrfInit = (extra) => ({ method: 'POST', credentials: 'same-origin', headers: Object.assign({ [CSRF_HEADER]: CSRF_TOKEN }, extra || {}) });
 
-        function calculateRebalance() {
-            const amount = document.getElementById('rebalanceInput').value;
-            if(!amount || amount <= 0) return;
 
-            fetch('/tools/rebalance?amount=' + amount, csrfInit())
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('resBinance').innerText = '$' + parseFloat(data.binance).toLocaleString(undefined, {minimumFractionDigits: 2});
-                    document.getElementById('resKraken').innerText = '$' + parseFloat(data.kraken).toLocaleString(undefined, {minimumFractionDigits: 2});
-                    document.getElementById('resCold').innerText = '$' + parseFloat(data.coldStorage).toLocaleString(undefined, {minimumFractionDigits: 2});
-                    document.getElementById('rebalanceResult').classList.remove('hidden');
-                });
-        }
 
         function testApi() {
             const btn = document.getElementById('testApiBtn');

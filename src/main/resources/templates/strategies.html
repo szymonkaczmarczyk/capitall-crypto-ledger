@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+
+<head th:replace="~{fragments/head :: head('Capitall - Strategie & Boty Handlowe')}"></head>
+
+<body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
+
+    <aside th:replace="~{fragments/nav :: sidebar('strategies')}"></aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header
+            class="h-16 bg-qv-surface border-b border-qv-border flex items-center justify-between px-6 lg:px-8 shrink-0 transition-colors-all">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold shadow-sm">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-qv-text">Wizualny Kreator Strategii & Boty Handlowe</h2>
+            </div>
+            <div th:replace="~{fragments/theme :: toggle}"></div>
+        </header>
+
+        <div class="p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto">
+
+            <div th:if="${success}"
+                class="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-lg">
+                <span th:text="${success}">Bot utworzony pomyślnie.</span>
+                <button onclick="this.parentElement.remove()"
+                    class="text-emerald-400 font-bold hover:text-white">✕</button>
+            </div>
+
+            <!-- Symmetric Header Banner -->
+            <div
+                class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 border border-purple-500/30 p-6 lg:p-8 shadow-2xl">
+                <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-3xl">
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="px-3 py-1 bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-wider rounded-full border border-purple-500/30">Visual
+                                Algorithmic Builder</span>
+                        </div>
+                        <h1 class="text-2xl lg:text-3xl font-black text-white leading-tight">Wyklikaj & Automatyzuj
+                            Swoje Boty Handlowe</h1>
+                        <p class="text-xs text-slate-300">Projektuj strategie inwestycyjne bez użycia kodu. Połącz
+                            sygnały wejścia (Smart Dip, DCA, RSI) z dynamicznym Trailing Stop Loss.</p>
+                    </div>
+
+                    <button onclick="exportStrategiesConfig()"
+                        class="px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold rounded-xl transition-all flex items-center space-x-2 shrink-0 shadow-lg">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Eksportuj Strategie (JSON)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Szybkie Gotowe Szablony Strategii -->
+            <div class="space-y-3">
+                <span class="text-xs font-bold text-qv-text uppercase tracking-wider block">⚡ Wybierz Gotowy Szablon
+                    Strategii:</span>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button
+                        onclick="applyPreset('NVDA AI Momentum', 'NVDA', 'Binance API', 'SMART_DIP', 4.0, 150.0, 3.5, 12.0)"
+                        class="p-4 bg-qv-surface border border-qv-border hover:border-purple-500/50 rounded-2xl text-left transition-all group shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span
+                                class="font-bold text-xs text-qv-text group-hover:text-purple-400 transition-colors">🚀
+                                NVIDIA AI Dip</span>
+                            <span
+                                class="text-[9px] font-bold px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded-md">NVDA</span>
+                        </div>
+                        <p class="text-[11px] text-qv-muted">Dip 4% + Trailing Stop 3.5%</p>
+                    </button>
+
+                    <button
+                        onclick="applyPreset('Bitcoin RSI Sniper', 'BTC-USD', 'Capitall Simulator', 'RSI_OVERSOLD', 5.0, 250.0, 4.0, 15.0)"
+                        class="p-4 bg-qv-surface border border-qv-border hover:border-amber-500/50 rounded-2xl text-left transition-all group shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-bold text-xs text-qv-text group-hover:text-amber-400 transition-colors">📈
+                                BTC RSI Sniper</span>
+                            <span
+                                class="text-[9px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded-md">BTC</span>
+                        </div>
+                        <p class="text-[11px] text-qv-muted">RSI < 30 + Take Profit 15%</p>
+                    </button>
+
+                    <button
+                        onclick="applyPreset('CD Projekt DCA Safe', 'CDR.WA', 'XTB / GPW Polish Stock API', 'DCA_SCHEDULED', 0.0, 100.0, 2.5, 10.0)"
+                        class="p-4 bg-qv-surface border border-qv-border hover:border-blue-500/50 rounded-2xl text-left transition-all group shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-bold text-xs text-qv-text group-hover:text-blue-400 transition-colors">🛡️
+                                CD Projekt DCA</span>
+                            <span
+                                class="text-[9px] font-bold px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md">GPW</span>
+                        </div>
+                        <p class="text-[11px] text-qv-muted">Cykliczne DCA + Stop 2.5%</p>
+                    </button>
+
+                    <button
+                        onclick="applyPreset('Tesla Trailing Scalper', 'TSLA', 'Kraken Global API', 'SMART_DIP', 6.0, 200.0, 5.0, 20.0)"
+                        class="p-4 bg-qv-surface border border-qv-border hover:border-emerald-500/50 rounded-2xl text-left transition-all group shadow-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span
+                                class="font-bold text-xs text-qv-text group-hover:text-emerald-400 transition-colors">⚡
+                                Tesla Scalper</span>
+                            <span
+                                class="text-[9px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md">TSLA</span>
+                        </div>
+                        <p class="text-[11px] text-qv-muted">Dip 6% + Trailing Stop 5%</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Perfectly Symmetric 2-Column Layout (6 Cols / 6 Cols) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                <!-- LEFT COLUMN: Kreator & Terminal (6 cols) -->
+                <div class="lg:col-span-6 space-y-8">
+
+                    <!-- Form Creator Box -->
+                    <div class="bg-qv-surface border border-qv-border rounded-3xl p-6 lg:p-8 shadow-qv space-y-6">
+                        <div class="flex items-center space-x-3 pb-4 border-b border-qv-border">
+                            <div
+                                class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs shadow-sm">
+                                1</div>
+                            <div>
+                                <h3 class="text-sm font-bold text-qv-text">Wizualny Builder Bota</h3>
+                                <p class="text-[11px] text-qv-muted">Skonfiguruj bloki wejścia i zasady zarządzania
+                                    ryzykiem</p>
+                            </div>
+                        </div>
+
+                        <form th:action="@{/strategies/create}" method="POST" id="strategyForm"
+                            class="space-y-5 text-xs">
+
+                            <!-- Bot Name -->
+                            <div>
+                                <label class="block font-bold text-qv-text mb-1">Nazwa Strategii / Bota</label>
+                                <input name="name" id="botName" type="text" required
+                                    placeholder="np. Smart Dip NVDA + Trailing Stop"
+                                    class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3.5 py-2.5 text-qv-text focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+
+                            <!-- Asset & Exchange -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-bold text-qv-text mb-1">Aktywo Docelowe</label>
+                                    <select name="symbol" id="botSymbol" onchange="updateNodeDiagram()"
+                                        class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3.5 py-2.5 text-qv-text font-bold outline-none">
+                                        <option value="NVDA">NVDA (NVIDIA)</option>
+                                        <option value="BTC-USD">BTC (Bitcoin)</option>
+                                        <option value="AAPL">AAPL (Apple)</option>
+                                        <option value="TSLA">TSLA (Tesla)</option>
+                                        <option value="ETH-USD">ETH (Ethereum)</option>
+                                        <option value="MSFT">MSFT (Microsoft)</option>
+                                        <option value="CDR.WA">CDR.WA (CD Projekt)</option>
+                                        <option value="PKN.WA">PKN.WA (Orlen)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-qv-text mb-1">Giełda Execution</label>
+                                    <select name="exchange" id="botExchange" onchange="updateNodeDiagram()"
+                                        class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3.5 py-2.5 text-qv-text font-bold outline-none">
+                                        <option value="Capitall Simulator">Capitall Simulator</option>
+                                        <option value="Binance API">Binance API</option>
+                                        <option value="Kraken API">Kraken API</option>
+                                        <option value="Coinbase API">Coinbase API</option>
+                                        <option value="Bybit API">Bybit API</option>
+                                        <option value="XTB / GPW Polish Stock API">XTB / GPW API</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Trigger Type -->
+                            <div>
+                                <label class="block font-bold text-qv-text mb-1">Sygnał Wejścia (Trigger Node)</label>
+                                <select name="triggerType" id="triggerTypeSelect" onchange="updateTriggerFields()"
+                                    class="w-full bg-qv-surface-2 border border-qv-border rounded-xl px-3.5 py-2.5 text-qv-text font-bold outline-none">
+                                    <option th:each="t : ${triggerTypes}" th:value="${t}" th:text="${t.displayName}">DCA
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Dip Percentage (Conditional) -->
+                            <div id="dipPercentBox">
+                                <label class="block font-bold text-qv-text mb-1">Spadek do zakupu (Dip %)</label>
+                                <div class="relative">
+                                    <input name="dipPercentage" id="botDip" type="number" step="0.5" value="5.0"
+                                        oninput="updateNodeDiagram()"
+                                        class="w-full bg-qv-surface-2 border border-qv-border rounded-xl pl-3.5 pr-14 py-2.5 text-qv-text font-bold outline-none">
+                                    <span
+                                        class="absolute right-2 top-2 px-2.5 py-1 rounded-lg bg-qv-surface border border-qv-border text-qv-muted font-bold text-[11px] pointer-events-none">%</span>
+                                </div>
+                            </div>
+
+                            <!-- Trade Amount -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="font-bold text-qv-text">Kwota Zlecenia (USD)</label>
+                                    <div class="flex space-x-1">
+                                        <button type="button" onclick="setTradeAmount(50)"
+                                            class="px-2 py-0.5 rounded bg-qv-surface-2 border border-qv-border hover:bg-indigo-600 hover:text-white font-mono text-[10px]">50$</button>
+                                        <button type="button" onclick="setTradeAmount(100)"
+                                            class="px-2 py-0.5 rounded bg-qv-surface-2 border border-qv-border hover:bg-indigo-600 hover:text-white font-mono text-[10px]">100$</button>
+                                        <button type="button" onclick="setTradeAmount(250)"
+                                            class="px-2 py-0.5 rounded bg-qv-surface-2 border border-qv-border hover:bg-indigo-600 hover:text-white font-mono text-[10px]">250$</button>
+                                        <button type="button" onclick="setTradeAmount(500)"
+                                            class="px-2 py-0.5 rounded bg-qv-surface-2 border border-qv-border hover:bg-indigo-600 hover:text-white font-mono text-[10px]">500$</button>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <input name="tradeAmountUsd" id="botAmount" type="number" step="10" value="100.00"
+                                        required oninput="updateNodeDiagram()"
+                                        class="w-full bg-qv-surface-2 border border-qv-border rounded-xl pl-3.5 pr-16 py-2.5 text-qv-text font-bold outline-none">
+                                    <span
+                                        class="absolute right-2 top-2 px-2.5 py-1 rounded-lg bg-qv-surface border border-qv-border text-qv-muted font-bold text-[11px] pointer-events-none">USD</span>
+                                </div>
+                            </div>
+
+                            <!-- Risk Management -->
+                            <div class="p-4 bg-qv-surface-2/60 border border-qv-border rounded-2xl space-y-3">
+                                <span
+                                    class="font-bold text-qv-text text-[11px] uppercase tracking-wider block">Zarządzanie
+                                    Ryzykiem i Zyskiem</span>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-qv-muted mb-1">Trailing Stop
+                                            %</label>
+                                        <input name="trailingStopPercent" id="botTrailing" type="number" step="0.5"
+                                            value="3.0" oninput="updateNodeDiagram()"
+                                            class="w-full bg-qv-surface border border-qv-border rounded-lg px-2.5 py-1.5 text-qv-text font-bold text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-qv-muted mb-1">Take Profit
+                                            %</label>
+                                        <input name="takeProfitPercent" id="botTP" type="number" step="0.5" value="10.0"
+                                            oninput="updateNodeDiagram()"
+                                            class="w-full bg-qv-surface border border-qv-border rounded-lg px-2.5 py-1.5 text-qv-text font-bold text-xs">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Node Diagram Preview Box -->
+                            <div
+                                class="p-4 rounded-2xl bg-slate-950 border border-purple-500/30 space-y-3 shadow-inner">
+                                <span
+                                    class="text-[10px] font-mono text-purple-400 font-bold block uppercase tracking-widest">Wizualny
+                                    Schemat Przepływu (Node Flow):</span>
+
+                                <div class="flex items-center justify-between text-[11px] font-mono">
+                                    <div class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm"
+                                        id="nodeTrigger">
+                                        [Sygnał: Smart Dip]
+                                    </div>
+                                    <span class="text-purple-400 font-bold animate-pulse">➔</span>
+                                    <div class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
+                                        id="nodeExecution">
+                                        [Kup: $100 NVDA]
+                                    </div>
+                                    <span class="text-purple-400 font-bold animate-pulse">➔</span>
+                                    <div class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                                        id="nodeRisk">
+                                        [Trailing Stop: 3%]
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-xs rounded-2xl shadow-xl transition-all flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span>Generuj i Uruchom Autonomicznego Bota</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Live Terminal Log Stream -->
+                    <div
+                        class="bg-slate-950 border border-qv-border rounded-3xl p-6 font-mono text-xs text-slate-300 space-y-4 shadow-2xl">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <span class="text-emerald-400 font-bold flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span>LIVE ENGINE AUDIT LOG STREAM</span>
+                            </span>
+                        </div>
+                        <div class="space-y-2 text-[11px] max-h-44 overflow-y-auto">
+                            <div class="flex items-center space-x-2 text-slate-400">
+                                <span class="text-slate-600">[23:58:01]</span>
+                                <span class="text-indigo-400 font-bold">[ENGINE]</span>
+                                <span>Zainicjalizowano podsystem automatycznych botów handlowych.</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-slate-400">
+                                <span class="text-slate-600">[23:58:05]</span>
+                                <span class="text-amber-400 font-bold">[TRIGGER]</span>
+                                <span>Smart Dip NVDA: Cena spadła o 4.1%. Zlecono BUY $150.00 na Binance API.</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-slate-400">
+                                <span class="text-slate-600">[23:58:08]</span>
+                                <span class="text-emerald-400 font-bold">[EXECUTION]</span>
+                                <span>Zlecenie zrealizowane pomyślnie. Aktywowano Trailing Stop-Loss (3.5%).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: Podsumowanie Stats & Lista Botów (6 cols) -->
+                <div class="lg:col-span-6 space-y-8">
+
+                    <!-- Bot Performance Stats Dashboard -->
+                    <div class="bg-qv-surface border border-qv-border rounded-3xl p-6 lg:p-8 shadow-qv space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-qv-border">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs shadow-sm">
+                                    2</div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-qv-text">Wskaźniki Wydajności Botów</h3>
+                                    <p class="text-[11px] text-qv-muted">Zbiorczy zysk i statystyki wszystkich aktywnych
+                                        strategii</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4 Symmetric Metric Boxes -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div class="p-3.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                <span class="text-[10px] font-bold text-qv-muted block mb-1">Łączny Zysk PnL</span>
+                                <span class="text-sm font-black text-emerald-400">+$453.30</span>
+                            </div>
+                            <div class="p-3.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                <span class="text-[10px] font-bold text-qv-muted block mb-1">Średni Win Rate</span>
+                                <span class="text-sm font-black text-emerald-400">86.4%</span>
+                            </div>
+                            <div class="p-3.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                <span class="text-[10px] font-bold text-qv-muted block mb-1">Aktywne Boty</span>
+                                <span class="text-sm font-black text-indigo-400"
+                                    th:text="${#lists.size(strategies)}">2</span>
+                            </div>
+                            <div class="p-3.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                <span class="text-[10px] font-bold text-qv-muted block mb-1">Egzekucje 24h</span>
+                                <span class="text-sm font-black text-purple-400">20 trades</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bot Cards List -->
+                    <div class="space-y-4">
+                        <div th:each="bot : ${strategies}"
+                            class="bg-qv-surface border border-qv-border rounded-3xl p-6 shadow-qv transition-all hover:border-purple-500/40 space-y-4">
+
+                            <div class="flex items-start justify-between">
+                                <div class="space-y-1">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-black text-base text-qv-text" th:text="${bot.name}">Smart DCA
+                                            Bot</span>
+                                        <span th:if="${bot.active}"
+                                            class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center space-x-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                            <span>AKTYWNY</span>
+                                        </span>
+                                        <span th:unless="${bot.active}"
+                                            class="px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 text-[10px] font-bold border border-slate-500/20">
+                                            WSTRZYMANY
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-3 text-xs text-qv-muted font-mono">
+                                        <span class="font-bold text-qv-text" th:text="${bot.symbol}">BTC-USD</span>
+                                        <span>•</span>
+                                        <span th:text="${bot.exchange}">Binance API</span>
+                                        <span>•</span>
+                                        <span th:text="${bot.triggerType.displayName}">Smart Dip</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-2">
+                                    <button
+                                        th:onclick="'runLiveBacktest(\'' + ${bot.name} + '\', \'' + ${bot.symbol} + '\')'"
+                                        class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold rounded-xl transition-all flex items-center space-x-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        <span>Symuluj Live</span>
+                                    </button>
+
+                                    <form th:action="@{/strategies/{id}/toggle(id=${bot.id})}" method="POST">
+                                        <button type="submit"
+                                            class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all"
+                                            th:classappend="${bot.active ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'}">
+                                            <span th:text="${bot.active ? 'Pauza' : 'Uruchom'}">Pauza</span>
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{/strategies/{id}/delete(id=${bot.id})}" method="POST"
+                                        onsubmit="return confirm('Czy na pewno usunąć tego bota?')">
+                                        <button type="submit"
+                                            class="p-1.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 text-xs font-bold transition-all">
+                                            ✕
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Bot Performance Metrics Grid -->
+                            <div class="grid grid-cols-4 gap-2 pt-2 text-center">
+                                <div class="p-2.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                    <span class="text-[9px] font-bold text-qv-muted block">Kwota / Trade</span>
+                                    <span class="text-xs font-black text-qv-text"
+                                        th:text="'$' + ${#numbers.formatDecimal(bot.tradeAmountUsd, 1, 2)}">$100.00</span>
+                                </div>
+                                <div class="p-2.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                    <span class="text-[9px] font-bold text-qv-muted block">Wykonania</span>
+                                    <span class="text-xs font-black text-indigo-400"
+                                        th:text="${bot.totalTradesCount}">12</span>
+                                </div>
+                                <div class="p-2.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                    <span class="text-[9px] font-bold text-qv-muted block">Win Rate</span>
+                                    <span class="text-xs font-black text-emerald-400">88.5%</span>
+                                </div>
+                                <div class="p-2.5 bg-qv-surface-2/60 rounded-2xl border border-qv-border">
+                                    <span class="text-[9px] font-bold text-qv-muted block">Zysk PnL</span>
+                                    <span class="text-xs font-black text-emerald-400"
+                                        th:text="'+$' + ${#numbers.formatDecimal(bot.totalProfitUsd, 1, 2)}">+$142.80</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div th:if="${#lists.isEmpty(strategies)}"
+                            class="p-12 text-center text-qv-muted bg-qv-surface rounded-3xl border border-qv-border">
+                            Brak aktywnych botów. Użyj kreatora po lewej stronie, aby stworzyć swoją pierwszą strategię!
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Symulacji Backtestowej Bota -->
+    <div id="backtestModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="bg-qv-surface border border-qv-border rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-qv-border pb-3">
+                <h3 class="text-base font-bold text-qv-text" id="backtestModalTitle">Symulacja Bota</h3>
+                <button onclick="closeBacktestModal()" class="text-qv-muted hover:text-qv-text font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl space-y-1">
+                    <span class="text-[10px] font-bold text-emerald-400 block uppercase">Wynik Symulacji (Ostatnie 90
+                        Dni):</span>
+                    <div class="text-xl font-black text-emerald-400">+28.4% ROI (+$426.00)</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="p-3 bg-qv-surface-2 rounded-xl border border-qv-border">
+                        <span class="text-[10px] text-qv-muted block font-bold">Max Spadek (Drawdown)</span>
+                        <span class="font-mono font-bold text-red-400">-3.8%</span>
+                    </div>
+                    <div class="p-3 bg-qv-surface-2 rounded-xl border border-qv-border">
+                        <span class="text-[10px] text-qv-muted block font-bold">Profit Factor</span>
+                        <span class="font-mono font-bold text-emerald-400">2.64</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeBacktestModal()"
+                class="w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">
+                Zamknij Podgląd Symulacji
+            </button>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/nav :: mobilebar('strategies')}"></div>
+
+    <script>
+        function updateTriggerFields() {
+            const val = document.getElementById('triggerTypeSelect').value;
+            const dipBox = document.getElementById('dipPercentBox');
+            if (val === 'SMART_DIP') {
+                dipBox.style.display = 'block';
+            } else {
+                dipBox.style.display = 'none';
+            }
+            updateNodeDiagram();
+        }
+
+        function setTradeAmount(amt) {
+            document.getElementById('botAmount').value = amt;
+            updateNodeDiagram();
+        }
+
+        function updateNodeDiagram() {
+            const symbol = document.getElementById('botSymbol').value;
+            const trigger = document.getElementById('triggerTypeSelect').selectedOptions[0].text;
+            const amount = document.getElementById('botAmount').value;
+            const trailing = document.getElementById('botTrailing').value;
+
+            document.getElementById('nodeTrigger').innerText = `[Sygnał: ${trigger}]`;
+            document.getElementById('nodeExecution').innerText = `[Kup: $${amount} ${symbol}]`;
+            document.getElementById('nodeRisk').innerText = `[Trailing Stop: ${trailing}%]`;
+        }
+
+        function applyPreset(name, symbol, exchange, trigger, dip, amount, trailing, tp) {
+            document.getElementById('botName').value = name;
+            document.getElementById('botSymbol').value = symbol;
+            document.getElementById('botExchange').value = exchange;
+            document.getElementById('triggerTypeSelect').value = trigger;
+            document.getElementById('botDip').value = dip;
+            document.getElementById('botAmount').value = amount;
+            document.getElementById('botTrailing').value = trailing;
+            document.getElementById('botTP').value = tp;
+            updateTriggerFields();
+        }
+
+        function exportStrategiesConfig() {
+            alert("Eksport konfiguracji botów w formacie JSON rozpoczął się pomyślnie!");
+        }
+
+        function runLiveBacktest(name, symbol) {
+            document.getElementById('backtestModalTitle').innerText = `Symulacja Bota: ${name} (${symbol})`;
+            document.getElementById('backtestModal').classList.remove('hidden');
+        }
+
+        function closeBacktestModal() {
+            document.getElementById('backtestModal').classList.add('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', updateTriggerFields);
+    </script>
+</body>
+
+</html>

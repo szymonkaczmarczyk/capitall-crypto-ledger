@@ -43,8 +43,29 @@ public class DcaOrderProcessor {
             return;
         }
 
+        BigDecimal finalAmount = order.getUsdAmount();
+        if (Boolean.TRUE.equals(order.getSmartDca())) {
+            try {
+                java.util.List<com.capitall.dto.BacktestResult.OHLCVBar> bars = priceService.fetchOHLCV(order.getSymbol(), "7d", "1d");
+                if (bars != null && !bars.isEmpty()) {
+                    double price7DaysAgo = bars.get(0).close;
+                    if (price7DaysAgo > 0) {
+                        double dropThreshold = price7DaysAgo * 0.90;
+                        if (price.doubleValue() <= dropThreshold) {
+                            BigDecimal multiplier = order.getSmartMultiplier() != null ? order.getSmartMultiplier() : BigDecimal.valueOf(2.0);
+                            finalAmount = finalAmount.multiply(multiplier);
+                            log.info("Smart DCA activated for {}: Price dropped from {} to {}. Multiplying amount by {} to {}",
+                                     order.getSymbol(), price7DaysAgo, price, multiplier, finalAmount);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to apply Smart DCA logic for {}: {}", order.getSymbol(), e.getMessage());
+            }
+        }
+
         // Execute trade via WalletService inside this isolated transaction
-        walletService.buy(order.getUserId(), order.getSymbol(), price, order.getUsdAmount());
+        walletService.buy(order.getUserId(), order.getSymbol(), price, finalAmount);
 
         order.setLastExecution(now);
         order.setNextExecution(now.plusDays(order.getIntervalDays()));

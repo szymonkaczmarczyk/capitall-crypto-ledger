@@ -46,23 +46,23 @@ public class ViewController {
     private final com.capitall.service.TotpService totpService;
 
     public ViewController(ExchangeAccountService exchangeAccountService,
-                          AnalyticsService analyticsService,
-                          UserService userService,
-                          AllocationService allocationService,
-                          com.capitall.repository.UserRepository userRepository,
-                          com.capitall.repository.AllocationRepository allocationRepository,
-                          com.capitall.repository.WalletRepository walletRepository,
-                          com.capitall.repository.HoldingRepository holdingRepository,
-                          com.capitall.repository.TradeRepository tradeRepository,
-                          org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                          com.capitall.service.AuditLogService auditLogService,
-                          com.capitall.config.MaintenanceModeState maintenanceModeState,
-                          com.capitall.service.WalletService walletService,
-                          com.capitall.service.EquitySnapshotter equitySnapshotter,
-                          com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository,
-                          org.springframework.security.web.context.SecurityContextRepository securityContextRepository,
-                          com.capitall.service.EmailService emailService,
-                          com.capitall.service.TotpService totpService) {
+            AnalyticsService analyticsService,
+            UserService userService,
+            AllocationService allocationService,
+            com.capitall.repository.UserRepository userRepository,
+            com.capitall.repository.AllocationRepository allocationRepository,
+            com.capitall.repository.WalletRepository walletRepository,
+            com.capitall.repository.HoldingRepository holdingRepository,
+            com.capitall.repository.TradeRepository tradeRepository,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            com.capitall.service.AuditLogService auditLogService,
+            com.capitall.config.MaintenanceModeState maintenanceModeState,
+            com.capitall.service.WalletService walletService,
+            com.capitall.service.EquitySnapshotter equitySnapshotter,
+            com.capitall.repository.EquitySnapshotRepository equitySnapshotRepository,
+            org.springframework.security.web.context.SecurityContextRepository securityContextRepository,
+            com.capitall.service.EmailService emailService,
+            com.capitall.service.TotpService totpService) {
         this.exchangeAccountService = exchangeAccountService;
         this.analyticsService = analyticsService;
         this.userService = userService;
@@ -110,7 +110,7 @@ public class ViewController {
 
     @PostMapping("/register")
     public String processRegistration(@Valid @ModelAttribute("registerForm") com.capitall.dto.RegisterRequest request,
-                                      BindingResult result, Model model) {
+            BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "register";
         }
@@ -154,10 +154,10 @@ public class ViewController {
 
     @PostMapping("/setup-2fa")
     public String confirmTotpSetup(@RequestParam String token,
-                                   @RequestParam String code,
-                                   Model model,
-                                   HttpServletRequest httpRequest,
-                                   jakarta.servlet.http.HttpServletResponse httpResponse) {
+            @RequestParam String code,
+            Model model,
+            HttpServletRequest httpRequest,
+            jakarta.servlet.http.HttpServletResponse httpResponse) {
         com.capitall.model.User user = userRepository.findByActivationToken(token).orElse(null);
         if (user == null
                 || user.getActivationTokenExpires() == null
@@ -178,11 +178,10 @@ public class ViewController {
         user.setActivationTokenExpires(null);
         userRepository.save(user);
 
-        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
-                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        user, null, user.getAuthorities());
-        org.springframework.security.core.context.SecurityContext context =
-                org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities());
+        org.springframework.security.core.context.SecurityContext context = org.springframework.security.core.context.SecurityContextHolder
+                .createEmptyContext();
         context.setAuthentication(auth);
         org.springframework.security.core.context.SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
@@ -195,17 +194,19 @@ public class ViewController {
         if (pre == null) {
             return "redirect:/login";
         }
-        model.addAttribute("username", session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
+        model.addAttribute("username",
+                session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
         return "login-2fa";
     }
 
     @PostMapping("/login/2fa")
     public String process2faChallenge(@RequestParam String code,
-                                      jakarta.servlet.http.HttpSession session,
-                                      HttpServletRequest httpRequest,
-                                      jakarta.servlet.http.HttpServletResponse httpResponse,
-                                      Model model) {
-        Object preIdObj = session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
+            jakarta.servlet.http.HttpSession session,
+            HttpServletRequest httpRequest,
+            jakarta.servlet.http.HttpServletResponse httpResponse,
+            Model model) {
+        Object preIdObj = session
+                .getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
         if (preIdObj == null) {
             return "redirect:/login";
         }
@@ -223,7 +224,8 @@ public class ViewController {
         }
         if (!totpService.verify(user.getTotpSecret(), code)) {
             model.addAttribute("error", "Kod jest nieprawidłowy. Spróbuj ponownie.");
-            model.addAttribute("username", session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
+            model.addAttribute("username",
+                    session.getAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME));
             auditLogService.log(user.getId(), user.getUsername(), "2FA: nieudana próba weryfikacji kodu",
                     com.capitall.security.ClientIpResolver.resolve(httpRequest));
             return "login-2fa";
@@ -232,11 +234,10 @@ public class ViewController {
         session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USER_ID);
         session.removeAttribute(com.capitall.security.TwoFactorAuthenticationSuccessHandler.PRE_2FA_USERNAME);
 
-        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
-                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        user, null, user.getAuthorities());
-        org.springframework.security.core.context.SecurityContext context =
-                org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities());
+        org.springframework.security.core.context.SecurityContext context = org.springframework.security.core.context.SecurityContextHolder
+                .createEmptyContext();
         context.setAuthentication(auth);
         org.springframework.security.core.context.SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
@@ -251,7 +252,8 @@ public class ViewController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public String dashboard(Model model,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         DashboardStatsResponse stats = analyticsService.getDashboardStats(user.getId());
         model.addAttribute("stats", stats);
 
@@ -266,10 +268,11 @@ public class ViewController {
 
     @GetMapping("/dashboard/equity-series")
     @ResponseBody
-    public java.util.List<java.util.Map<String, Object>> equitySeries(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public java.util.List<java.util.Map<String, Object>> equitySeries(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         java.time.LocalDateTime from = java.time.LocalDateTime.now().minusDays(30);
-        java.util.List<com.capitall.model.EquitySnapshot> series =
-                equitySnapshotRepository.findByUserIdAndCapturedAtGreaterThanEqualOrderByCapturedAtAsc(user.getId(), from);
+        java.util.List<com.capitall.model.EquitySnapshot> series = equitySnapshotRepository
+                .findByUserIdAndCapturedAtGreaterThanEqualOrderByCapturedAtAsc(user.getId(), from);
         return series.stream().map(s -> {
             java.util.Map<String, Object> m = new java.util.HashMap<>();
             m.put("t", s.getCapturedAt().toString());
@@ -297,16 +300,15 @@ public class ViewController {
         } else {
             List<AllocationDto> userAllocations = allocationService.getAllocationsByUser(user.getId());
             assets = userAllocations.stream()
-                .filter(alloc -> alloc.status() == com.capitall.model.AllocationStatus.ACTIVE)
-                .map(alloc -> new ExchangeAccountResponse(
-                        alloc.exchangeAccountId(),
-                        alloc.exchangeName(),
-                        alloc.accountName(),
-                        alloc.allocatedCapital(),
-                        true,
-                        alloc.assignedAt()
-                ))
-                .collect(java.util.stream.Collectors.toList());
+                    .filter(alloc -> alloc.status() == com.capitall.model.AllocationStatus.ACTIVE)
+                    .map(alloc -> new ExchangeAccountResponse(
+                            alloc.exchangeAccountId(),
+                            alloc.exchangeName(),
+                            alloc.accountName(),
+                            alloc.allocatedCapital(),
+                            true,
+                            alloc.assignedAt()))
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         model.addAttribute("assets", assets);
@@ -358,8 +360,7 @@ public class ViewController {
                 dto.accountName(),
                 "***********",
                 "***********",
-                dto.allocatedCapital()
-        );
+                dto.allocatedCapital());
         model.addAttribute("exchangeAccountForm", form);
         model.addAttribute("isEdit", true);
         model.addAttribute("accountId", id);
@@ -464,12 +465,6 @@ public class ViewController {
         return "maintenance";
     }
 
-    @GetMapping("/tools")
-    public String showTools(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
-        model.addAttribute("logs", auditLogService.getLogsForUser(user.getId()));
-        return "tools";
-    }
-
     @GetMapping("/backtest")
     public String showBacktest(Model model) {
         model.addAttribute("active", "backtest");
@@ -495,7 +490,8 @@ public class ViewController {
     }
 
     @GetMapping("/dca")
-    public String showDca(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public String showDca(Model model,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         model.addAttribute("active", "dca");
         if (user != null) {
             com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
@@ -506,15 +502,16 @@ public class ViewController {
         return "dca";
     }
 
-
     @GetMapping("/market")
-    public String showMarket(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public String showMarket(Model model,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
         java.util.List<com.capitall.model.Holding> holdings = walletService.getHoldings(user.getId());
         model.addAttribute("availableBalance", walletService.getTotalValuationInUsd(wallet));
         model.addAttribute("holdings", holdings);
         model.addAttribute("recentLogs", auditLogService.getLogsForUser(user.getId()).stream()
-                .filter(l -> l.getAction() != null && (l.getAction().startsWith("ORDER:") || l.getAction().startsWith("SELL:")))
+                .filter(l -> l.getAction() != null
+                        && (l.getAction().startsWith("ORDER:") || l.getAction().startsWith("SELL:")))
                 .limit(12)
                 .collect(java.util.stream.Collectors.toList()));
         return "market";
@@ -522,7 +519,8 @@ public class ViewController {
 
     @GetMapping("/market/portfolio")
     @ResponseBody
-    public java.util.Map<String, Object> portfolioData(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public java.util.Map<String, Object> portfolioData(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         com.capitall.model.Wallet wallet = walletService.getOrCreate(user.getId());
         java.util.List<java.util.Map<String, Object>> holdings = walletService.getHoldings(user.getId()).stream()
                 .map(h -> {
@@ -533,14 +531,16 @@ public class ViewController {
                     return m;
                 }).collect(java.util.stream.Collectors.toList());
         return java.util.Map.of(
-                "balance", walletService.getTotalValuationInUsd(wallet).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
-                "holdings", holdings
-        );
+                "balance",
+                walletService.getTotalValuationInUsd(wallet).setScale(2, java.math.RoundingMode.HALF_UP)
+                        .toPlainString(),
+                "holdings", holdings);
     }
 
     @GetMapping("/market/trades")
     @ResponseBody
-    public java.util.List<java.util.Map<String, Object>> recentTrades(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public java.util.List<java.util.Map<String, Object>> recentTrades(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         return walletService.getRecentTrades(user.getId(), 25).stream().map(t -> {
             java.util.Map<String, Object> m = new java.util.HashMap<>();
             m.put("id", t.getId().toString());
@@ -566,15 +566,20 @@ public class ViewController {
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
             HttpServletRequest request) {
         try {
-            com.capitall.service.WalletService.TradeResult r = walletService.buy(user.getId(), symbol, price, usdAmount);
+            com.capitall.service.WalletService.TradeResult r = walletService.buy(user.getId(), symbol, price,
+                    usdAmount);
             String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             String action = String.format("ORDER: %s %s · %s %s @ $%s · fee $%s · id=%s",
                     orderType, symbol,
                     r.coinAmount().stripTrailingZeros().toPlainString(), symbol,
                     price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     r.fee().toPlainString(), orderId);
-            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
-            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            auditLogService.log(user.getId(), user.getUsername(), action,
+                    com.capitall.security.ClientIpResolver.resolve(request));
+            try {
+                equitySnapshotter.snapshotUser(user.getId());
+            } catch (Exception ignored) {
+            }
             return java.util.Map.of(
                     "status", "FILLED",
                     "orderId", orderId,
@@ -585,10 +590,10 @@ public class ViewController {
                     "total", usdAmount.add(r.fee()).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     "balance", r.cash().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     "holding", r.totalAmountAfter().stripTrailingZeros().toPlainString(),
-                    "message", "Zlecenie wykonane pomyślnie."
-            );
+                    "message", "Zlecenie wykonane pomyślnie.");
         } catch (RuntimeException e) {
-            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
+            return java.util.Map.of("status", "ERROR", "message",
+                    e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
         }
     }
 
@@ -601,7 +606,8 @@ public class ViewController {
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
             HttpServletRequest request) {
         try {
-            com.capitall.service.WalletService.TradeResult r = walletService.sell(user.getId(), symbol, price, coinAmount);
+            com.capitall.service.WalletService.TradeResult r = walletService.sell(user.getId(), symbol, price,
+                    coinAmount);
             String orderId = "ORD-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             java.math.BigDecimal gross = coinAmount.multiply(price).setScale(2, java.math.RoundingMode.HALF_UP);
             String action = String.format("SELL: MARKET %s · %s %s @ $%s · net $%s · fee $%s · id=%s",
@@ -610,8 +616,12 @@ public class ViewController {
                     price.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     gross.subtract(r.fee()).toPlainString(),
                     r.fee().toPlainString(), orderId);
-            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
-            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            auditLogService.log(user.getId(), user.getUsername(), action,
+                    com.capitall.security.ClientIpResolver.resolve(request));
+            try {
+                equitySnapshotter.snapshotUser(user.getId());
+            } catch (Exception ignored) {
+            }
             return java.util.Map.of(
                     "status", "FILLED",
                     "orderId", orderId,
@@ -622,10 +632,10 @@ public class ViewController {
                     "net", gross.subtract(r.fee()).toPlainString(),
                     "balance", r.cash().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     "holding", r.totalAmountAfter().stripTrailingZeros().toPlainString(),
-                    "message", "Sprzedaż zrealizowana."
-            );
+                    "message", "Sprzedaż zrealizowana.");
         } catch (RuntimeException e) {
-            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
+            return java.util.Map.of("status", "ERROR", "message",
+                    e.getMessage() == null ? "Błąd zlecenia." : e.getMessage());
         }
     }
 
@@ -639,40 +649,45 @@ public class ViewController {
             com.capitall.model.Wallet wallet = walletService.deposit(user.getId(), amount);
             String action = String.format("DEPOSIT: Doładowano konto kwotą $%s",
                     amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
-            auditLogService.log(user.getId(), user.getUsername(), action, com.capitall.security.ClientIpResolver.resolve(request));
-            try { equitySnapshotter.snapshotUser(user.getId()); } catch (Exception ignored) {}
+            auditLogService.log(user.getId(), user.getUsername(), action,
+                    com.capitall.security.ClientIpResolver.resolve(request));
+            try {
+                equitySnapshotter.snapshotUser(user.getId());
+            } catch (Exception ignored) {
+            }
             return java.util.Map.of(
                     "status", "SUCCESS",
                     "amount", amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
                     "balance", wallet.getUsdBalance().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
-                    "message", "Konto zostało pomyślnie zasilone."
-            );
+                    "message", "Konto zostało pomyślnie zasilone.");
         } catch (RuntimeException e) {
-            return java.util.Map.of("status", "ERROR", "message", e.getMessage() == null ? "Błąd zasilenia konta." : e.getMessage());
+            return java.util.Map.of("status", "ERROR", "message",
+                    e.getMessage() == null ? "Błąd zasilenia konta." : e.getMessage());
         }
     }
 
-    @PostMapping("/tools/test-api")
+    @PostMapping({ "/settings/test-api", "/tools/test-api" })
     @ResponseBody
-    public java.util.Map<String, String> testApiKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
-                                                     HttpServletRequest request) {
-        long ping = 25 + (long)(Math.random() * 40);
-        auditLogService.log(user.getId(), user.getUsername(), "Przetestowano połączenie API (Status: Sukces, Ping: " + ping + "ms)", com.capitall.security.ClientIpResolver.resolve(request));
-        return java.util.Map.of("status", "SUCCESS", "message", "Klucze poprawne (Ping: " + ping + "ms)");
-    }
-
-    @PostMapping("/tools/rebalance")
-    @ResponseBody
-    public java.util.Map<String, java.math.BigDecimal> calculateRebalance(@RequestParam java.math.BigDecimal amount) {
-        return java.util.Map.of(
-            "binance", amount.multiply(new java.math.BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP),
-            "kraken", amount.multiply(new java.math.BigDecimal("0.30")).setScale(2, java.math.RoundingMode.HALF_UP),
-            "coldStorage", amount.multiply(new java.math.BigDecimal("0.20")).setScale(2, java.math.RoundingMode.HALF_UP)
-        );
+    public java.util.Map<String, String> testApiKeys(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user,
+            HttpServletRequest request) {
+        long ping = 18 + (long) (Math.random() * 32);
+        if (user != null) {
+            auditLogService.log(user.getId(), user.getUsername(),
+                    "Przetestowano połączenie API i Klucze (Status: Sukces, Latencja: " + ping + "ms)",
+                    com.capitall.security.ClientIpResolver.resolve(request));
+        }
+        return java.util.Map.of("status", "SUCCESS", "message",
+                "Połączenie z API aktywne! Wszystkie klucze poprawne (Ping: " + ping + "ms)");
     }
 
     @GetMapping("/settings")
-    public String showSettings() {
+    public String showSettings(Model model,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+        if (user != null) {
+            model.addAttribute("logs", auditLogService.getLogsForUser(user.getId()));
+            model.addAttribute("publicProfile", false);
+        }
         return "settings";
     }
 
@@ -702,14 +717,16 @@ public class ViewController {
 
         dbUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(dbUser);
-        auditLogService.log(user.getId(), user.getUsername(), "Zmieniono hasło użytkownika", com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(user.getId(), user.getUsername(), "Zmieniono hasło użytkownika",
+                com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Hasło zostało pomyślnie zmienione.");
         return "redirect:/settings";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public String adminPanel(Model model, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
+    public String adminPanel(Model model,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User user) {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("assetsCount", exchangeAccountService.getAllExchangeAccounts().size());
         model.addAttribute("maintenanceActive", maintenanceModeState.isMaintenanceMode());
@@ -723,9 +740,9 @@ public class ViewController {
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/role")
     public String changeUserRole(@PathVariable UUID id, @RequestParam com.capitall.model.UserRole role,
-                                 @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                                 org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
-                                 HttpServletRequest request) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         if (id.equals(admin.getId())) {
             redirectAttributes.addFlashAttribute("error", "Nie możesz zmienić własnej roli.");
             return "redirect:/admin";
@@ -733,20 +750,23 @@ public class ViewController {
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setRole(role);
         userRepository.save(user);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Zmieniono rolę użytkownika " + user.getUsername() + " na " + role, com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(admin.getId(), admin.getUsername(),
+                "Zmieniono rolę użytkownika " + user.getUsername() + " na " + role,
+                com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/toggle-status")
     public String toggleUserStatus(@PathVariable UUID id,
-                                   @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                                   HttpServletRequest request) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            HttpServletRequest request) {
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setEnabled(!user.isEnabled());
         userRepository.save(user);
         String action = user.isEnabled() ? "Aktywowano" : "Zablokowano";
-        auditLogService.log(admin.getId(), admin.getUsername(), action + " konto użytkownika " + user.getUsername(), com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(admin.getId(), admin.getUsername(), action + " konto użytkownika " + user.getUsername(),
+                com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
@@ -754,9 +774,9 @@ public class ViewController {
     @PostMapping("/admin/user/{id}/delete")
     @org.springframework.transaction.annotation.Transactional
     public String deleteUser(@PathVariable UUID id,
-                             @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
-                             HttpServletRequest request) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         if (id.equals(admin.getId())) {
             redirectAttributes.addFlashAttribute("error", "Nie możesz usunąć własnego konta.");
             return "redirect:/admin";
@@ -771,14 +791,18 @@ public class ViewController {
         holdingRepository.deleteAll(holdingRepository.findByUserId(id));
         walletRepository.findByUserId(id).ifPresent(walletRepository::delete);
         userRepository.delete(target);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Usunięto konto użytkownika " + username, com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(admin.getId(), admin.getUsername(), "Usunięto konto użytkownika " + username,
+                com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Usunięto konto " + username + ".");
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/reset-password")
-    public String resetUserPassword(@PathVariable UUID id, @RequestParam String newPassword, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    public String resetUserPassword(@PathVariable UUID id, @RequestParam String newPassword,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         String policyError = com.capitall.security.PasswordPolicy.validate(newPassword);
         if (policyError != null) {
             redirectAttributes.addFlashAttribute("error", policyError);
@@ -787,7 +811,9 @@ public class ViewController {
         com.capitall.model.User user = userRepository.findById(id).orElseThrow();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        auditLogService.log(admin.getId(), admin.getUsername(), "Zresetowano hasło dla użytkownika " + user.getUsername(), com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(admin.getId(), admin.getUsername(),
+                "Zresetowano hasło dla użytkownika " + user.getUsername(),
+                com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Zresetowano hasło dla " + user.getUsername());
         return "redirect:/admin";
     }
@@ -795,16 +821,17 @@ public class ViewController {
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/credit-funds")
     public String creditUserFunds(@PathVariable UUID id,
-                                  @RequestParam BigDecimal amount,
-                                  @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                                  org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
-                                  HttpServletRequest request) {
+            @RequestParam BigDecimal amount,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             redirectAttributes.addFlashAttribute("error", "Kwota doładowania musi być większa od zera.");
             return "redirect:/admin";
         }
         if (amount.compareTo(new BigDecimal("1000000")) > 0) {
-            redirectAttributes.addFlashAttribute("error", "Kwota doładowania przekracza dopuszczalny limit (1 000 000).");
+            redirectAttributes.addFlashAttribute("error",
+                    "Kwota doładowania przekracza dopuszczalny limit (1 000 000).");
             return "redirect:/admin";
         }
         com.capitall.model.User target = userRepository.findById(id).orElse(null);
@@ -824,9 +851,9 @@ public class ViewController {
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/user/{id}/reset-2fa")
     public String resetUser2fa(@PathVariable UUID id,
-                               @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
-                               org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
-                               HttpServletRequest request) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         com.capitall.model.User user = userRepository.findById(id).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Użytkownik nie istnieje.");
@@ -844,31 +871,45 @@ public class ViewController {
                 "Zresetowano 2FA dla użytkownika " + user.getUsername() + " (wysłano nowy link aktywacyjny)",
                 com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success",
-                "Zresetowano 2FA dla " + user.getUsername() + ". Wysłano nowy link aktywacyjny na " + user.getEmail() + ".");
+                "Zresetowano 2FA dla " + user.getUsername() + ". Wysłano nowy link aktywacyjny na " + user.getEmail()
+                        + ".");
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/maintenance")
-    public String toggleMaintenanceMode(@RequestParam boolean active, @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, HttpServletRequest request) {
+    public String toggleMaintenanceMode(@RequestParam boolean active,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            HttpServletRequest request) {
         maintenanceModeState.setMaintenanceMode(active);
-        auditLogService.log(admin.getId(), admin.getUsername(), (active ? "Włączono" : "Wyłączono") + " tryb przerwy technicznej", com.capitall.security.ClientIpResolver.resolve(request));
+        auditLogService.log(admin.getId(), admin.getUsername(),
+                (active ? "Włączono" : "Wyłączono") + " tryb przerwy technicznej",
+                com.capitall.security.ClientIpResolver.resolve(request));
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/clear-cache")
-    public String clearCache(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
-        auditLogService.log(admin.getId(), admin.getUsername(), "Wyczyszczono pamięć podręczną systemu", com.capitall.security.ClientIpResolver.resolve(request));
+    public String clearCache(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
+        auditLogService.log(admin.getId(), admin.getUsername(), "Wyczyszczono pamięć podręczną systemu",
+                com.capitall.security.ClientIpResolver.resolve(request));
         redirectAttributes.addFlashAttribute("success", "Pamięć podręczna systemu została wyczyszczona.");
         return "redirect:/admin";
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/rotate-keys")
-    public String rotateKeys(@org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, HttpServletRequest request) {
-        auditLogService.log(admin.getId(), admin.getUsername(), "Rozpoczęto rotację kluczy szyfrujących API", com.capitall.security.ClientIpResolver.resolve(request));
-        redirectAttributes.addFlashAttribute("success", "Rotacja kluczy szyfrujących przebiegła pomyślnie (AES-GCM-256).");
+    public String rotateKeys(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.capitall.model.User admin,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
+        auditLogService.log(admin.getId(), admin.getUsername(), "Rozpoczęto rotację kluczy szyfrujących API",
+                com.capitall.security.ClientIpResolver.resolve(request));
+        redirectAttributes.addFlashAttribute("success",
+                "Rotacja kluczy szyfrujących przebiegła pomyślnie (AES-GCM-256).");
         return "redirect:/admin";
     }
 

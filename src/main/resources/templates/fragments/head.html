@@ -79,6 +79,16 @@
             --qv-accent-hover: #a5b4fc;
         }
 
+        /* Suppress browser default number input spinner arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         html {
             color-scheme: light;
         }
@@ -584,37 +594,52 @@
             function initCrypto(el) {
                 const sym = el.dataset.cryptoSymbol;
                 if (!sym) return;
+                const cleanSym = sym.replace('-USD', '').toLowerCase();
                 const fallback = el.dataset.fallback || sym.substring(0, 1);
                 el.style.position = 'relative';
                 el.style.overflow = 'hidden';
 
-                const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${sym.toLowerCase()}.png`;
-                img.alt = sym;
-                img.className = 'w-full h-full object-contain p-0.5';
-                img.style.display = 'none';
-
                 const span = document.createElement('span');
                 span.textContent = fallback;
-                span.className = 'flex items-center justify-center w-full h-full';
+                span.className = 'flex items-center justify-center w-full h-full font-bold';
+
+                const sources = [
+                    `https://assets.coincap.io/assets/icons/${cleanSym}@2k.png`,
+                    `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${cleanSym}.png`,
+                    `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63539be1313df85e18238ed80e05416d8761b0/128/color/${cleanSym}.png`
+                ];
+
+                let srcIndex = 0;
+                const img = document.createElement('img');
+                img.alt = sym;
+                img.className = 'w-full h-full object-contain p-0.5 rounded-full';
+                img.style.display = 'none';
+
+                function tryNext() {
+                    if (srcIndex < sources.length) {
+                        img.src = sources[srcIndex++];
+                    } else {
+                        img.remove();
+                        span.style.display = 'flex';
+                    }
+                }
 
                 img.onload = () => {
                     img.style.display = 'block';
                     span.style.display = 'none';
                 };
-                img.onerror = () => {
-                    img.remove();
-                    span.style.display = 'flex';
-                };
+                img.onerror = tryNext;
 
                 el.innerHTML = '';
                 el.appendChild(img);
                 el.appendChild(span);
+                tryNext();
             }
 
             function initStock(el) {
-                const sym = el.dataset.stockSymbol;
-                if (!sym) return;
+                const rawSym = el.dataset.stockSymbol;
+                if (!rawSym) return;
+                const sym = rawSym.replace('.WA', '').toUpperCase();
                 const fallback = el.dataset.fallback || sym.substring(0, 1);
                 el.style.position = 'relative';
                 el.style.overflow = 'hidden';
@@ -627,34 +652,47 @@
                     'DIS': 'disney.com', 'BA': 'boeing.com', 'GE': 'ge.com', 'F': 'ford.com', 'GM': 'gm.com',
                     'CDR': 'cdprojekt.com', 'PKN': 'orlen.pl', 'KGH': 'kghm.com', 'PZU': 'pzu.pl',
                     'LPP': 'lpp.com', 'DNP': 'grupadino.pl', 'ALR': 'aliorbank.pl', 'JSW': 'jsw.pl',
-                    'MBK': 'mbank.pl', 'OPL': 'orange.pl',
-                    'PKO': 'pkobp.pl', 'SPY': 'ssga.com', 'QQQ': 'invesco.com', 'BABA': 'alibaba.com', 'NIO': 'nio.com'
+                    'MBK': 'mbank.pl', 'OPL': 'orange.pl', 'PKO': 'pkobp.pl',
+                    'SPY': 'ssga.com', 'QQQ': 'invesco.com', 'BABA': 'alibaba.com', 'NIO': 'nio.com'
                 };
-                const domain = domains[sym.toUpperCase()];
+                const domain = domains[sym];
 
                 const span = document.createElement('span');
                 span.textContent = fallback;
-                span.className = 'flex items-center justify-center w-full h-full';
+                span.className = 'flex items-center justify-center w-full h-full font-bold';
 
                 if (domain) {
+                    const sources = [
+                        `https://unavatar.io/${domain}?fallback=false`,
+                        `https://logo.clearbit.com/${domain}`,
+                        `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+                    ];
+                    let srcIndex = 0;
+
                     const img = document.createElement('img');
-                    img.src = `https://logos.hunter.io/${domain}`;
                     img.alt = sym;
-                    img.className = 'w-full h-full object-contain p-0.5 bg-white';
+                    img.className = 'w-full h-full object-contain p-0.5 rounded-full bg-white';
                     img.style.display = 'none';
+
+                    function tryNextStock() {
+                        if (srcIndex < sources.length) {
+                            img.src = sources[srcIndex++];
+                        } else {
+                            img.remove();
+                            span.style.display = 'flex';
+                        }
+                    }
 
                     img.onload = () => {
                         img.style.display = 'block';
                         span.style.display = 'none';
                     };
-                    img.onerror = () => {
-                        img.remove();
-                        span.style.display = 'flex';
-                    };
+                    img.onerror = tryNextStock;
 
                     el.innerHTML = '';
                     el.appendChild(img);
                     el.appendChild(span);
+                    tryNextStock();
                 } else {
                     el.innerHTML = '';
                     el.appendChild(span);

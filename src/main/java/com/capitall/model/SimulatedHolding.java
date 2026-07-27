@@ -35,6 +35,15 @@ public class SimulatedHolding {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "trailing_stop_enabled", columnDefinition = "boolean default false")
+    private Boolean trailingStopEnabled = false;
+
+    @Column(name = "trailing_stop_percent", precision = 5, scale = 2)
+    private BigDecimal trailingStopPercent;
+
+    @Column(name = "highest_price_reached", precision = 20, scale = 8)
+    private BigDecimal highestPriceReached;
+
     public SimulatedHolding() {
     }
 
@@ -96,5 +105,33 @@ public class SimulatedHolding {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Boolean getTrailingStopEnabled() {
+        return trailingStopEnabled;
+    }
+
+    public void setTrailingStopEnabled(Boolean trailingStopEnabled) {
+        this.trailingStopEnabled = trailingStopEnabled;
+    }
+
+    public BigDecimal getTrailingStopPercent() {
+        return trailingStopPercent;
+    }
+
+    public void setTrailingStopPercent(BigDecimal trailingStopPercent) {
+        this.trailingStopPercent = trailingStopPercent;
+    }
+
+    public BigDecimal getHighestPriceReached() {
+        return highestPriceReached;
+    }
+
+    public void setHighestPriceReached(BigDecimal highestPriceReached) {
+        this.highestPriceReached = highestPriceReached;
     }
 }

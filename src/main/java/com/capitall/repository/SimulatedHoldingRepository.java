@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface SimulatedHoldingRepository extends JpaRepository<SimulatedHolding, UUID> {
     List<SimulatedHolding> findByUserId(UUID userId);
     Optional<SimulatedHolding> findByUserIdAndSymbol(UUID userId, String symbol);
+    List<SimulatedHolding> findByTrailingStopEnabledTrue();
 }

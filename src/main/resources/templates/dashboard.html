@@ -1,51 +1,281 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+
 <head th:replace="~{fragments/head :: head('Capitall - Dashboard')}"></head>
+
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
-        .live-dot { animation: pulseDot 1.6s ease-in-out infinite; }
-        @keyframes flashGreen { 0%{color:#10b981;transform:translateY(-2px)} 100%{color:inherit;transform:translateY(0)} }
-        @keyframes flashRed { 0%{color:#ef4444;transform:translateY(2px)} 100%{color:inherit;transform:translateY(0)} }
-        .flash-up { animation: flashGreen .8s ease-out; }
-        .flash-down { animation: flashRed .8s ease-out; }
-        .price-value { transition: color .4s ease; font-variant-numeric: tabular-nums; }
-        .spark { width: 100%; height: 42px; }
+        @keyframes pulseDot {
 
-        .mesh-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-        .mesh-blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .55; }
-        .dark .mesh-blob { opacity: .35; }
-        .blob-a { width: 520px; height: 520px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); top: -160px; left: -120px; animation: floatA 22s ease-in-out infinite; }
-        .blob-b { width: 460px; height: 460px; background: radial-gradient(circle, #d946ef 0%, transparent 70%); top: 30%; right: -140px; animation: floatB 26s ease-in-out infinite; }
-        .blob-c { width: 380px; height: 380px; background: radial-gradient(circle, #10b981 0%, transparent 70%); bottom: -140px; left: 30%; animation: floatC 30s ease-in-out infinite; }
-        @keyframes floatA { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,60px) scale(1.08)} }
-        @keyframes floatB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-60px,-40px) scale(1.12)} }
-        @keyframes floatC { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-50px) scale(1.05)} }
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
 
-        .glass { background: color-mix(in srgb, var(--qv-surface) 78%, transparent); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); border: 1px solid color-mix(in srgb, var(--qv-border) 60%, transparent); }
-        .dark .glass { background: color-mix(in srgb, var(--qv-surface) 62%, transparent); border-color: color-mix(in srgb, #ffffff 8%, transparent); }
-        .glass-strong { background: color-mix(in srgb, var(--qv-surface) 92%, transparent); backdrop-filter: blur(18px) saturate(150%); }
+            50% {
+                opacity: .5;
+                transform: scale(1.4)
+            }
+        }
 
-        .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #d946ef 50%, #f59e0b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 200% 200%; animation: gradientShift 8s ease-in-out infinite; }
-        @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .live-dot {
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
 
-        .fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp .7s cubic-bezier(.2,.9,.3,1.2) forwards; }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-        .delay-1 { animation-delay: .05s; } .delay-2 { animation-delay: .12s; } .delay-3 { animation-delay: .19s; }
-        .delay-4 { animation-delay: .26s; } .delay-5 { animation-delay: .33s; } .delay-6 { animation-delay: .4s; }
-        .delay-7 { animation-delay: .48s; } .delay-8 { animation-delay: .56s; }
+        @keyframes flashGreen {
+            0% {
+                color: #10b981;
+                transform: translateY(-2px)
+            }
 
-        .skel { position: relative; overflow: hidden; background: color-mix(in srgb, var(--qv-muted) 12%, transparent); border-radius: 6px; }
-        .skel::after { content:''; position:absolute; inset:0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--qv-muted) 20%, transparent), transparent); transform: translateX(-100%); animation: shimmer 1.4s infinite; }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
-        .skel.loaded::after { display: none; }
-        .skel.loaded { background: transparent; }
+            100% {
+                color: inherit;
+                transform: translateY(0)
+            }
+        }
 
-        .hero-ring { position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: linear-gradient(135deg, #6366f1, #d946ef, #f59e0b); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: .6; pointer-events: none; }
-</style>
+        @keyframes flashRed {
+            0% {
+                color: #ef4444;
+                transform: translateY(2px)
+            }
+
+            100% {
+                color: inherit;
+                transform: translateY(0)
+            }
+        }
+
+        .flash-up {
+            animation: flashGreen .8s ease-out;
+        }
+
+        .flash-down {
+            animation: flashRed .8s ease-out;
+        }
+
+        .price-value {
+            transition: color .4s ease;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .spark {
+            width: 100%;
+            height: 42px;
+        }
+
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .mesh-blob {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(90px);
+            opacity: .55;
+        }
+
+        .dark .mesh-blob {
+            opacity: .35;
+        }
+
+        .blob-a {
+            width: 520px;
+            height: 520px;
+            background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+            top: -160px;
+            left: -120px;
+            animation: floatA 22s ease-in-out infinite;
+        }
+
+        .blob-b {
+            width: 460px;
+            height: 460px;
+            background: radial-gradient(circle, #d946ef 0%, transparent 70%);
+            top: 30%;
+            right: -140px;
+            animation: floatB 26s ease-in-out infinite;
+        }
+
+        .blob-c {
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, #10b981 0%, transparent 70%);
+            bottom: -140px;
+            left: 30%;
+            animation: floatC 30s ease-in-out infinite;
+        }
+
+        @keyframes floatA {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(40px, 60px) scale(1.08)
+            }
+        }
+
+        @keyframes floatB {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(-60px, -40px) scale(1.12)
+            }
+        }
+
+        @keyframes floatC {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -50px) scale(1.05)
+            }
+        }
+
+        .glass {
+            background: color-mix(in srgb, var(--qv-surface) 78%, transparent);
+            backdrop-filter: blur(14px) saturate(140%);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            border: 1px solid color-mix(in srgb, var(--qv-border) 60%, transparent);
+        }
+
+        .dark .glass {
+            background: color-mix(in srgb, var(--qv-surface) 62%, transparent);
+            border-color: color-mix(in srgb, #ffffff 8%, transparent);
+        }
+
+        .glass-strong {
+            background: color-mix(in srgb, var(--qv-surface) 92%, transparent);
+            backdrop-filter: blur(18px) saturate(150%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #d946ef 50%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 8s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeUp .7s cubic-bezier(.2, .9, .3, 1.2) forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 {
+            animation-delay: .05s;
+        }
+
+        .delay-2 {
+            animation-delay: .12s;
+        }
+
+        .delay-3 {
+            animation-delay: .19s;
+        }
+
+        .delay-4 {
+            animation-delay: .26s;
+        }
+
+        .delay-5 {
+            animation-delay: .33s;
+        }
+
+        .delay-6 {
+            animation-delay: .4s;
+        }
+
+        .delay-7 {
+            animation-delay: .48s;
+        }
+
+        .delay-8 {
+            animation-delay: .56s;
+        }
+
+        .skel {
+            position: relative;
+            overflow: hidden;
+            background: color-mix(in srgb, var(--qv-muted) 12%, transparent);
+            border-radius: 6px;
+        }
+
+        .skel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--qv-muted) 20%, transparent), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 1.4s infinite;
+        }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .skel.loaded::after {
+            display: none;
+        }
+
+        .skel.loaded {
+            background: transparent;
+        }
+
+        .hero-ring {
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, #6366f1, #d946ef, #f59e0b);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: .6;
+            pointer-events: none;
+        }
+    </style>
 </head>
+
 <body class="bg-qv-bg font-sans text-qv-text antialiased h-screen flex overflow-hidden transition-colors-all">
 
     <div class="mesh-bg" aria-hidden="true">
@@ -57,17 +287,20 @@
     <aside th:replace="~{fragments/nav :: sidebar('dashboard')}"></aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 glass border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
+        <header
+            class="h-16 glass border-b border-qv-border flex items-center justify-between px-6 lg:px-8 transition-colors-all">
             <div class="flex items-center gap-3">
                 <h2 class="text-lg font-black tracking-tight text-qv-text">Przegląd portfela</h2>
-                <span class="text-[10px] font-bold text-green-500 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10">
+                <span
+                    class="text-[10px] font-bold text-green-500 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10">
                     <span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE
                 </span>
             </div>
             <div class="flex items-center space-x-4">
                 <div th:replace="~{fragments/theme :: toggle}"></div>
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-qv-accent to-fuchsia-500 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-qv-accent/30" th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-qv-accent to-fuchsia-500 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-qv-accent/30"
+                        th:text="${#strings.substring(traderName, 0, 1).toUpperCase()}">U</div>
                     <span class="text-sm font-medium text-qv-text" th:text="${traderName}">Użytkownik</span>
                 </div>
             </div>
@@ -82,18 +315,23 @@
                         <div class="hero-ring rounded-2xl"></div>
                         <div class="flex items-center justify-between mb-1">
                             <p class="text-xs font-bold uppercase tracking-widest text-qv-muted">Całkowite AUM</p>
-                            <div class="flex items-center gap-1 text-[10px] font-bold text-qv-muted"><span class="w-1.5 h-1.5 rounded-full bg-qv-accent live-dot"></span>REALTIME</div>
+                            <div class="flex items-center gap-1 text-[10px] font-bold text-qv-muted"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-qv-accent live-dot"></span>REALTIME</div>
                         </div>
-                        <h3 class="text-5xl lg:text-6xl font-black tracking-tight gradient-text price-value leading-none mt-4 mb-3" id="aumValue" th:attr="data-base=${stats.totalAum}">$0.00</h3>
+                        <h3 class="text-5xl lg:text-6xl font-black tracking-tight gradient-text price-value leading-none mt-4 mb-3"
+                            id="aumValue" th:attr="data-base=${stats.totalAum}">$0.00</h3>
                         <p class="text-xs text-qv-muted">Wartość reaguje na żywy ruch rynku · aktualizacja co 6s</p>
                         <div class="mt-6 grid grid-cols-2 gap-3">
                             <div class="glass-strong rounded-xl p-3 border border-qv-border">
                                 <p class="text-[10px] font-bold uppercase text-qv-muted mb-1">Konta giełdowe</p>
-                                <p class="text-2xl font-black text-qv-text" th:text="${stats.diversification.size()}">0</p>
+                                <p class="text-2xl font-black text-qv-text" th:text="${stats.diversification.size()}">0
+                                </p>
                             </div>
                             <div class="glass-strong rounded-xl p-3 border border-qv-border">
                                 <p class="text-[10px] font-bold uppercase text-qv-muted mb-1">Status</p>
-                                <p class="text-sm font-bold text-qv-text flex items-center gap-2 mt-1"><span class="w-2 h-2 rounded-full bg-green-500 live-dot shadow-lg shadow-green-500/50"></span>Online</p>
+                                <p class="text-sm font-bold text-qv-text flex items-center gap-2 mt-1"><span
+                                        class="w-2 h-2 rounded-full bg-green-500 live-dot shadow-lg shadow-green-500/50"></span>Online
+                                </p>
                                 <p class="text-[10px] text-qv-muted mt-0.5 truncate" id="lastTick">Oczekiwanie…</p>
                             </div>
                         </div>
@@ -104,13 +342,15 @@
                     <div class="fade-up delay-2 glass rounded-2xl p-4 card-hover" data-coin="bitcoin" data-symbol="BTC">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-amber-500/30" data-crypto-symbol="BTC" data-fallback="₿">₿</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-amber-500/30"
+                                    data-crypto-symbol="BTC" data-fallback="₿">₿</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Bitcoin</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">BTC/USD</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                         </div>
                         <div class="price-value text-2xl font-black text-qv-text tracking-tight" data-price>—</div>
                         <div class="flex items-end justify-between mt-1">
@@ -118,16 +358,19 @@
                             <canvas class="spark" data-spark></canvas>
                         </div>
                     </div>
-                    <div class="fade-up delay-3 glass rounded-2xl p-4 card-hover" data-coin="ethereum" data-symbol="ETH">
+                    <div class="fade-up delay-3 glass rounded-2xl p-4 card-hover" data-coin="ethereum"
+                        data-symbol="ETH">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-500/30" data-crypto-symbol="ETH" data-fallback="Ξ">Ξ</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-500/30"
+                                    data-crypto-symbol="ETH" data-fallback="Ξ">Ξ</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Ethereum</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">ETH/USD</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                         </div>
                         <div class="price-value text-2xl font-black text-qv-text tracking-tight" data-price>—</div>
                         <div class="flex items-end justify-between mt-1">
@@ -138,13 +381,15 @@
                     <div class="fade-up delay-4 glass rounded-2xl p-4 card-hover" data-coin="solana" data-symbol="SOL">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-fuchsia-500/30" data-crypto-symbol="SOL" data-fallback="◎">◎</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-fuchsia-500/30"
+                                    data-crypto-symbol="SOL" data-fallback="◎">◎</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">Solana</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">SOL/USD</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                         </div>
                         <div class="price-value text-2xl font-black text-qv-text tracking-tight" data-price>—</div>
                         <div class="flex items-end justify-between mt-1">
@@ -152,21 +397,70 @@
                             <canvas class="spark" data-spark></canvas>
                         </div>
                     </div>
-                    <div class="fade-up delay-5 glass rounded-2xl p-4 card-hover" data-coin="binancecoin" data-symbol="BNB">
+                    <div class="fade-up delay-5 glass rounded-2xl p-4 card-hover" data-coin="binancecoin"
+                        data-symbol="BNB">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-yellow-500/30" data-crypto-symbol="BNB" data-fallback="B">B</div>
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-yellow-500/30"
+                                    data-crypto-symbol="BNB" data-fallback="B">B</div>
                                 <div>
                                     <p class="text-xs font-bold text-qv-text">BNB</p>
                                     <p class="text-[10px] font-semibold text-qv-muted">BNB/USD</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                            <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                    class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                         </div>
                         <div class="price-value text-2xl font-black text-qv-text tracking-tight" data-price>—</div>
                         <div class="flex items-end justify-between mt-1">
                             <div class="text-xs font-bold" data-change>—</div>
                             <canvas class="spark" data-spark></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Fear & Greed Market Overview Widget -->
+                <div class="col-span-12 fade-up delay-3">
+                    <div class="bg-qv-surface border border-qv-border rounded-2xl p-5 shadow-qv transition-all hover:border-indigo-500/40">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-black text-lg border border-amber-500/20 shadow-sm">⚡</div>
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-qv-muted block">Live Market Sentiment API</span>
+                                    <h4 class="text-sm font-black text-qv-text">Indeks Strachu i Chciwości (Fear & Greed Index)</h4>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-6 w-full sm:w-auto justify-between sm:justify-end">
+                                
+                                <!-- Hover Tooltip Box for Fear & Greed Ranges -->
+                                <div class="relative group cursor-help text-center">
+                                    <span class="text-[10px] text-qv-muted font-bold block uppercase tracking-wider">Wynik API ℹ️</span>
+                                    <span class="text-xl font-black text-emerald-500 dark:text-emerald-400" th:text="${marketOverview != null ? marketOverview['fearAndGreedValue'] : '72'}">72</span>
+
+                                    <!-- Interactive Tooltip Popup -->
+                                    <div class="absolute right-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 bg-slate-900 text-white text-[11px] rounded-2xl p-3.5 shadow-2xl border border-qv-border space-y-2 pointer-events-none text-left">
+                                        <span class="font-bold text-amber-400 block border-b border-slate-800 pb-1 uppercase tracking-wider text-[10px]">Skala Indeksu (0 - 100):</span>
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between items-center"><span class="text-red-400 font-bold">0 - 24</span> <span>🔴 Ekstremalny Strach</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-amber-400 font-bold">25 - 46</span> <span>🟠 Strach</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-yellow-400 font-bold">47 - 54</span> <span>🟡 Neutralnie</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-emerald-400 font-bold">55 - 74</span> <span>🟢 Chciwość</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-purple-400 font-bold">75 - 100</span> <span>🚀 Ekstremalna Chciwość</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center border-x border-qv-border px-5">
+                                    <span class="text-[10px] text-qv-muted font-bold block uppercase tracking-wider">Nastroje</span>
+                                    <span class="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-wider" th:text="${marketOverview != null ? marketOverview['fearAndGreedClassification'] : 'Greed'}">Greed</span>
+                                </div>
+
+                                <div class="text-center">
+                                    <span class="text-[10px] text-qv-muted font-bold block uppercase tracking-wider">Dominacja BTC</span>
+                                    <span class="text-xs font-mono font-bold text-indigo-500 dark:text-indigo-400" th:text="${marketOverview != null ? marketOverview['btcDominance'] : '56.4%'}">56.4%</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -177,15 +471,20 @@
                             <div>
                                 <h3 class="text-base font-black text-qv-text flex items-center gap-2 tracking-tight">
                                     Symulacja zysków (PnL)
-                                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                                 </h3>
                                 <p class="text-xs text-qv-muted mt-0.5">Strumień powiązany z kursem BTC z Binance</p>
                             </div>
                             <div class="flex gap-1 glass-strong rounded-xl p-1 border border-qv-border" id="rangeBtns">
-                                <button data-days="1" class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">24H</button>
-                                <button data-days="7" class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">7D</button>
-                                <button data-days="30" class="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-gradient-to-br from-qv-accent to-fuchsia-500 text-white shadow-lg shadow-qv-accent/30">30D</button>
-                                <button data-days="90" class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">90D</button>
+                                <button data-days="1"
+                                    class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">24H</button>
+                                <button data-days="7"
+                                    class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">7D</button>
+                                <button data-days="30"
+                                    class="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-gradient-to-br from-qv-accent to-fuchsia-500 text-white shadow-lg shadow-qv-accent/30">30D</button>
+                                <button data-days="90"
+                                    class="px-3 py-1.5 text-[11px] font-bold rounded-lg text-qv-muted hover:text-qv-text transition-colors">90D</button>
                             </div>
                         </div>
                         <div class="w-full h-80 skel" id="pnlSkel">
@@ -210,10 +509,13 @@
                                     <span class="text-qv-muted" th:text="${entry.value + '%'}">0.0%</span>
                                 </div>
                                 <div class="w-full bg-qv-surface-2 rounded-full h-1.5 overflow-hidden">
-                                    <div class="h-1.5 rounded-full transition-all duration-1000" th:style="'width: ' + ${entry.value} + '%; background-color: ' + ${iter.index == 0 ? '#6366f1' : (iter.index == 1 ? '#d946ef' : (iter.index == 2 ? '#f59e0b' : (iter.index == 3 ? '#10b981' : '#818cf8')))}"></div>
+                                    <div class="h-1.5 rounded-full transition-all duration-1000"
+                                        th:style="'width: ' + ${entry.value} + '%; background-color: ' + ${iter.index == 0 ? '#6366f1' : (iter.index == 1 ? '#d946ef' : (iter.index == 2 ? '#f59e0b' : (iter.index == 3 ? '#10b981' : '#818cf8')))}">
+                                    </div>
                                 </div>
                             </div>
-                            <div th:if="${stats.diversification.isEmpty()}" class="text-center py-4 text-sm text-qv-muted">
+                            <div th:if="${stats.diversification.isEmpty()}"
+                                class="text-center py-4 text-sm text-qv-muted">
                                 Brak zaalokowanego kapitału.
                             </div>
                         </div>
@@ -226,12 +528,15 @@
                             <div>
                                 <h3 class="text-base font-black text-qv-text flex items-center gap-2 tracking-tight">
                                     Wartość Twojego portfela
-                                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
+                                    <span class="text-[10px] font-bold text-green-500 flex items-center gap-1"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-green-500 live-dot"></span>LIVE</span>
                                 </h3>
-                                <p class="text-xs text-qv-muted mt-0.5">Suma gotówki i krypto w czasie — snapshoty co 5 min oraz po każdej transakcji</p>
+                                <p class="text-xs text-qv-muted mt-0.5">Suma gotówki i krypto w czasie — snapshoty co 5
+                                    min oraz po każdej transakcji</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-qv-muted">Obecna wartość</p>
+                                <p class="text-[10px] font-bold uppercase tracking-widest text-qv-muted">Obecna wartość
+                                </p>
                                 <p id="equityCurrent" class="text-2xl font-black text-qv-text tracking-tight">—</p>
                                 <p id="equityDelta" class="text-[11px] font-bold">—</p>
                             </div>
@@ -239,7 +544,9 @@
                         <div class="w-full h-72 skel" id="equitySkel">
                             <canvas id="equityChart"></canvas>
                         </div>
-                        <p id="equityEmpty" class="hidden text-center text-xs text-qv-muted py-8">Brak danych historycznych. Wykonaj pierwszą transakcję w sekcji Rynek, aby uruchomić zapis snapshotów.</p>
+                        <p id="equityEmpty" class="hidden text-center text-xs text-qv-muted py-8">Brak danych
+                            historycznych. Wykonaj pierwszą transakcję w sekcji Rynek, aby uruchomić zapis snapshotów.
+                        </p>
                     </div>
                 </div>
 
@@ -250,7 +557,7 @@
     <div th:replace="~{fragments/nav :: mobilebar('dashboard')}"></div>
 
     <script th:inline="javascript">
-        const fallbackPnl = /*[[${pnlPoints}]]*/ [];
+        const fallbackPnl = /*[[${pnlPoints}]]*/[];
         const divMap = /*[[${stats.diversification}]]*/ {};
         const baseAum = parseFloat(/*[[${stats.totalAum}]]*/ 0) || 0;
 
@@ -368,7 +675,7 @@
                     const pts = klines.map(k => parseFloat(k[4]));
                     const card = document.querySelector(`#tickerGrid [data-coin="${coin}"]`);
                     if (card) drawSpark(card.querySelector('[data-spark]'), pts, COIN_COLORS[coin]);
-                } catch (e) {  }
+                } catch (e) { }
             }));
         }
 
@@ -567,7 +874,7 @@
                     }
                 });
                 skel?.classList.add('loaded');
-            } catch (e) {  }
+            } catch (e) { }
         }
         loadEquitySeries();
         setInterval(loadEquitySeries, 6000);
@@ -596,6 +903,7 @@
                 }
             });
         }
-</script>
+    </script>
 </body>
+
 </html>

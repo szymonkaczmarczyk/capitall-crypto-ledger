@@ -29,7 +29,7 @@ public class DcaServiceImpl implements DcaService {
 
     @Override
     @Transactional
-    public RecurringOrder createOrder(UUID userId, String symbol, BigDecimal usdAmount, Integer intervalDays) {
+    public RecurringOrder createOrder(UUID userId, String symbol, BigDecimal usdAmount, Integer intervalDays, Boolean smartDca) {
         if (usdAmount == null || usdAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Kwota zlecenia musi być większa od zera.");
         }
@@ -45,6 +45,7 @@ public class DcaServiceImpl implements DcaService {
         // Initial execution starts immediately
         LocalDateTime now = LocalDateTime.now();
         RecurringOrder order = new RecurringOrder(userId, cleanSymbol, usdAmount, intervalDays, now);
+        order.setSmartDca(smartDca != null ? smartDca : false);
         
         return recurringOrderRepository.save(order);
     }

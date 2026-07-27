@@ -36,7 +36,7 @@ public class DcaServiceImplTest {
         when(recurringOrderRepository.save(any(RecurringOrder.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        RecurringOrder order = dcaService.createOrder(userId, "btc", new BigDecimal("50.00"), 7);
+        RecurringOrder order = dcaService.createOrder(userId, "btc", new BigDecimal("50.00"), 7, false);
 
         assertNotNull(order);
         assertEquals(userId, order.getUserId());
@@ -50,7 +50,7 @@ public class DcaServiceImplTest {
     @Test
     public void testCreateOrder_InvalidAmount_ThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> {
-            dcaService.createOrder(userId, "BTC", new BigDecimal("0.00"), 7);
+            dcaService.createOrder(userId, "BTC", new BigDecimal("0.00"), 7, false);
         });
     }
 

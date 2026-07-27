@@ -1,11 +1,14 @@
+# Build output
 target/
 bin/
 *.class
 
+# Dependencies & Local Tooling
 .local_jdk/
 .local_maven/
 jdk21.tar.gz
 
+# IDE settings
 .idea/
 *.iml
 .project
@@ -13,12 +16,25 @@ jdk21.tar.gz
 .settings/
 .vscode/
 
+# OS metadata
 .DS_Store
+Thumbs.db
 
+# Database & Storage Data
 data/
+*.db
+*.mv.db
+*.trace.db
+
+# Logs & Scripts
 *.log
 postgres_server.log
 server.log
 start_postgres.sh
 
-README.md
+# Secrets & Environment Configurations
+.env
+*.env
+application-local.properties
+application-secret.properties
+application-dev.properties
