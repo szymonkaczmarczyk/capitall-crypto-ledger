@@ -382,7 +382,8 @@
 
                                 <div class="flex items-center space-x-2">
                                     <button
-                                        th:onclick="'runLiveBacktest(\'' + ${bot.name} + '\', \'' + ${bot.symbol} + '\')'"
+                                        th:data-name="${bot.name}" th:data-symbol="${bot.symbol}"
+                                        onclick="runLiveBacktest(this.dataset.name, this.dataset.symbol)"
                                         class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold rounded-xl transition-all flex items-center space-x-1">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

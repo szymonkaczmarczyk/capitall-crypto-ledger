@@ -484,7 +484,8 @@
                                           th:text="${item.pnl.doubleValue() >= 0 ? '+$' : '-$'} + ${#numbers.formatDecimal(item.pnl.abs(), 1, 2)} + ' (' + ${item.roi} + '%)'"></span>
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
-                                    <button th:onclick="'quickSellStock(\'' + ${item.holding.symbol} + '\', ' + ${item.holding.shares} + ')'" 
+                                    <button th:data-symbol="${item.holding.symbol}" th:data-shares="${item.holding.shares}"
+                                            onclick="quickSellStock(this.dataset.symbol, this.dataset.shares)"
                                             class="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold transition-all">
                                         Sprzedaj 1-Click
                                     </button>
